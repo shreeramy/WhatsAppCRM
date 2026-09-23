@@ -1,4 +1,4 @@
-# wacrm — CRM Template for WhatsApp
+# wacrm — CRM Template for WhatsApp   DSA
 
 > Self-hostable CRM template for WhatsApp® — shared inbox, contacts,
 > sales pipelines, broadcasts, and no-code automations. Fork it, brand
