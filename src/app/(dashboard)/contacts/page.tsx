@@ -1,6 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { DateRangeFilter } from '@/components/ui/date-range-filter';
+import {
+  ALL_TIME,
+  isRangeActive,
+  resolveRange,
+  type DateRangeValue,
+} from '@/lib/date-range';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import type { Contact, Tag, ContactTag } from '@/types';
@@ -77,6 +84,8 @@ export default function ContactsPage() {
   const [totalCount, setTotalCount] = useState(0);
   // Tag filter — contacts shown must have ANY of these tags (OR).
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  // Created-date filter, applied server-side like search and tags.
+  const [createdRange, setCreatedRange] = useState<DateRangeValue>(ALL_TIME);
 
   // Modals
   const [formOpen, setFormOpen] = useState(false);
@@ -129,6 +138,9 @@ export default function ContactsPage() {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     const term = search.trim();
+    const created = resolveRange(createdRange);
+    const createdFrom = created.from?.toISOString() ?? null;
+    const createdTo = created.to?.toISOString() ?? null;
 
     let contactRows: Contact[];
     let count: number;
@@ -143,6 +155,8 @@ export default function ContactsPage() {
         p_search: term || null,
         p_limit: PAGE_SIZE,
         p_offset: from,
+        p_created_from: createdFrom,
+        p_created_to: createdTo,
       });
       if (seq !== fetchSeq.current) return; // superseded by a newer fetch
       if (error) {
@@ -159,6 +173,9 @@ export default function ContactsPage() {
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to);
+
+      if (createdFrom) query = query.gte('created_at', createdFrom);
+      if (createdTo) query = query.lte('created_at', createdTo);
 
       if (term) {
         const like = `%${term}%`;
@@ -207,7 +224,7 @@ export default function ContactsPage() {
 
     setContacts(enriched);
     setLoading(false);
-  }, [supabase, page, search, selectedTagIds, tagsMap, t]);
+  }, [supabase, page, search, selectedTagIds, createdRange, tagsMap, t]);
 
   // Load-once-on-mount-ish data fetches. Each setter inside runs
   // inside an async promise completion (Supabase await), not
@@ -323,7 +340,8 @@ export default function ContactsPage() {
   const allTags = Object.values(tagsMap).sort((a, b) =>
     a.name.localeCompare(b.name)
   );
-  const hasActiveFilters = search.trim().length > 0 || selectedTagIds.length > 0;
+  const hasActiveFilters =
+    search.trim().length > 0 || selectedTagIds.length > 0 || isRangeActive(createdRange);
 
   function toggleTagFilter(tagId: string) {
     setSelectedTagIds((prev) =>
@@ -460,6 +478,16 @@ export default function ContactsPage() {
               )}
             </PopoverContent>
           </Popover>
+
+          <DateRangeFilter
+            value={createdRange}
+            onChange={(v) => {
+              setCreatedRange(v);
+              setPage(0);
+            }}
+            label={t('createdFilter')}
+            className="shrink-0"
+          />
         </div>
 
         {/* Active tag-filter chips */}

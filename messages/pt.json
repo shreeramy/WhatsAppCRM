@@ -151,7 +151,9 @@
       "clearAll": "Limpar tudo",
       "noConversations": "Nenhuma conversa encontrada",
       "noMessagesYet": "Nenhuma mensagem ainda",
-      "unknown": "Desconhecido"
+      "unknown": "Desconhecido",
+      "filterUnreplied": "Unreplied",
+      "lastMessage": "Last message"
     },
     "messageThread": {
       "backToConversations": "Voltar às conversas",
@@ -359,7 +361,8 @@
       "toastFailedDelete": "Falha ao excluir o contato",
       "toastDeleted": "Contato excluído",
       "toastBulkFailedDelete": "Falha ao excluir os contatos",
-      "toastBulkDeleted": "{count} contatos excluídos"
+      "toastBulkDeleted": "{count} contatos excluídos",
+      "createdFilter": "Added"
     },
     "form": {
       "addTitle": "Adicionar contato",
@@ -547,7 +550,10 @@
       "toastFailedMoveDeal": "Falha ao mover o negócio",
       "toastFailedCreatePipeline": "Falha ao criar o pipeline",
       "toastPipelineCreated": "Pipeline criado",
-      "toastNotLinkedToAccount": "Seu perfil não está vinculado a uma conta."
+      "toastNotLinkedToAccount": "Seu perfil não está vinculado a uma conta.",
+      "filterCreated": "Created",
+      "filterExpectedClose": "Expected close",
+      "filterShowing": "Showing {shown} of {total} deals"
     },
     "board": {
       "dropDealHere": "Solte um negócio aqui",
@@ -2103,6 +2109,25 @@
     "toastFailedSave": "Couldn't save the follow-up",
     "toastFailedDelete": "Couldn't delete the follow-up",
     "toastFailedLoad": "Couldn't load follow-ups",
-    "toastNotLinked": "Your profile isn't linked to an account."
+    "toastNotLinked": "Your profile isn't linked to an account.",
+    "filterDue": "Due"
+  },
+  "DateRange": {
+    "preset": {
+      "all": "All time",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "next7": "Next 7 days",
+      "next30": "Next 30 days",
+      "nextMonth": "Next month",
+      "custom": "Custom range"
+    },
+    "from": "From",
+    "to": "To",
+    "clear": "Clear date filter"
   }
 }

@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import {
+  ALL_TIME,
+  PAST_AND_FUTURE_PRESETS,
+  inRange,
+  isRangeActive,
+  type DateRangeValue,
+} from "@/lib/date-range";
 import { createClient } from "@/lib/supabase/client";
 import type { Pipeline, PipelineStage, Deal } from "@/types";
 import { PipelineBoard } from "@/components/pipelines/pipeline-board";
@@ -56,6 +64,18 @@ export default function PipelinesPage() {
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
+  // Date filters narrow what the board and analytics show.
+  const [createdRange, setCreatedRange] = useState<DateRangeValue>(ALL_TIME);
+  const [closeRange, setCloseRange] = useState<DateRangeValue>(ALL_TIME);
+  const visibleDeals = useMemo(
+    () =>
+      deals.filter(
+        (d) =>
+          inRange(d.created_at, createdRange) &&
+          inRange(d.expected_close_date, closeRange),
+      ),
+    [deals, createdRange, closeRange],
+  );
   const [loading, setLoading] = useState(true);
 
   // Dialog / sheet state
@@ -405,6 +425,27 @@ export default function PipelinesPage() {
         </div>
       </div>
 
+      {pipelines.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <DateRangeFilter
+            value={createdRange}
+            onChange={setCreatedRange}
+            label={t("filterCreated")}
+          />
+          <DateRangeFilter
+            value={closeRange}
+            onChange={setCloseRange}
+            label={t("filterExpectedClose")}
+            presets={PAST_AND_FUTURE_PRESETS}
+          />
+          {(isRangeActive(createdRange) || isRangeActive(closeRange)) && (
+            <span className="text-xs text-muted-foreground">
+              {t("filterShowing", { shown: visibleDeals.length, total: deals.length })}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Board */}
       {pipelines.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20">
@@ -427,10 +468,10 @@ export default function PipelinesPage() {
         </div>
       ) : (
         <>
-          <PipelineAnalytics stages={stages} deals={deals} />
+          <PipelineAnalytics stages={stages} deals={visibleDeals} />
           <PipelineBoard
             stages={stages}
-            deals={deals}
+            deals={visibleDeals}
             onDealMoved={handleDealMoved}
             onAddDeal={handleAddDeal}
             onEditDeal={handleEditDeal}

@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import { ALL_TIME, inRange, type DateRangeValue } from "@/lib/date-range";
 
 interface ConversationListProps {
   activeConversationId: string | null;
@@ -44,7 +46,7 @@ const STATUS_COLORS: Record<ConversationStatus, string> = {
 
 
 
-type InboxFilter = ConversationStatus | "all" | "unread";
+type InboxFilter = ConversationStatus | "all" | "unread" | "unreplied";
 
 export function ConversationList({
   activeConversationId,
@@ -58,6 +60,7 @@ export function ConversationList({
   const FILTER_OPTIONS: { label: string; value: InboxFilter }[] = useMemo(() => [
     { label: t("filterAll"), value: "all" },
     { label: t("filterUnread"), value: "unread" },
+    { label: t("filterUnreplied"), value: "unreplied" },
     { label: t("filterOpen"), value: "open" },
     { label: t("filterPending"), value: "pending" },
     { label: t("filterClosed"), value: "closed" },
@@ -65,6 +68,7 @@ export function ConversationList({
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<InboxFilter>("all");
+  const [dateRange, setDateRange] = useState<DateRangeValue>(ALL_TIME);
   const [loading, setLoading] = useState(true);
   // Contact-based filters (issue #272). Tags use OR logic (a conversation
   // matches if its contact carries any selected tag), consistent with
@@ -163,6 +167,11 @@ export function ConversationList({
 
     if (filter === "unread") {
       result = result.filter((c) => c.unread_count > 0);
+    } else if (filter === "unreplied") {
+      // Customer spoke last and the thread isn't closed — waiting on us.
+      result = result.filter(
+        (c) => c.last_message_sender === "customer" && c.status !== "closed",
+      );
     } else if (filter !== "all") {
       result = result.filter((c) => c.status === filter);
     }
@@ -177,6 +186,8 @@ export function ConversationList({
       );
     }
 
+    result = result.filter((c) => inRange(c.last_message_at, dateRange));
+
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((c) => {
@@ -188,7 +199,7 @@ export function ConversationList({
     }
 
     return result;
-  }, [conversations, filter, search, selectedTagIds, selectedCompany]);
+  }, [conversations, filter, search, selectedTagIds, selectedCompany, dateRange]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>
@@ -351,6 +362,12 @@ export function ConversationList({
             </DropdownMenu>
           )}
         </div>
+
+        <DateRangeFilter
+          value={dateRange}
+          onChange={setDateRange}
+          label={t("lastMessage")}
+        />
 
         {hasContactFilters && (
           <div className="flex flex-wrap items-center gap-1">

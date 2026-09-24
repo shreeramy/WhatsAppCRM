@@ -151,7 +151,9 @@
       "clearAll": "Clear all",
       "noConversations": "No conversations found",
       "noMessagesYet": "No messages yet",
-      "unknown": "Unknown"
+      "unknown": "Unknown",
+      "filterUnreplied": "Unreplied",
+      "lastMessage": "Last message"
     },
     "messageThread": {
       "backToConversations": "Back to conversations",
@@ -359,7 +361,8 @@
       "toastFailedDelete": "Failed to delete contact",
       "toastDeleted": "Contact deleted",
       "toastBulkFailedDelete": "Failed to delete contacts",
-      "toastBulkDeleted": "{count} contacts deleted"
+      "toastBulkDeleted": "{count} contacts deleted",
+      "createdFilter": "Added"
     },
     "form": {
       "addTitle": "Add Contact",
@@ -547,7 +550,10 @@
       "toastFailedMoveDeal": "Failed to move deal",
       "toastFailedCreatePipeline": "Failed to create pipeline",
       "toastPipelineCreated": "Pipeline created",
-      "toastNotLinkedToAccount": "Your profile is not linked to an account."
+      "toastNotLinkedToAccount": "Your profile is not linked to an account.",
+      "filterCreated": "Created",
+      "filterExpectedClose": "Expected close",
+      "filterShowing": "Showing {shown} of {total} deals"
     },
     "board": {
       "dropDealHere": "Drop a deal here",
@@ -2103,6 +2109,25 @@
     "toastFailedSave": "Couldn't save the follow-up",
     "toastFailedDelete": "Couldn't delete the follow-up",
     "toastFailedLoad": "Couldn't load follow-ups",
-    "toastNotLinked": "Your profile isn't linked to an account."
+    "toastNotLinked": "Your profile isn't linked to an account.",
+    "filterDue": "Due"
+  },
+  "DateRange": {
+    "preset": {
+      "all": "All time",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "next7": "Next 7 days",
+      "next30": "Next 30 days",
+      "nextMonth": "Next month",
+      "custom": "Custom range"
+    },
+    "from": "From",
+    "to": "To",
+    "clear": "Clear date filter"
   }
 }

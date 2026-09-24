@@ -151,7 +151,9 @@
       "clearAll": "Limpiar todo",
       "noConversations": "No se encontraron conversaciones",
       "noMessagesYet": "Aún no hay mensajes",
-      "unknown": "Desconocido"
+      "unknown": "Desconocido",
+      "filterUnreplied": "Unreplied",
+      "lastMessage": "Last message"
     },
     "messageThread": {
       "backToConversations": "Volver a las conversaciones",
@@ -359,7 +361,8 @@
       "toastFailedDelete": "Error al eliminar el contacto",
       "toastDeleted": "Contacto eliminado",
       "toastBulkFailedDelete": "Error al eliminar los contactos",
-      "toastBulkDeleted": "{count} contactos eliminados"
+      "toastBulkDeleted": "{count} contactos eliminados",
+      "createdFilter": "Added"
     },
     "form": {
       "addTitle": "Agregar contacto",
@@ -547,7 +550,10 @@
       "toastFailedMoveDeal": "Error al mover el negocio",
       "toastFailedCreatePipeline": "Error al crear el pipeline",
       "toastPipelineCreated": "Pipeline creado",
-      "toastNotLinkedToAccount": "Tu perfil no está vinculado a una cuenta."
+      "toastNotLinkedToAccount": "Tu perfil no está vinculado a una cuenta.",
+      "filterCreated": "Created",
+      "filterExpectedClose": "Expected close",
+      "filterShowing": "Showing {shown} of {total} deals"
     },
     "board": {
       "dropDealHere": "Suelta un negocio aquí",
@@ -2103,6 +2109,25 @@
     "toastFailedSave": "Couldn't save the follow-up",
     "toastFailedDelete": "Couldn't delete the follow-up",
     "toastFailedLoad": "Couldn't load follow-ups",
-    "toastNotLinked": "Your profile isn't linked to an account."
+    "toastNotLinked": "Your profile isn't linked to an account.",
+    "filterDue": "Due"
+  },
+  "DateRange": {
+    "preset": {
+      "all": "All time",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "next7": "Next 7 days",
+      "next30": "Next 30 days",
+      "nextMonth": "Next month",
+      "custom": "Custom range"
+    },
+    "from": "From",
+    "to": "To",
+    "clear": "Clear date filter"
   }
 }

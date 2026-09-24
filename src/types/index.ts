@@ -176,6 +176,8 @@ export interface Conversation {
   assigned_agent_id?: string;
   last_message_text?: string;
   last_message_at?: string;
+  /** Who sent the latest message (migration 044). 'customer' = awaiting our reply. */
+  last_message_sender?: SenderType | null;
   unread_count: number;
   created_at: string;
   updated_at: string;

@@ -14,6 +14,14 @@ import { followUpBucket, type FollowUpBucket } from "@/lib/follow-ups/dates";
 import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
 import { FollowUpRow } from "@/components/follow-ups/follow-up-row";
 import { FOLLOW_UP_SELECT } from "@/components/follow-ups/follow-up-meta";
+import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import {
+  ALL_TIME,
+  PAST_AND_FUTURE_PRESETS,
+  inRange,
+  resolveRange,
+  type DateRangeValue,
+} from "@/lib/date-range";
 
 const TABS: FollowUpBucket[] = ["overdue", "today", "upcoming", "done"];
 const DONE_LOOKBACK_DAYS = 30;
@@ -28,6 +36,7 @@ export default function FollowUpsPage() {
   const [pickedTab, setTab] = useState<FollowUpBucket | null>(null);
   // Managers can look at the whole team; everyone else only has their own.
   const [owner, setOwner] = useState<string>("me");
+  const [dueRange, setDueRange] = useState<DateRangeValue>(ALL_TIME);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FollowUp | null>(null);
 
@@ -35,6 +44,20 @@ export default function FollowUpsPage() {
     if (!accountId) return;
     const supabase = createClient();
     const since = subDays(new Date(), DONE_LOOKBACK_DAYS).toISOString();
+    // With a due-date range set, Done shows everything completed in that
+    // range; otherwise just the last 30 days so the list stays short.
+    const range = resolveRange(dueRange);
+    let doneQuery = supabase
+      .from("follow_ups")
+      .select(FOLLOW_UP_SELECT)
+      .eq("account_id", accountId)
+      .not("completed_at", "is", null);
+    if (range.from || range.to) {
+      if (range.from) doneQuery = doneQuery.gte("due_at", range.from.toISOString());
+      if (range.to) doneQuery = doneQuery.lte("due_at", range.to.toISOString());
+    } else {
+      doneQuery = doneQuery.gte("completed_at", since);
+    }
     const [open, done, m] = await Promise.all([
       supabase
         .from("follow_ups")
@@ -43,13 +66,7 @@ export default function FollowUpsPage() {
         .is("completed_at", null)
         .order("due_at")
         .limit(500),
-      supabase
-        .from("follow_ups")
-        .select(FOLLOW_UP_SELECT)
-        .eq("account_id", accountId)
-        .gte("completed_at", since)
-        .order("completed_at", { ascending: false })
-        .limit(200),
+      doneQuery.order("completed_at", { ascending: false }).limit(500),
       supabase.from("profiles").select("*").eq("account_id", accountId),
     ]);
     if (open.error || done.error) {
@@ -59,7 +76,7 @@ export default function FollowUpsPage() {
     }
     setItems([...(open.data ?? []), ...(done.data ?? [])] as FollowUp[]);
     setMembers((m.data ?? []) as Profile[]);
-  }, [accountId, t]);
+  }, [accountId, dueRange, t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -73,10 +90,11 @@ export default function FollowUpsPage() {
 
   const visible = useMemo(() => {
     if (!items) return [];
-    if (owner === "all") return items;
+    const inDates = items.filter((f) => inRange(f.due_at, dueRange));
+    if (owner === "all") return inDates;
     const target = owner === "me" ? user?.id : owner;
-    return items.filter((f) => f.assigned_to === target);
-  }, [items, owner, user?.id]);
+    return inDates.filter((f) => f.assigned_to === target);
+  }, [items, owner, user?.id, dueRange]);
 
   const byBucket = useMemo(() => {
     const out: Record<FollowUpBucket, FollowUp[]> = {
@@ -164,6 +182,13 @@ export default function FollowUpsPage() {
           )}
         </div>
       </div>
+
+      <DateRangeFilter
+        value={dueRange}
+        onChange={setDueRange}
+        label={t("filterDue")}
+        presets={PAST_AND_FUTURE_PRESETS}
+      />
 
       <div className="flex gap-1 overflow-x-auto border-b border-border">
         {TABS.map((b) => (
