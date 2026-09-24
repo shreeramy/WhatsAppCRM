@@ -22,6 +22,10 @@ import {
   handleTemplateWebhookChange,
   isTemplateWebhookField,
 } from '@/lib/whatsapp/template-webhook'
+import {
+  formatInboundInteractive,
+  type InboundInteractive,
+} from '@/lib/whatsapp/interactive-inbound'
 
 // The `after()` callback in POST runs within this route's max duration.
 // Inbound processing can fan out to per-media Meta verification calls, so
@@ -72,8 +76,8 @@ interface WhatsAppMessage {
    * we put on the button/row when sending — the Flows engine uses this
    * to advance the per-contact run.
    */
-  interactive?: {
-    type: 'button_reply' | 'list_reply'
+  interactive?: InboundInteractive & {
+    type: string
     button_reply?: { id: string; title: string }
     list_reply?: { id: string; title: string; description?: string }
   }
@@ -1160,7 +1164,9 @@ async function parseMessageContent(
           interactiveReplyId: reply.id,
         }
       }
-      return { ...empty, contentText: '[Interactive reply]' }
+      // Form (Flow) submissions, shared addresses, call-permission
+      // answers, … — render their content instead of a bare placeholder.
+      return { ...empty, contentText: formatInboundInteractive(message.interactive) }
     }
 
     case 'button': {
