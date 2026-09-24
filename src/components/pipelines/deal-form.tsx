@@ -33,6 +33,8 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
+import { CallRecordings } from "./call-recordings";
+import { CALL_RECORDINGS_BUCKET } from "@/lib/call-recordings";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
@@ -259,6 +261,17 @@ export function DealForm({
   async function handleDelete() {
     if (!deal) return;
     setDeleting(true);
+    // Recording rows cascade with the deal; remove their audio files first
+    // so they aren't left behind in storage.
+    const { data: recs } = await supabase
+      .from("call_recordings")
+      .select("storage_path")
+      .eq("deal_id", deal.id);
+    if (recs?.length) {
+      await supabase.storage
+        .from(CALL_RECORDINGS_BUCKET)
+        .remove(recs.map((r) => r.storage_path));
+    }
     const { error } = await supabase.from("deals").delete().eq("id", deal.id);
     setDeleting(false);
     if (error) {
@@ -415,6 +428,8 @@ export function DealForm({
                 {tFollowUps("addForDeal")}
               </Button>
             )}
+
+            {deal && <CallRecordings dealId={deal.id} contactId={deal.contact_id} />}
 
             {deal && (
               <div className="space-y-2 rounded-lg border border-border bg-muted/50 p-3">

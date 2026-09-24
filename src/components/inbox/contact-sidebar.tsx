@@ -24,6 +24,8 @@ import { useTranslations } from "next-intl";
 import { contactHandle } from "@/lib/whatsapp/wa-identity";
 import { toast } from "sonner";
 import { CreateDealSheet } from "./create-deal-sheet";
+import { EditableContactName } from "./editable-contact-name";
+import { EditDealSheet } from "./edit-deal-sheet";
 import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
 import { FollowUpRow } from "@/components/follow-ups/follow-up-row";
 import { FOLLOW_UP_SELECT } from "@/components/follow-ups/follow-up-meta";
@@ -35,15 +37,18 @@ interface ContactSidebarProps {
   contact: Contact | null;
   /** Open conversation — linked to deals / follow-ups created here. */
   conversationId?: string;
+  /** Called after the contact is edited here (e.g. renamed). */
+  onContactUpdated?: (contact: Contact) => void;
 }
 
-export function ContactSidebar({ contact, conversationId }: ContactSidebarProps) {
+export function ContactSidebar({ contact, conversationId, onContactUpdated }: ContactSidebarProps) {
   const tSidebar = useTranslations("Inbox.sidebar");
   const tThread = useTranslations("Inbox.messageThread");
   const tFollowUps = useTranslations("FollowUps");
 
   const { accountId, canSendMessages } = useAuth();
   const [dealSheetOpen, setDealSheetOpen] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [followUpFormOpen, setFollowUpFormOpen] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
@@ -201,8 +206,13 @@ export function ContactSidebar({ contact, conversationId }: ContactSidebarProps)
                 initials
               )}
             </div>
-            <h3 className="mt-3 text-sm font-semibold text-foreground">
-              {displayName}
+            <h3 className="mt-3 w-full text-sm">
+              <EditableContactName
+                contact={contact}
+                fallback={contactHandle(contact)}
+                onSaved={(c) => onContactUpdated?.(c)}
+                align="center"
+              />
             </h3>
             {contact.company && (
               <p className="text-xs text-muted-foreground">{contact.company}</p>
@@ -287,9 +297,12 @@ export function ContactSidebar({ contact, conversationId }: ContactSidebarProps)
                 <p className="px-1 text-xs text-muted-foreground">{tSidebar("noDeals")}</p>
               ) : (
                 deals.map((deal) => (
-                  <div
+                  <button
+                    type="button"
                     key={deal.id}
-                    className="rounded-lg bg-muted px-3 py-2"
+                    onClick={() => setEditingDeal(deal)}
+                    title={tFollowUps("openDeal")}
+                    className="block w-full rounded-lg bg-muted px-3 py-2 text-left transition-colors hover:bg-muted/70 hover:ring-1 hover:ring-primary/40"
                   >
                     <p className="text-sm font-medium text-foreground">
                       {deal.title}
@@ -311,7 +324,7 @@ export function ContactSidebar({ contact, conversationId }: ContactSidebarProps)
                         </span>
                       )}
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
@@ -418,6 +431,13 @@ export function ContactSidebar({ contact, conversationId }: ContactSidebarProps)
         contactId={contact.id}
         conversationId={conversationId}
         onCreated={fetchContactData}
+      />
+      <EditDealSheet
+        deal={editingDeal}
+        onOpenChange={(open) => {
+          if (!open) setEditingDeal(null);
+        }}
+        onSaved={fetchContactData}
       />
       <FollowUpForm
         open={followUpFormOpen}

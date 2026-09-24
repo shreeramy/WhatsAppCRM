@@ -316,6 +316,13 @@
       "resumed": "IA retomada.",
       "updateError": "Não foi possível atualizar o assistente de IA.",
       "networkError": "Não foi possível conectar ao servidor."
+    },
+    "editName": {
+      "label": "Contact name",
+      "placeholder": "Contact name",
+      "hint": "Click to edit name",
+      "saved": "Name updated",
+      "failed": "Couldn't update the name"
     }
   },
   "Contacts": {
@@ -2110,7 +2117,8 @@
     "toastFailedDelete": "Couldn't delete the follow-up",
     "toastFailedLoad": "Couldn't load follow-ups",
     "toastNotLinked": "Your profile isn't linked to an account.",
-    "filterDue": "Due"
+    "filterDue": "Due",
+    "openDeal": "Open deal"
   },
   "DateRange": {
     "preset": {
@@ -2129,5 +2137,26 @@
     "from": "From",
     "to": "To",
     "clear": "Clear date filter"
+  },
+  "CallRecordings": {
+    "title": "Call recordings",
+    "upload": "Upload call recording",
+    "uploading": "Uploading…",
+    "hint": "MP3, M4A, AMR, AAC, WAV, OGG — up to 50 MB. Only your team can listen.",
+    "notePlaceholder": "Note for this call (optional)",
+    "empty": "No recordings yet",
+    "uploaded": "Recording uploaded",
+    "uploadFailed": "Couldn't upload the recording",
+    "notAudio": "That file isn't an audio recording",
+    "tooLarge": "Recording is larger than 50 MB",
+    "notLinked": "Your profile isn't linked to an account.",
+    "loadFailed": "Couldn't open the recording",
+    "cantPlay": "This format can't play in the browser — use Download",
+    "play": "Play",
+    "download": "Download",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this recording?",
+    "deleted": "Recording deleted",
+    "deleteFailed": "Couldn't delete the recording"
   }
 }

@@ -212,6 +212,17 @@ function InboxPageInner() {
     checkConnection();
   }, []);
 
+  // A contact edited in the thread header or sidebar (e.g. renamed):
+  // patch the open chat and every list row showing that contact.
+  const handleContactUpdated = useCallback((updated: Contact) => {
+    setActiveContact((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev));
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.contact?.id === updated.id ? { ...c, contact: { ...c.contact, ...updated } } : c,
+      ),
+    );
+  }, []);
+
   // Handle realtime message events
   const handleMessageEvent = useCallback(
     (event: { eventType: string; new: Message; old: Partial<Message> }) => {
@@ -624,6 +635,7 @@ function InboxPageInner() {
             onRefresh={handleManualRefresh}
             contactPanelOpen={contactPanelOpen}
             onToggleContactPanel={handleToggleContactPanel}
+            onContactUpdated={handleContactUpdated}
           />
         </div>
 
@@ -636,6 +648,7 @@ function InboxPageInner() {
             <ContactSidebar
               contact={activeContact}
               conversationId={activeConversation?.id}
+              onContactUpdated={handleContactUpdated}
             />
           </div>
         )}

@@ -55,6 +55,7 @@ import { buildReplyPreview } from "./reply-quote";
 import { renderTemplateBody } from "@/lib/whatsapp/template-body";
 import { contactHandle } from "@/lib/whatsapp/wa-identity";
 import { toast } from "sonner";
+import { EditableContactName } from "./editable-contact-name";
 
 interface ReplyDraft {
   id: string;
@@ -81,6 +82,8 @@ interface MessageThreadProps {
    * mobile only.
    */
   onBack?: () => void;
+  /** Called after the contact is renamed from the header. */
+  onContactUpdated?: (contact: Contact) => void;
   /**
    * Increment to force the messages + reactions fetch effects to refire.
    * Parent bumps this on realtime reconnect / tab visibility → visible
@@ -160,6 +163,7 @@ export function MessageThread({
   onStatusChange,
   onAssignChange,
   onBack,
+  onContactUpdated,
   resyncToken = 0,
   onRefresh,
   contactPanelOpen,
@@ -922,7 +926,13 @@ export function MessageThread({
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-foreground">{displayName}</h2>
+            <h2 className="flex min-w-0 text-sm">
+              <EditableContactName
+                contact={contact}
+                fallback={contactHandle(contact)}
+                onSaved={(c) => onContactUpdated?.(c)}
+              />
+            </h2>
             <p className="truncate text-xs text-muted-foreground">
               {contactHandle(contact)}
             </p>
