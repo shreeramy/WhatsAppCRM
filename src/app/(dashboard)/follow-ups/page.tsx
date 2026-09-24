@@ -24,7 +24,8 @@ export default function FollowUpsPage() {
 
   const [items, setItems] = useState<FollowUp[] | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
-  const [tab, setTab] = useState<FollowUpBucket>("today");
+  // null = not picked yet: open on Overdue when something is overdue.
+  const [pickedTab, setTab] = useState<FollowUpBucket | null>(null);
   // Managers can look at the whole team; everyone else only has their own.
   const [owner, setOwner] = useState<string>("me");
   const [formOpen, setFormOpen] = useState(false);
@@ -119,6 +120,7 @@ export default function FollowUpsPage() {
     [load, t],
   );
 
+  const tab: FollowUpBucket = pickedTab ?? (byBucket.overdue.length > 0 ? "overdue" : "today");
   const showAssignee = canManageMembers && owner !== "me";
   const list = byBucket[tab];
 

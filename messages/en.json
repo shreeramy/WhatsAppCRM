@@ -1956,7 +1956,7 @@
   },
   "Notifications": {
     "title": "Notifications",
-    "description": "Conversations other teammates assign to you show up here.",
+    "description": "Conversations assigned to you and follow-up reminders show up here.",
     "markAllRead": "Mark all as read",
     "markReadFailed": "Failed to mark notification as read",
     "markAllFailed": "Failed to mark all as read",
