@@ -36,6 +36,7 @@ import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
 import { CallRecordings } from "./call-recordings";
 import { CALL_RECORDINGS_BUCKET } from "@/lib/call-recordings";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import { useTranslations } from "next-intl";
 
 interface DealFormProps {
@@ -71,6 +72,8 @@ export function DealForm({
   const { accountId, defaultCurrency } = useAuth();
 
   const [title, setTitle] = useState("");
+  // Until the user types a title, new deals are named after the contact.
+  const [titleTouched, setTitleTouched] = useState(false);
   const [value, setValue] = useState("");
   const [currency, setCurrency] = useState(defaultCurrency);
   const [contactId, setContactId] = useState("");
@@ -100,6 +103,7 @@ export function DealForm({
     setConfirmDelete(false);
     if (deal) {
       setTitle(deal.title);
+      setTitleTouched(true);
       setValue(String(deal.value ?? ""));
       setCurrency(deal.currency || defaultCurrency);
       // contact_id is nullable when the contact has been deleted
@@ -111,6 +115,7 @@ export function DealForm({
       setNotes(deal.notes ?? "");
     } else {
       setTitle("");
+      setTitleTouched(false);
       setValue("");
       setCurrency(defaultCurrency);
       setContactId(defaultContactId ?? "");
@@ -172,6 +177,15 @@ export function DealForm({
       cancelled = true;
     };
   }, [open, contactId, supabase]);
+
+  // Auto-title new deals "<Contact> – <Mon YYYY>" (e.g. "Wangoes – Sep 2026").
+  useEffect(() => {
+    if (!open || deal || titleTouched) return;
+    const c = contacts.find((x) => x.id === contactId);
+    const name = c ? (c.name || c.phone || "").trim() : "";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTitle(name ? `${name} – ${format(new Date(), "MMM yyyy")}` : "");
+  }, [open, deal, titleTouched, contacts, contactId]);
 
   async function handleSave() {
     if (!title.trim() || !contactId || !stageId) {
@@ -304,7 +318,10 @@ export function DealForm({
               <Label className="text-muted-foreground">{t("title")}</Label>
               <Input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setTitleTouched(true);
+                }}
                 placeholder={t("titlePlaceholder")}
                 className="border-border bg-muted text-foreground"
               />
