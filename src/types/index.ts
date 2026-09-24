@@ -198,7 +198,7 @@ export interface Conversation {
 // Notifications (migration 027)
 // ============================================================
 
-export type NotificationType = 'conversation_assigned';
+export type NotificationType = 'conversation_assigned' | 'follow_up_due';
 
 export interface Notification {
   id: string;
@@ -208,6 +208,8 @@ export interface Notification {
   type: NotificationType;
   conversation_id?: string;
   contact_id?: string;
+  /** Set for 'follow_up_due' notifications. */
+  follow_up_id?: string;
   /** Who triggered it. Null when an automation/system assigned it. */
   actor_user_id?: string;
   title: string;
@@ -408,6 +410,31 @@ export interface Deal {
   contact?: Contact;
   stage?: PipelineStage;
   assignee?: Profile;
+  /** Earliest open follow-up due date, attached client-side on the board. */
+  next_follow_up_at?: string;
+}
+
+export type FollowUpType = 'call' | 'follow_up' | 'meeting' | 'task';
+
+export interface FollowUp {
+  id: string;
+  account_id: string;
+  contact_id: string | null;
+  deal_id: string | null;
+  conversation_id: string | null;
+  type: FollowUpType;
+  title: string;
+  notes: string | null;
+  due_at: string;
+  /** auth.users id of the teammate who has to do it. */
+  assigned_to: string;
+  created_by: string | null;
+  completed_at: string | null;
+  reminded_at: string | null;
+  created_at: string;
+  updated_at: string;
+  contact?: Pick<Contact, 'id' | 'name' | 'phone'> | null;
+  deal?: Pick<Deal, 'id' | 'title'> | null;
 }
 
 export type BroadcastStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';

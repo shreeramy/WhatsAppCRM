@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,7 +30,9 @@ import {
   MessageSquare,
   DollarSign,
   Loader2,
+  CalendarClock,
 } from "lucide-react";
+import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
@@ -41,6 +43,12 @@ interface DealFormProps {
   pipelineId: string;
   stages: PipelineStage[];
   defaultStageId?: string;
+  /** Pre-selects the contact for a new deal (e.g. created from a chat). */
+  defaultContactId?: string;
+  /** Conversation the new deal came from; stored on the deal. */
+  conversationId?: string;
+  /** Extra fields rendered above the title (e.g. a pipeline picker). */
+  headerSlot?: ReactNode;
   onSaved: () => void;
 }
 
@@ -51,6 +59,9 @@ export function DealForm({
   pipelineId,
   stages,
   defaultStageId,
+  defaultContactId,
+  conversationId,
+  headerSlot,
   onSaved,
 }: DealFormProps) {
   const t = useTranslations("Pipelines.form");
@@ -75,6 +86,8 @@ export function DealForm({
   const [statusAction, setStatusAction] = useState<DealStatus | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
+  const tFollowUps = useTranslations("FollowUps");
 
   // Reset the form fields every time the sheet opens or its input
   // props change. This is a legitimate prop-driven sync; the rule is
@@ -98,13 +111,20 @@ export function DealForm({
       setTitle("");
       setValue("");
       setCurrency(defaultCurrency);
-      setContactId("");
-      setStageId(defaultStageId || stages[0]?.id || "");
+      setContactId(defaultContactId ?? "");
       setAssignedTo("");
       setExpectedCloseDate("");
       setNotes("");
     }
-  }, [open, deal, defaultStageId, stages, defaultCurrency]);
+  }, [open, deal, defaultContactId, defaultCurrency]);
+
+  // New deals start in the requested (or first) stage. Kept separate from
+  // the reset above so switching pipelines — which swaps `stages` — doesn't
+  // wipe what the user already typed.
+  useEffect(() => {
+    if (!open || deal) return;
+    setStageId(defaultStageId || stages[0]?.id || "");
+  }, [open, deal, defaultStageId, stages]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Load supporting data once the sheet is open
@@ -197,7 +217,13 @@ export function DealForm({
       }
       const { error } = await supabase
         .from("deals")
-        .insert({ ...payload, user_id: user.id, account_id: accountId, status: "open" });
+        .insert({
+          ...payload,
+          user_id: user.id,
+          account_id: accountId,
+          status: "open",
+          ...(conversationId ? { conversation_id: conversationId } : {}),
+        });
       if (error) {
         toast.error(t("toastFailedCreate"));
         setSaving(false);
@@ -259,6 +285,8 @@ export function DealForm({
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {headerSlot}
+
             <div className="grid gap-2">
               <Label className="text-muted-foreground">{t("title")}</Label>
               <Input
@@ -377,6 +405,18 @@ export function DealForm({
             </div>
 
             {deal && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFollowUpOpen(true)}
+                className="w-full border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <CalendarClock className="mr-1 h-4 w-4" />
+                {tFollowUps("addForDeal")}
+              </Button>
+            )}
+
+            {deal && (
               <div className="space-y-2 rounded-lg border border-border bg-muted/50 p-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {t("status")}
@@ -482,6 +522,17 @@ export function DealForm({
           </div>
         </div>
       </SheetContent>
+
+      {deal && (
+        <FollowUpForm
+          open={followUpOpen}
+          onOpenChange={setFollowUpOpen}
+          contactId={deal.contact_id}
+          dealId={deal.id}
+          conversationId={deal.conversation_id ?? linkedConversation?.id ?? null}
+          onSaved={onSaved}
+        />
+      )}
     </Sheet>
   );
 }

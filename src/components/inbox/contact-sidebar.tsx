@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import type { Contact, Deal, ContactNote, Tag } from "@/types";
+import type { Contact, Deal, ContactNote, FollowUp, Tag } from "@/types";
 import {
   Phone,
   Mail,
@@ -15,22 +15,38 @@ import {
   DollarSign,
   StickyNote,
   Plus,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
 import { contactHandle } from "@/lib/whatsapp/wa-identity";
+import { toast } from "sonner";
+import { CreateDealSheet } from "./create-deal-sheet";
+import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
+import { FollowUpRow } from "@/components/follow-ups/follow-up-row";
+import { FOLLOW_UP_SELECT } from "@/components/follow-ups/follow-up-meta";
+
+/** Completed follow-ups kept visible in the chat for context. */
+const RECENT_DONE_LIMIT = 3;
 
 interface ContactSidebarProps {
   contact: Contact | null;
+  /** Open conversation — linked to deals / follow-ups created here. */
+  conversationId?: string;
 }
 
-export function ContactSidebar({ contact }: ContactSidebarProps) {
+export function ContactSidebar({ contact, conversationId }: ContactSidebarProps) {
   const tSidebar = useTranslations("Inbox.sidebar");
   const tThread = useTranslations("Inbox.messageThread");
+  const tFollowUps = useTranslations("FollowUps");
 
-  const { accountId } = useAuth();
+  const { accountId, canSendMessages } = useAuth();
+  const [dealSheetOpen, setDealSheetOpen] = useState(false);
+  const [followUpFormOpen, setFollowUpFormOpen] = useState(false);
+  const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [copied, setCopied] = useState(false);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [notes, setNotes] = useState<ContactNote[]>([]);
@@ -44,7 +60,7 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
     const supabase = createClient();
 
     // Fetch deals, notes, and tags in parallel
-    const [dealsRes, notesRes, tagsRes] = await Promise.all([
+    const [dealsRes, notesRes, tagsRes, openFuRes, doneFuRes] = await Promise.all([
       supabase
         .from("deals")
         .select("*, stage:pipeline_stages(*)")
@@ -59,6 +75,24 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
         .from("contact_tags")
         .select("id, tag_id, tags(*)")
         .eq("contact_id", contact.id),
+      supabase
+        .from("follow_ups")
+        .select(FOLLOW_UP_SELECT)
+        .eq("contact_id", contact.id)
+        .is("completed_at", null)
+        .order("due_at"),
+      supabase
+        .from("follow_ups")
+        .select(FOLLOW_UP_SELECT)
+        .eq("contact_id", contact.id)
+        .not("completed_at", "is", null)
+        .order("completed_at", { ascending: false })
+        .limit(RECENT_DONE_LIMIT),
+    ]);
+
+    setFollowUps([
+      ...((openFuRes.data ?? []) as FollowUp[]),
+      ...((doneFuRes.data ?? []) as FollowUp[]),
     ]);
 
     if (dealsRes.data) setDeals(dealsRes.data);
@@ -122,6 +156,22 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
     }
     setAddingNote(false);
   }, [contact, newNote, accountId]);
+
+  const handleToggleFollowUp = useCallback(
+    async (f: FollowUp) => {
+      const completed_at = f.completed_at ? null : new Date().toISOString();
+      setFollowUps((prev) => prev.map((x) => (x.id === f.id ? { ...x, completed_at } : x)));
+      const { error } = await createClient()
+        .from("follow_ups")
+        .update({ completed_at })
+        .eq("id", f.id);
+      if (error) {
+        toast.error(tFollowUps("toastFailedSave"));
+        fetchContactData();
+      }
+    },
+    [fetchContactData, tFollowUps],
+  );
 
   if (!contact) {
     return (
@@ -220,7 +270,17 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
           <div>
             <div className="flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               <DollarSign className="h-3 w-3" />
-              {tSidebar("deals")}
+              <span className="flex-1">{tSidebar("deals")}</span>
+              {canSendMessages && (
+                <button
+                  type="button"
+                  onClick={() => setDealSheetOpen(true)}
+                  className="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary hover:bg-primary/10"
+                >
+                  <Plus className="h-3 w-3" />
+                  {tFollowUps("newDeal")}
+                </button>
+              )}
             </div>
             <div className="mt-2 space-y-2">
               {deals.length === 0 ? (
@@ -252,6 +312,53 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
                       )}
                     </div>
                   </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="my-4 border-t border-border" />
+
+          {/* Follow-ups */}
+          <div>
+            <div className="flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <CalendarClock className="h-3 w-3" />
+              <span className="flex-1">{tFollowUps("sectionTitle")}</span>
+              {canSendMessages && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingFollowUp(null);
+                    setFollowUpFormOpen(true);
+                  }}
+                  className="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary hover:bg-primary/10"
+                >
+                  <Plus className="h-3 w-3" />
+                  {tFollowUps("add")}
+                </button>
+              )}
+            </div>
+            <div className="mt-2 space-y-1.5">
+              {followUps.length === 0 ? (
+                <p className="px-1 text-xs text-muted-foreground">{tFollowUps("noneForContact")}</p>
+              ) : (
+                followUps.map((f) => (
+                  <FollowUpRow
+                    key={f.id}
+                    followUp={f}
+                    compact
+                    hideContact
+                    onToggleDone={handleToggleFollowUp}
+                    onEdit={
+                      canSendMessages
+                        ? (x) => {
+                            setEditingFollowUp(x);
+                            setFollowUpFormOpen(true);
+                          }
+                        : undefined
+                    }
+                  />
                 ))
               )}
             </div>
@@ -304,6 +411,22 @@ export function ContactSidebar({ contact }: ContactSidebarProps) {
           </div>
         </div>
       </ScrollArea>
+
+      <CreateDealSheet
+        open={dealSheetOpen}
+        onOpenChange={setDealSheetOpen}
+        contactId={contact.id}
+        conversationId={conversationId}
+        onCreated={fetchContactData}
+      />
+      <FollowUpForm
+        open={followUpFormOpen}
+        onOpenChange={setFollowUpFormOpen}
+        followUp={editingFollowUp}
+        contactId={contact.id}
+        conversationId={conversationId}
+        onSaved={fetchContactData}
+      />
     </div>
   );
 }

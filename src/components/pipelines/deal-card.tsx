@@ -1,9 +1,10 @@
 "use client";
 
 import type { Deal, PipelineStage } from "@/types";
-import { Calendar, Check, X } from "lucide-react";
+import { Calendar, CalendarClock, Check, X } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useTranslations } from "next-intl";
+import { isPastDue } from "@/lib/follow-ups/dates";
 
 interface DealCardProps {
   deal: Deal;
@@ -30,6 +31,8 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
   const t = useTranslations("Pipelines.card");
   const contactLabel = deal.contact?.name || deal.contact?.phone || t("noContact");
   const assigneeLabel = deal.assignee?.full_name || null;
+  const nextFollowUp = deal.next_follow_up_at ? new Date(deal.next_follow_up_at) : null;
+  const followUpOverdue = !!deal.next_follow_up_at && isPastDue(deal.next_follow_up_at);
 
   return (
     <button
@@ -92,14 +95,35 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
         )}
       </div>
 
-      {assigneeLabel && (
-        <div className="mt-2 flex items-center justify-end">
-          <span
-            title={assigneeLabel}
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary"
-          >
-            {initials(assigneeLabel)}
-          </span>
+      {(nextFollowUp || assigneeLabel) && (
+        <div className="mt-2 flex items-center justify-between gap-2">
+          {nextFollowUp ? (
+            <span
+              title={t("nextFollowUp")}
+              className={`flex items-center gap-1 text-[11px] ${
+                followUpOverdue ? "font-semibold text-red-400" : "text-muted-foreground"
+              }`}
+            >
+              <CalendarClock className="h-3 w-3" />
+              {followUpOverdue && `${t("overdue")} · `}
+              {nextFollowUp.toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          ) : (
+            <span />
+          )}
+          {assigneeLabel && (
+            <span
+              title={assigneeLabel}
+              className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary"
+            >
+              {initials(assigneeLabel)}
+            </span>
+          )}
         </div>
       )}
     </button>

@@ -104,7 +104,22 @@ export default function PipelinesPage() {
         .select("*, contact:contacts(*), assignee:profiles!deals_assigned_to_fkey(*)")
         .eq("pipeline_id", pipelineId)
         .order("created_at", { ascending: false });
-      return (data ?? []) as Deal[];
+      const deals = (data ?? []) as Deal[];
+      if (deals.length === 0) return deals;
+
+      // Earliest open follow-up per deal, shown on the card. RLS limits
+      // agents to their own follow-ups; admins see the whole team's.
+      const { data: followUps } = await supabase
+        .from("follow_ups")
+        .select("deal_id, due_at")
+        .in("deal_id", deals.map((d) => d.id))
+        .is("completed_at", null)
+        .order("due_at");
+      const next = new Map<string, string>();
+      for (const f of followUps ?? []) {
+        if (f.deal_id && !next.has(f.deal_id)) next.set(f.deal_id, f.due_at);
+      }
+      return deals.map((d) => ({ ...d, next_follow_up_at: next.get(d.id) }));
     },
     [supabase],
   );

@@ -39,7 +39,8 @@
     "defaultAvatar": "Avatar",
     "menuProfile": "Perfil",
     "menuSettings": "Configuración",
-    "menuSignOut": "Cerrar sesión"
+    "menuSignOut": "Cerrar sesión",
+    "followUps": "Follow-ups"
   },
   "Header": {
     "dashboard": "Panel",
@@ -555,7 +556,9 @@
     "card": {
       "noContact": "Sin contacto",
       "won": "Ganado",
-      "lost": "Perdido"
+      "lost": "Perdido",
+      "nextFollowUp": "Next follow-up",
+      "overdue": "Overdue"
     },
     "form": {
       "editDeal": "Editar negocio",
@@ -2026,5 +2029,80 @@
   },
   "DashboardShell": {
     "loading": "Cargando..."
+  },
+  "FollowUps": {
+    "pageTitle": "Follow-ups",
+    "pageDescription": "Call-backs, meetings and tasks — what's overdue, due today and coming up.",
+    "sectionTitle": "Follow-ups",
+    "newTitle": "New follow-up",
+    "editTitle": "Edit follow-up",
+    "formDescription": "Set a reminder to call back, follow up or meet. The assignee gets a notification when it's due.",
+    "add": "Add",
+    "addForDeal": "Add follow-up for this deal",
+    "newDeal": "New deal",
+    "pipeline": "Pipeline",
+    "noPipelines": "No pipelines yet — create one on the Pipelines page first.",
+    "noneForContact": "No follow-ups yet",
+    "type": {
+      "call": "Call",
+      "follow_up": "Follow-up",
+      "meeting": "Meeting",
+      "task": "Task"
+    },
+    "fieldTitle": "What needs to happen?",
+    "fieldTitlePlaceholder": "e.g. Call back about pricing",
+    "fieldDue": "When",
+    "quick": {
+      "inOneHour": "In 1 hour",
+      "tomorrow": "Tomorrow 10:00",
+      "nextMonday": "Next Monday 10:00",
+      "inThreeDays": "In 3 days",
+      "nextWeek": "In a week"
+    },
+    "fieldAssignee": "Assigned to",
+    "me": "me",
+    "fieldContact": "Contact",
+    "noContact": "No contact",
+    "fieldDeal": "Deal",
+    "noDeal": "No deal",
+    "fieldNotes": "Notes",
+    "fieldNotesPlaceholder": "Anything to remember for the call…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create follow-up",
+    "markDone": "Mark as done",
+    "markOpen": "Mark as not done",
+    "overdue": "Overdue",
+    "openChat": "Open chat",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this follow-up?",
+    "viewAll": "View all",
+    "filterOwner": "Show follow-ups for",
+    "ownerMe": "My follow-ups",
+    "ownerAll": "Everyone",
+    "tab": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "done": "Done"
+    },
+    "empty": {
+      "overdue": "Nothing overdue",
+      "today": "Nothing due today",
+      "upcoming": "Nothing scheduled",
+      "done": "Nothing completed in the last 30 days"
+    },
+    "emptyHint": "Add follow-ups from a WhatsApp chat, a deal, or the New follow-up button.",
+    "dashboardTitle": "Follow-ups due",
+    "dashboardNone": "You're all caught up for today.",
+    "dashboardSummary": "{total} due today or earlier · {overdue} overdue",
+    "toastCreated": "Follow-up created",
+    "toastUpdated": "Follow-up updated",
+    "toastDone": "Marked as done",
+    "toastFailedSave": "Couldn't save the follow-up",
+    "toastFailedDelete": "Couldn't delete the follow-up",
+    "toastFailedLoad": "Couldn't load follow-ups",
+    "toastNotLinked": "Your profile isn't linked to an account."
   }
 }

@@ -33,6 +33,7 @@ import { ConversationsChart } from '@/components/dashboard/conversations-chart'
 import { PipelineDonut } from '@/components/dashboard/pipeline-donut'
 import { ResponseTimeChart } from '@/components/dashboard/response-time-chart'
 import { ActivityFeed } from '@/components/dashboard/activity-feed'
+import { DueFollowUpsCard } from '@/components/follow-ups/due-follow-ups-card'
 
 import { useTranslations } from 'next-intl'
 
@@ -187,6 +188,9 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Follow-ups due today / overdue for the signed-in user */}
+      <DueFollowUpsCard />
 
       {/* Quick actions */}
       <QuickActions />
