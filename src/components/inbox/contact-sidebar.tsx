@@ -16,7 +16,14 @@ import {
   StickyNote,
   Plus,
   CalendarClock,
+  X,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { addContactTag, deleteContactTag } from "@/lib/contacts/tag-api";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
@@ -56,6 +63,10 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
   const [deals, setDeals] = useState<Deal[]>([]);
   const [notes, setNotes] = useState<ContactNote[]>([]);
   const [tags, setTags] = useState<(Tag & { contact_tag_id: string })[]>([]);
+  // Account's predefined tags for the picker (Settings -> Fields & tags).
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [savingTagId, setSavingTagId] = useState<string | null>(null);
   const [newNote, setNewNote] = useState("");
   const [addingNote, setAddingNote] = useState(false);
 
@@ -162,6 +173,52 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
     setAddingNote(false);
   }, [contact, newNote, accountId]);
 
+  // Load the tag list when the picker is first opened.
+  useEffect(() => {
+    if (!tagPickerOpen || !accountId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await createClient()
+        .from("tags")
+        .select("*")
+        .eq("account_id", accountId)
+        .order("name");
+      if (!cancelled) setAllTags((data ?? []) as Tag[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tagPickerOpen, accountId]);
+
+  const handleToggleTag = useCallback(
+    async (tag: Tag) => {
+      if (!contact || savingTagId) return;
+      const has = tags.some((t) => t.id === tag.id);
+      setSavingTagId(tag.id);
+      try {
+        // Goes through the API route so "tag added" automations still fire.
+        if (has) await deleteContactTag(contact.id, tag.id);
+        else await addContactTag(contact.id, tag.id);
+        const next = has
+          ? tags.filter((t) => t.id !== tag.id)
+          : [...tags, { ...tag, contact_tag_id: tag.id }];
+        setTags(next);
+        // Keep the conversation list's tag filter in sync.
+        onContactUpdated?.({
+          ...contact,
+          tags: next.map(({ contact_tag_id: _ct, ...t }) => {
+            void _ct;
+            return t;
+          }),
+        });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : tSidebar("tagUpdateFailed"));
+      }
+      setSavingTagId(null);
+    },
+    [contact, tags, savingTagId, onContactUpdated, tSidebar],
+  );
+
   const handleToggleFollowUp = useCallback(
     async (f: FollowUp) => {
       const completed_at = f.completed_at ? null : new Date().toISOString();
@@ -251,7 +308,49 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
           <div>
             <div className="flex items-center gap-2 px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               <TagIcon className="h-3 w-3" />
-              {tSidebar("tags")}
+              <span className="flex-1">{tSidebar("tags")}</span>
+              {canSendMessages && (
+                <Popover open={tagPickerOpen} onOpenChange={setTagPickerOpen}>
+                  <PopoverTrigger className="flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-primary hover:bg-primary/10">
+                    <Plus className="h-3 w-3" />
+                    {tSidebar("addTag")}
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56 p-1">
+                    {allTags.length === 0 ? (
+                      <p className="px-2 py-2 text-xs text-muted-foreground">
+                        {tSidebar("noTagsDefined")}
+                      </p>
+                    ) : (
+                      <ul className="max-h-64 overflow-y-auto">
+                        {allTags.map((tag) => {
+                          const selected = tags.some((t) => t.id === tag.id);
+                          return (
+                            <li key={tag.id}>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleTag(tag)}
+                                disabled={savingTagId !== null}
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-popover-foreground hover:bg-muted disabled:opacity-60"
+                              >
+                                <span
+                                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                  style={{ backgroundColor: tag.color }}
+                                />
+                                <span className="flex-1 truncate">{tag.name}</span>
+                                {savingTagId === tag.id ? (
+                                  <span className="h-3 w-3 animate-spin rounded-full border border-primary border-t-transparent" />
+                                ) : (
+                                  selected && <Check className="h-3.5 w-3.5 text-primary" />
+                                )}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
             <div className="mt-2 flex flex-wrap gap-1">
               {tags.length === 0 ? (
@@ -260,13 +359,24 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
                 tags.map((tag) => (
                   <span
                     key={tag.contact_tag_id}
-                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    className="group inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium"
                     style={{
                       backgroundColor: `${tag.color}20`,
                       color: tag.color,
                     }}
                   >
                     {tag.name}
+                    {canSendMessages && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTag(tag)}
+                        disabled={savingTagId !== null}
+                        aria-label={tSidebar("removeTag", { name: tag.name })}
+                        className="-mr-1 rounded-full p-0.5 opacity-60 hover:opacity-100"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    )}
                   </span>
                 ))
               )}
