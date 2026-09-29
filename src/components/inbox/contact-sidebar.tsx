@@ -333,7 +333,11 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
                             <li key={tag.id}>
                               <button
                                 type="button"
-                                onClick={() => handleToggleTag(tag)}
+                                onClick={() => {
+                                  // Close right away; the chip list shows the result.
+                                  setTagPickerOpen(false);
+                                  handleToggleTag(tag);
+                                }}
                                 disabled={savingTagId !== null}
                                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-popover-foreground hover:bg-muted disabled:opacity-60"
                               >
