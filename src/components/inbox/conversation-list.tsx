@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/use-auth";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import { ALL_TIME, inRange, type DateRangeValue } from "@/lib/date-range";
 
@@ -46,7 +47,13 @@ const STATUS_COLORS: Record<ConversationStatus, string> = {
 
 
 
-type InboxFilter = ConversationStatus | "all" | "unread" | "unreplied";
+type InboxFilter =
+  | ConversationStatus
+  | "all"
+  | "unread"
+  | "unreplied"
+  | "mine"
+  | "unassigned";
 
 export function ConversationList({
   activeConversationId,
@@ -59,6 +66,8 @@ export function ConversationList({
   
   const FILTER_OPTIONS: { label: string; value: InboxFilter }[] = useMemo(() => [
     { label: t("filterAll"), value: "all" },
+    { label: t("filterMine"), value: "mine" },
+    { label: t("filterUnassigned"), value: "unassigned" },
     { label: t("filterUnread"), value: "unread" },
     { label: t("filterUnreplied"), value: "unreplied" },
     { label: t("filterOpen"), value: "open" },
@@ -67,7 +76,17 @@ export function ConversationList({
   ], [t]);
 
   const [search, setSearch] = useState("");
+  const { user, accountRole } = useAuth();
   const [filter, setFilter] = useState<InboxFilter>("all");
+  // Agents start on their own chats; once the role is known, apply that
+  // default once — never override a filter the user already picked.
+  const defaultApplied = useRef(false);
+  useEffect(() => {
+    if (defaultApplied.current || !accountRole) return;
+    defaultApplied.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (accountRole === "agent") setFilter((f) => (f === "all" ? "mine" : f));
+  }, [accountRole]);
   const [dateRange, setDateRange] = useState<DateRangeValue>(ALL_TIME);
   const [loading, setLoading] = useState(true);
   // Contact-based filters (issue #272). Tags use OR logic (a conversation
@@ -167,6 +186,10 @@ export function ConversationList({
 
     if (filter === "unread") {
       result = result.filter((c) => c.unread_count > 0);
+    } else if (filter === "mine") {
+      result = result.filter((c) => !!user && c.assigned_agent_id === user.id);
+    } else if (filter === "unassigned") {
+      result = result.filter((c) => !c.assigned_agent_id);
     } else if (filter === "unreplied") {
       // Customer spoke last and the thread isn't closed — waiting on us.
       result = result.filter(
@@ -199,7 +222,7 @@ export function ConversationList({
     }
 
     return result;
-  }, [conversations, filter, search, selectedTagIds, selectedCompany, dateRange]);
+  }, [conversations, filter, search, selectedTagIds, selectedCompany, dateRange, user]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>

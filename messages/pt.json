@@ -153,7 +153,9 @@
       "noMessagesYet": "Nenhuma mensagem ainda",
       "unknown": "Desconhecido",
       "filterUnreplied": "Unreplied",
-      "lastMessage": "Last message"
+      "lastMessage": "Last message",
+      "filterMine": "Assigned to me",
+      "filterUnassigned": "Unassigned"
     },
     "messageThread": {
       "backToConversations": "Voltar às conversas",
