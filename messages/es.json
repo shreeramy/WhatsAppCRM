@@ -385,8 +385,8 @@
       "nameLabel": "Nombre",
       "namePlaceholder": "María Pérez",
       "phoneLabel": "Número de teléfono",
-      "phonePlaceholder": "+1234567890",
-      "phoneHint": "Incluye el código de país, p. ej. +52 para México",
+      "phonePlaceholder": "98765 43210",
+      "phoneHint": "10-digit mobile number — +91 is added automatically. For other countries, start with + and the country code.",
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "maria@example.com",
       "companyLabel": "Empresa",
@@ -409,7 +409,7 @@
       "loadingTags": "Cargando etiquetas...",
       "noTagsAvailable": "No hay etiquetas disponibles. Crea etiquetas en Configuración.",
       "phoneRequired": "El número de teléfono es obligatorio",
-      "phoneNeedsCountryCode": "Incluye el código de país — el número debe empezar con + (p. ej. +5215512345678)"
+      "phoneNeedsCountryCode": "Enter a 10-digit Indian mobile number, or a number starting with + and the country code"
     },
     "detailView": {
       "tabs": {
@@ -461,7 +461,7 @@
       "saveChangesBtn": "Guardar cambios",
       "saveCustomFieldsBtn": "Guardar campos personalizados",
       "toastPhoneRequired": "El número de teléfono es obligatorio",
-      "toastPhoneNeedsCountryCode": "Incluye el código de país — el número debe empezar con + (p. ej. +5215512345678)",
+      "toastPhoneNeedsCountryCode": "Enter a 10-digit Indian mobile number, or a number starting with + and the country code",
       "toastUpdateFailed": "Error al actualizar el contacto",
       "toastUpdated": "Contacto actualizado",
       "toastNotAuthenticated": "No autenticado",

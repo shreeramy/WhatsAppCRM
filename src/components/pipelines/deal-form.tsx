@@ -38,6 +38,7 @@ import { CALL_RECORDINGS_BUCKET } from "@/lib/call-recordings";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 interface DealFormProps {
   open: boolean;
@@ -182,7 +183,7 @@ export function DealForm({
   useEffect(() => {
     if (!open || deal || titleTouched) return;
     const c = contacts.find((x) => x.id === contactId);
-    const name = c ? (c.name || c.phone || "").trim() : "";
+    const name = c ? (c.name || formatPhoneDisplay(c.phone) || "").trim() : "";
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(name ? `${name} – ${format(new Date(), "MMM yyyy")}` : "");
   }, [open, deal, titleTouched, contacts, contactId]);
@@ -337,7 +338,7 @@ export function DealForm({
                 <option value="">{t("selectContact")}</option>
                 {contacts.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name || c.phone}
+                    {c.name || formatPhoneDisplay(c.phone)}
                   </option>
                 ))}
               </select>

@@ -138,3 +138,46 @@ export function phoneVariants(sanitized: string): string[] {
 export function isRecipientNotAllowedError(message: string): boolean {
   return /131030|not in allowed list|not in the allowed list/i.test(message)
 }
+
+// ------------------------------------------------------------
+// India-only deployment helpers (display + entry). Storage and
+// sending still use the full international number.
+// ------------------------------------------------------------
+
+/** Indian mobile number: 10 digits starting 6–9. */
+const INDIAN_MOBILE = /^[6-9]\d{9}$/
+
+/**
+ * Accept Indian numbers typed without the country code: a bare
+ * 10-digit mobile (optionally with a leading 0) or 91XXXXXXXXXX gets
+ * "+91" added. Anything else is returned trimmed and unchanged, so
+ * `parseInternationalPhone` still validates it as before.
+ */
+export function withIndiaCountryCode(raw: string): string {
+  const trimmed = (raw ?? '').trim()
+  const compact = trimmed.replace(/[\s().-]/g, '')
+  if (/^0?[6-9]\d{9}$/.test(compact)) return `+91${compact.slice(-10)}`
+  if (/^91[6-9]\d{9}$/.test(compact)) return `+${compact}`
+  return trimmed
+}
+
+/**
+ * How to show a phone number: Indian numbers lose the +91 and get a
+ * space after five digits ("98765 43210"); other numbers are shown
+ * as stored.
+ */
+export function formatPhoneDisplay(
+  phone: string | null | undefined,
+  { spaced = true }: { spaced?: boolean } = {},
+): string {
+  if (!phone) return ''
+  const digits = phone.replace(/\D/g, '')
+  let local: string | null = null
+  if (digits.length === 12 && digits.startsWith('91') && INDIAN_MOBILE.test(digits.slice(2))) {
+    local = digits.slice(2)
+  } else if (INDIAN_MOBILE.test(digits.replace(/^0/, '')) && digits.length <= 11) {
+    local = digits.slice(-10)
+  }
+  if (!local) return phone
+  return spaced ? `${local.slice(0, 5)} ${local.slice(5)}` : local
+}

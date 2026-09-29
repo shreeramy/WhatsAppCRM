@@ -32,6 +32,7 @@ import {
   normalizePhone,
   sanitizePhoneForMeta,
 } from './phone-utils'
+import { formatPhoneDisplay } from './phone-utils'
 
 /** The `contacts[]` entry Meta pairs with an inbound message. */
 export interface WaContactPayload {
@@ -157,7 +158,7 @@ export function contactHandle(contact: {
   wa_username?: string | null
   wa_user_id?: string | null
 }): string {
-  if (contact.phone?.trim()) return contact.phone
+  if (contact.phone?.trim()) return formatPhoneDisplay(contact.phone)
   if (contact.wa_username?.trim()) return `@${contact.wa_username.trim()}`
   return contact.wa_user_id?.trim() ?? ''
 }

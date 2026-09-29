@@ -56,6 +56,7 @@ import { renderTemplateBody } from "@/lib/whatsapp/template-body";
 import { contactHandle } from "@/lib/whatsapp/wa-identity";
 import { toast } from "sonner";
 import { EditableContactName } from "./editable-contact-name";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 interface ReplyDraft {
   id: string;
@@ -1127,7 +1128,7 @@ export function MessageThread({
                           authorLabel:
                             parent.sender_type === "agent" || parent.sender_type === "bot"
                               ? t("me") 
-                              : contact?.name || contact?.phone || t("unknown"),
+                              : contact?.name || formatPhoneDisplay(contact?.phone) || t("unknown"),
                           preview: buildReplyPreview(parent, tQuote),
                         }
                       : null;

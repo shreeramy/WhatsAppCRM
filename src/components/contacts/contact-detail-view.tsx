@@ -42,7 +42,12 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { contactHandle } from '@/lib/whatsapp/wa-identity';
-import { parseInternationalPhone } from '@/lib/whatsapp/phone-utils';
+import {
+  formatPhoneDisplay,
+  normalizePhone,
+  parseInternationalPhone,
+  withIndiaCountryCode,
+} from '@/lib/whatsapp/phone-utils';
 
 interface ContactDetailViewProps {
   open: boolean;
@@ -112,7 +117,7 @@ export function ContactDetailView({
     if (data) {
       setContact(data);
       setEditName(data.name ?? '');
-      setEditPhone(data.phone);
+      setEditPhone(formatPhoneDisplay(data.phone));
       setEditEmail(data.email ?? '');
       setEditCompany(data.company ?? '');
     }
@@ -194,7 +199,9 @@ export function ContactDetailView({
 
   async function copyPhone() {
     if (!contact) return;
-    await navigator.clipboard.writeText(contactHandle(contact));
+    await navigator.clipboard.writeText(
+      contact.phone ? formatPhoneDisplay(contact.phone, { spaced: false }) : contactHandle(contact),
+    );
     setCopiedPhone(true);
     setTimeout(() => setCopiedPhone(false), 2000);
   }
@@ -209,8 +216,10 @@ export function ContactDetailView({
     // and a country code (issue #586). Unchanged numbers — including the
     // digits-only form the inbound webhook stores — are left alone so a
     // name/email edit is never blocked by the phone field.
-    const phoneChanged = editPhone.trim() !== (contact?.phone ?? '');
-    if (phoneChanged && !parseInternationalPhone(editPhone)) {
+    // India-only: a bare 10-digit mobile gets +91 added automatically.
+    const phoneValue = withIndiaCountryCode(editPhone);
+    const phoneChanged = normalizePhone(phoneValue) !== normalizePhone(contact?.phone ?? '');
+    if (phoneChanged && !parseInternationalPhone(phoneValue)) {
       toast.error(t('toastPhoneNeedsCountryCode'));
       return;
     }
@@ -220,7 +229,7 @@ export function ContactDetailView({
       .from('contacts')
       .update({
         name: editName.trim() || null,
-        phone: editPhone.trim(),
+        phone: phoneChanged ? phoneValue : (contact?.phone ?? phoneValue),
         email: editEmail.trim() || null,
         company: editCompany.trim() || null,
         updated_at: new Date().toISOString(),

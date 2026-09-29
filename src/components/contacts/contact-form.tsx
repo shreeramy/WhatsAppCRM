@@ -12,7 +12,12 @@ import {
   isUniqueViolation,
   type ExistingContact,
 } from '@/lib/contacts/dedupe';
-import { parseInternationalPhone } from '@/lib/whatsapp/phone-utils';
+import {
+  formatPhoneDisplay,
+  normalizePhone,
+  parseInternationalPhone,
+  withIndiaCountryCode,
+} from '@/lib/whatsapp/phone-utils';
 import {
   Dialog,
   DialogContent,
@@ -74,7 +79,7 @@ export function ContactForm({
   useEffect(() => {
     if (open) {
       setName(contact?.name ?? '');
-      setPhone(contact?.phone ?? '');
+      setPhone(formatPhoneDisplay(contact?.phone));
       setEmail(contact?.email ?? '');
       setCompany(contact?.company ?? '');
       setSelectedTagIds(contactTags.map((ct) => ct.tag_id));
@@ -87,7 +92,7 @@ export function ContactForm({
   // Runs on blur so we don't query on every keystroke.
   async function checkDuplicate() {
     if (isEdit || !accountId) return;
-    const value = phone.trim();
+    const value = withIndiaCountryCode(phone);
     if (!value) {
       setDupMatch(null);
       return;
@@ -137,8 +142,12 @@ export function ContactForm({
     // when the number actually changed — contacts created by the inbound
     // webhook store Meta's digits-only form, and editing their name must
     // not be blocked by a phone the user never touched.
-    const phoneChanged = !isEdit || phone.trim() !== (contact?.phone ?? '');
-    if (phoneChanged && !parseInternationalPhone(phone)) {
+    // India-only: a bare 10-digit mobile gets +91 added automatically.
+    const phoneValue = withIndiaCountryCode(phone);
+    const phoneChanged =
+      !isEdit || normalizePhone(phoneValue) !== normalizePhone(contact?.phone ?? '');
+    const phoneToSave = phoneChanged ? phoneValue : (contact?.phone ?? phoneValue);
+    if (phoneChanged && !parseInternationalPhone(phoneValue)) {
       toast.error(t('phoneNeedsCountryCode'));
       return;
     }
@@ -167,7 +176,7 @@ export function ContactForm({
           .from('contacts')
           .update({
             name: name.trim() || null,
-            phone: phone.trim(),
+            phone: phoneToSave,
             email: email.trim() || null,
             company: company.trim() || null,
             updated_at: new Date().toISOString(),
@@ -181,7 +190,7 @@ export function ContactForm({
             user_id: user.id,
             account_id: accountId,
             name: name.trim() || null,
-            phone: phone.trim(),
+            phone: phoneToSave,
             email: email.trim() || null,
             company: company.trim() || null,
           })
@@ -220,7 +229,7 @@ export function ContactForm({
           const existing = await findExistingContact(
             supabase,
             accountId,
-            phone.trim(),
+            withIndiaCountryCode(phone),
           );
           if (existing) setDupMatch({ contact: existing, exact: true });
         }

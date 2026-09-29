@@ -38,6 +38,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { withIndiaCountryCode } from '@/lib/whatsapp/phone-utils';
 
 const DEFAULT_TAG_COLOR = '#3b82f6';
 const PREVIEW_LIMIT = 5;
@@ -186,7 +187,8 @@ export function ImportModal({
       return;
     }
 
-    setParsedRows(rows);
+    // India-only: bare 10-digit mobiles in the CSV get +91 added.
+    setParsedRows(rows.map((r) => ({ ...r, phone: withIndiaCountryCode(r.phone) })));
     setHasTagsColumn(csvHasTags);
     setHasCompanyColumn(csvHasCompany);
 

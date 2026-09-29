@@ -41,6 +41,7 @@ import {
   getRecipientStatus,
 } from '@/lib/broadcast-status';
 import { useTranslations } from 'next-intl';
+import { formatPhoneDisplay } from '@/lib/whatsapp/phone-utils';
 
 interface StatCardProps {
   label: string;
@@ -600,7 +601,7 @@ export default function BroadcastDetailPage() {
                         {recipient.contact?.name ?? 'Unknown'}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {recipient.contact?.phone ?? '-'}
+                        {formatPhoneDisplay(recipient.contact?.phone) || '-'}
                       </TableCell>
                       <TableCell>
                         <span

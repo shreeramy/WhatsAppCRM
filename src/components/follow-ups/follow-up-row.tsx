@@ -8,6 +8,7 @@ import type { FollowUp } from "@/types";
 import { cn } from "@/lib/utils";
 import { followUpBucket } from "@/lib/follow-ups/dates";
 import { FOLLOW_UP_TYPE_ICON } from "./follow-up-meta";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 interface FollowUpRowProps {
   followUp: FollowUp;
@@ -34,7 +35,7 @@ export function FollowUpRow({
   const bucket = followUpBucket(f);
   const Icon = FOLLOW_UP_TYPE_ICON[f.type] ?? FOLLOW_UP_TYPE_ICON.task;
   const done = bucket === "done";
-  const contactLabel = f.contact ? f.contact.name || f.contact.phone : null;
+  const contactLabel = f.contact ? f.contact.name || formatPhoneDisplay(f.contact.phone) : null;
   const chatHref = f.conversation_id
     ? `/inbox?c=${f.conversation_id}`
     : null;

@@ -24,6 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import { ALL_TIME, inRange, type DateRangeValue } from "@/lib/date-range";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 interface ConversationListProps {
   activeConversationId: string | null;
@@ -477,7 +478,7 @@ function ConversationItem({
   t,
 }: ConversationItemProps) {
   const contact = conversation.contact;
-  const displayName = contact?.name || contact?.phone || t("unknown");
+  const displayName = contact?.name || formatPhoneDisplay(contact?.phone) || t("unknown");
   const initials = displayName.charAt(0).toUpperCase();
 
   const handleClick = useCallback(() => {

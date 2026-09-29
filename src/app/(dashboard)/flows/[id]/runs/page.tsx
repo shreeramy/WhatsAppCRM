@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 /**
  * Run history viewer.
@@ -221,7 +222,7 @@ function RunCard({
   const meta = STATUS_META[run.status];
   const StatusIcon = meta.icon;
   const contactLabel =
-    run.contact?.name?.trim() || run.contact?.phone || t("unknownContact");
+    run.contact?.name?.trim() || formatPhoneDisplay(run.contact?.phone) || t("unknownContact");
   const duration = run.ended_at
     ? formatDistanceToNow(new Date(run.ended_at), {
         addSuffix: false,

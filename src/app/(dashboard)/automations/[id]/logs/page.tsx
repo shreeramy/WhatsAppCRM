@@ -21,6 +21,7 @@ import type {
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatRelative } from "@/lib/automations/trigger-meta"
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 export default function AutomationLogsPage({
   params,
@@ -130,7 +131,7 @@ export default function AutomationLogsPage({
                   <StatusBadge status={log.status} t={t} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-foreground">
-                      {log.contact?.name ?? log.contact?.phone ?? t("unknownContact")}
+                      {log.contact?.name || formatPhoneDisplay(log.contact?.phone) || t("unknownContact")}
                     </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {log.trigger_event} · {log.steps_executed?.length ?? 0}{" "}

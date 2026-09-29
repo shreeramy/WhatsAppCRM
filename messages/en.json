@@ -385,8 +385,8 @@
       "nameLabel": "Name",
       "namePlaceholder": "Jane Doe",
       "phoneLabel": "Phone Number",
-      "phonePlaceholder": "+1234567890",
-      "phoneHint": "Include country code, e.g. +1 for US",
+      "phonePlaceholder": "98765 43210",
+      "phoneHint": "10-digit mobile number — +91 is added automatically. For other countries, start with + and the country code.",
       "emailLabel": "Email",
       "emailPlaceholder": "jane@example.com",
       "companyLabel": "Company",
@@ -409,7 +409,7 @@
       "loadingTags": "Loading tags...",
       "noTagsAvailable": "No tags available. Create tags in Settings.",
       "phoneRequired": "Phone number is required",
-      "phoneNeedsCountryCode": "Include the country code — the number must start with + (e.g. +14155550123)"
+      "phoneNeedsCountryCode": "Enter a 10-digit Indian mobile number, or a number starting with + and the country code"
     },
     "detailView": {
       "tabs": {
@@ -461,7 +461,7 @@
       "saveChangesBtn": "Save Changes",
       "saveCustomFieldsBtn": "Save Custom Fields",
       "toastPhoneRequired": "Phone number is required",
-      "toastPhoneNeedsCountryCode": "Include the country code — the number must start with + (e.g. +14155550123)",
+      "toastPhoneNeedsCountryCode": "Enter a 10-digit Indian mobile number, or a number starting with + and the country code",
       "toastUpdateFailed": "Failed to update contact",
       "toastUpdated": "Contact updated",
       "toastNotAuthenticated": "Not authenticated",

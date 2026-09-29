@@ -385,8 +385,8 @@
       "nameLabel": "이름",
       "namePlaceholder": "홍길동",
       "phoneLabel": "전화번호",
-      "phonePlaceholder": "+1234567890",
-      "phoneHint": "국가 코드를 포함하세요. 예: 미국은 +1",
+      "phonePlaceholder": "98765 43210",
+      "phoneHint": "10-digit mobile number — +91 is added automatically. For other countries, start with + and the country code.",
       "emailLabel": "이메일",
       "emailPlaceholder": "jane@example.com",
       "companyLabel": "회사",
@@ -409,7 +409,7 @@
       "loadingTags": "태그를 불러오는 중...",
       "noTagsAvailable": "사용 가능한 태그가 없습니다. 설정에서 태그를 만드세요.",
       "phoneRequired": "전화번호는 필수입니다",
-      "phoneNeedsCountryCode": "국가 코드를 포함하세요. 번호는 +로 시작해야 합니다 (예: +14155550123)"
+      "phoneNeedsCountryCode": "Enter a 10-digit Indian mobile number, or a number starting with + and the country code"
     },
     "detailView": {
       "tabs": {
@@ -461,7 +461,7 @@
       "saveChangesBtn": "변경 사항 저장",
       "saveCustomFieldsBtn": "커스텀 필드 저장",
       "toastPhoneRequired": "전화번호는 필수입니다",
-      "toastPhoneNeedsCountryCode": "국가 코드를 포함하세요. 번호는 +로 시작해야 합니다 (예: +14155550123)",
+      "toastPhoneNeedsCountryCode": "Enter a 10-digit Indian mobile number, or a number starting with + and the country code",
       "toastUpdateFailed": "연락처를 업데이트하지 못했습니다",
       "toastUpdated": "연락처가 업데이트되었습니다",
       "toastNotAuthenticated": "인증되지 않았습니다",

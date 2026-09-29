@@ -29,6 +29,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
 import { contactHandle } from "@/lib/whatsapp/wa-identity";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 import { toast } from "sonner";
 import { CreateDealSheet } from "./create-deal-sheet";
 import { EditableContactName } from "./editable-contact-name";
@@ -134,7 +135,11 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
   const handleCopyPhone = useCallback(async () => {
     // Copies whatever the row displays — a BSUID-only contact has no
     // phone number to copy, but its @username still identifies them.
-    const handle = contact ? contactHandle(contact) : '';
+    const handle = contact?.phone
+      ? formatPhoneDisplay(contact.phone, { spaced: false })
+      : contact
+        ? contactHandle(contact)
+        : '';
     if (!handle) return;
     await navigator.clipboard.writeText(handle);
     setCopied(true);

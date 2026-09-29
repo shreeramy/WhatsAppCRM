@@ -27,6 +27,7 @@ import {
   toDateTimeInputs,
 } from "@/lib/follow-ups/dates";
 import { FOLLOW_UP_TYPES, FOLLOW_UP_TYPE_ICON } from "./follow-up-meta";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 interface FollowUpFormProps {
   open: boolean;
@@ -298,7 +299,7 @@ export function FollowUpForm({
                 <option value="">{t("noContact")}</option>
                 {contacts.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name || c.phone}
+                    {c.name || formatPhoneDisplay(c.phone)}
                   </option>
                 ))}
               </select>

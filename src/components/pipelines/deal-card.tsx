@@ -5,6 +5,7 @@ import { Calendar, CalendarClock, Check, X } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useTranslations } from "next-intl";
 import { isPastDue } from "@/lib/follow-ups/dates";
+import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 
 interface DealCardProps {
   deal: Deal;
@@ -29,7 +30,7 @@ function initials(name?: string, fallback?: string) {
 
 export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
   const t = useTranslations("Pipelines.card");
-  const contactLabel = deal.contact?.name || deal.contact?.phone || t("noContact");
+  const contactLabel = deal.contact?.name || formatPhoneDisplay(deal.contact?.phone) || t("noContact");
   const assigneeLabel = deal.assignee?.full_name || null;
   const nextFollowUp = deal.next_follow_up_at ? new Date(deal.next_follow_up_at) : null;
   const followUpOverdue = !!deal.next_follow_up_at && isPastDue(deal.next_follow_up_at);
