@@ -1086,7 +1086,11 @@
         "matchWord": "Palavra inteira",
         "matchWordHint": "Corresponde à palavra-chave apenas como palavra isolada, então \"k\" não dispara mais em \"thanks\". Ideal para palavras-chave curtas em idiomas com espaços; use Contém para idiomas escritos sem espaços.",
         "matchExact": "Exata",
-        "closeConversationHint": "Define o status da conversa como \"fechada\". Nenhuma configuração necessária."
+        "closeConversationHint": "Define o status da conversa como \"fechada\". Nenhuma configuração necessária.",
+        "rotateBetweenLabel": "Rotate between",
+        "rotateAllAgents": "Nobody ticked: rotates between all {count} {count, plural, =1 {agent} other {agents}} (Agent role only). Tick people to limit it.",
+        "rotateNoAgents": "No teammates have the Agent role yet — tick who should receive chats, or invite agents in Settings → Team members.",
+        "rotateSelected": "Rotates between the {count} ticked {count, plural, =1 {person} other {people}}."
       }
     }
   },

@@ -1086,7 +1086,11 @@
         "matchWord": "단어 단위 일치",
         "matchWordHint": "키워드가 독립된 단어일 때만 일치하므로 \"k\"가 \"thanks\"에서 실행되지 않습니다. 공백으로 단어를 구분하는 언어의 짧은 키워드에 적합하며, 공백 없이 표기하는 언어에는 \"포함\"을 사용하세요.",
         "matchExact": "정확히 일치",
-        "closeConversationHint": "대화 상태를 \"닫힘\"으로 설정합니다. 추가 설정이 필요 없습니다."
+        "closeConversationHint": "대화 상태를 \"닫힘\"으로 설정합니다. 추가 설정이 필요 없습니다.",
+        "rotateBetweenLabel": "Rotate between",
+        "rotateAllAgents": "Nobody ticked: rotates between all {count} {count, plural, =1 {agent} other {agents}} (Agent role only). Tick people to limit it.",
+        "rotateNoAgents": "No teammates have the Agent role yet — tick who should receive chats, or invite agents in Settings → Team members.",
+        "rotateSelected": "Rotates between the {count} ticked {count, plural, =1 {person} other {people}}."
       }
     }
   },

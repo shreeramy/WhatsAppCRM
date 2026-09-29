@@ -594,6 +594,10 @@ export interface TagStepConfig {
 export interface AssignConversationStepConfig {
   mode: 'specific' | 'round_robin';
   agent_id?: string;
+  /** Round robin: members to rotate between. Empty = everyone with the Agent role. */
+  agent_ids?: string[];
+  /** Round robin: who got the previous conversation (written by the engine). */
+  last_agent_id?: string;
 }
 
 export interface UpdateContactFieldStepConfig {

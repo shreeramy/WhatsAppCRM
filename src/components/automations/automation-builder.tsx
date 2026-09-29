@@ -452,6 +452,59 @@ function AgentSelect({
   )
 }
 
+/**
+ * Members a round-robin assignment rotates between. Nothing ticked means
+ * "every member with the Agent role" — owners/admins only when ticked.
+ */
+function RoundRobinPoolPicker({
+  value,
+  onChange,
+  t,
+}: {
+  value: string[]
+  onChange: (ids: string[]) => void
+  t: ReturnType<typeof useTranslations>
+}) {
+  const { members } = useResources()
+  const agents = members.filter((m) => m.role === "agent")
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs text-muted-foreground">
+        {value.length === 0
+          ? agents.length === 0
+            ? t("config.rotateNoAgents")
+            : t("config.rotateAllAgents", { count: agents.length })
+          : t("config.rotateSelected", { count: value.length })}
+      </p>
+      <div className="max-h-48 space-y-0.5 overflow-y-auto rounded-md border border-border bg-muted p-1">
+        {members.map((m) => {
+          const checked = value.includes(m.user_id)
+          return (
+            <label
+              key={m.user_id}
+              className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm text-foreground hover:bg-background/60"
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() =>
+                  onChange(
+                    checked
+                      ? value.filter((id) => id !== m.user_id)
+                      : [...value, m.user_id],
+                  )
+                }
+              />
+              <span className="flex-1 truncate">{m.full_name || m.email || m.user_id}</span>
+              <span className="text-[10px] uppercase text-muted-foreground">{m.role}</span>
+            </label>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 /** Pipeline + stage picker for Create Deal. The automation stores ids because
  *  the engine writes directly to deals, but authors should choose by name. */
 function DealPipelineFields({
@@ -1364,6 +1417,15 @@ function StepEditor({
               <AgentSelect
                 value={(cfg.agent_id as string) ?? ""}
                 onChange={(v) => set({ agent_id: v })}
+                t={t}
+              />
+            </FieldBlock>
+          )}
+          {(cfg.mode ?? "round_robin") === "round_robin" && (
+            <FieldBlock label={t("config.rotateBetweenLabel")}>
+              <RoundRobinPoolPicker
+                value={(cfg.agent_ids as string[] | undefined) ?? []}
+                onChange={(ids) => set({ agent_ids: ids })}
                 t={t}
               />
             </FieldBlock>

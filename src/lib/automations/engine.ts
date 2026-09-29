@@ -24,6 +24,7 @@ import { MAX_TAG_CHAIN_DEPTH, getTagChainDepth } from '@/lib/contacts/tag-chain'
 import { engineSendText, engineSendTemplate, engineSendInteractive } from './meta-send'
 import { validateInteractivePayload } from '@/lib/whatsapp/interactive'
 import { isDeliverableUrl } from '@/lib/webhooks/ssrf'
+import { nextRoundRobinAgent, roundRobinPool } from './round-robin'
 
 // ------------------------------------------------------------
 // Public API
@@ -485,15 +486,21 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       if (!args.contactId) throw new Error('assign_conversation needs a contact')
       let agentId = cfg.agent_id
       if (cfg.mode === 'round_robin') {
-        // Pick any member of the account. The existing implementation
-        // only ever returned the automation's author; preserving that
-        // shape until a real round-robin algorithm replaces it.
+        // Rotate between the picked members, or every Agent-role member
+        // when none are picked (owners/admins only if picked). The last
+        // assignee is kept on the step's config so the next run moves on.
         const { data: profiles } = await db
           .from('profiles')
-          .select('user_id')
+          .select('user_id, account_role')
           .eq('account_id', args.automation.account_id)
-          .limit(1)
-        agentId = profiles?.[0]?.user_id
+        const pool = roundRobinPool(profiles ?? [], cfg.agent_ids)
+        agentId = nextRoundRobinAgent(pool, cfg.last_agent_id) ?? undefined
+        if (agentId && step.id) {
+          await db
+            .from('automation_steps')
+            .update({ step_config: { ...cfg, last_agent_id: agentId } })
+            .eq('id', step.id)
+        }
       }
       if (!agentId) return 'no agent resolved'
       await db
