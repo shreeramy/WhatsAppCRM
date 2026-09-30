@@ -155,7 +155,11 @@
       "filterUnreplied": "Unreplied",
       "lastMessage": "Last message",
       "filterMine": "Assigned to me",
-      "filterUnassigned": "Unassigned"
+      "filterUnassigned": "Unassigned",
+      "agent": "Agent",
+      "allAgents": "All agents",
+      "openChats": "{count} open",
+      "unassignedShort": "Unassigned"
     },
     "messageThread": {
       "backToConversations": "Voltar às conversas",

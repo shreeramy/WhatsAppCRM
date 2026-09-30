@@ -77,7 +77,44 @@ export function ConversationList({
   ], [t]);
 
   const [search, setSearch] = useState("");
-  const { user, accountRole } = useAuth();
+  const { user, accountRole, accountId, canManageMembers } = useAuth();
+  // Owners/admins: see which agent each chat belongs to, and filter by agent.
+  const [members, setMembers] = useState<{ user_id: string; name: string }[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!canManageMembers || !accountId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await createClient()
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .eq("account_id", accountId)
+        .order("full_name");
+      if (cancelled) return;
+      setMembers(
+        (data ?? []).map((p) => ({
+          user_id: p.user_id as string,
+          name: (p.full_name as string) || (p.email as string) || "—",
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageMembers, accountId]);
+  const memberName = useMemo(
+    () => new Map(members.map((m) => [m.user_id, m.name])),
+    [members],
+  );
+  const chatsPerAgent = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const c of conversations) {
+      if (c.assigned_agent_id && c.status !== "closed") {
+        counts.set(c.assigned_agent_id, (counts.get(c.assigned_agent_id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [conversations]);
   const [filter, setFilter] = useState<InboxFilter>("all");
   // Agents start on their own chats; once the role is known, apply that
   // default once — never override a filter the user already picked.
@@ -210,6 +247,10 @@ export function ConversationList({
       );
     }
 
+    if (selectedAgentId) {
+      result = result.filter((c) => c.assigned_agent_id === selectedAgentId);
+    }
+
     result = result.filter((c) => inRange(c.last_message_at, dateRange));
 
     if (search.trim()) {
@@ -223,7 +264,7 @@ export function ConversationList({
     }
 
     return result;
-  }, [conversations, filter, search, selectedTagIds, selectedCompany, dateRange, user]);
+  }, [conversations, filter, search, selectedTagIds, selectedCompany, dateRange, user, selectedAgentId]);
 
   const toggleTag = useCallback((id: string) => {
     setSelectedTagIds((prev) =>
@@ -297,6 +338,53 @@ export function ConversationList({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {canManageMembers && members.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={cn(
+                  "inline-flex max-w-40 items-center justify-center h-7 gap-1 px-2 text-xs rounded-md hover:bg-muted",
+                  selectedAgentId
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className="truncate">
+                  {selectedAgentId ? memberName.get(selectedAgentId) ?? t("agent") : t("agent")}
+                </span>
+                <ChevronDown className="h-3 w-3 shrink-0" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="max-h-64 w-60 border-border bg-popover"
+              >
+                <DropdownMenuItem
+                  onClick={() => setSelectedAgentId(null)}
+                  className={cn(
+                    "text-sm",
+                    selectedAgentId === null ? "text-primary" : "text-popover-foreground"
+                  )}
+                >
+                  {t("allAgents")}
+                </DropdownMenuItem>
+                {members.map((m) => (
+                  <DropdownMenuItem
+                    key={m.user_id}
+                    onClick={() => setSelectedAgentId(m.user_id)}
+                    className={cn(
+                      "text-sm",
+                      selectedAgentId === m.user_id ? "text-primary" : "text-popover-foreground"
+                    )}
+                  >
+                    <span className="flex-1 truncate">{m.name}</span>
+                    <span className="ml-2 text-[10px] text-muted-foreground">
+                      {t("openChats", { count: chatsPerAgent.get(m.user_id) ?? 0 })}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           {tags.length > 0 && (
             <DropdownMenu>
@@ -454,6 +542,13 @@ export function ConversationList({
                 conversation={conv}
                 isActive={conv.id === activeConversationId}
                 onSelect={handleSelect}
+                assigneeName={
+                  canManageMembers
+                    ? conv.assigned_agent_id
+                      ? memberName.get(conv.assigned_agent_id) ?? null
+                      : t("unassignedShort")
+                    : null
+                }
                 t={t}
               />
             ))}
@@ -468,6 +563,8 @@ interface ConversationItemProps {
   conversation: Conversation;
   isActive: boolean;
   onSelect: (conversation: Conversation) => void;
+  /** Owners/admins: who the chat is assigned to. */
+  assigneeName?: string | null;
   t: ReturnType<typeof useTranslations>;
 }
 
@@ -475,6 +572,7 @@ function ConversationItem({
   conversation,
   isActive,
   onSelect,
+  assigneeName,
   t,
 }: ConversationItemProps) {
   const contact = conversation.contact;
@@ -539,6 +637,16 @@ function ConversationItem({
             />
           </div>
         </div>
+        {assigneeName && (
+          <p
+            className={cn(
+              "mt-0.5 truncate text-[10px]",
+              conversation.assigned_agent_id ? "text-primary/80" : "text-amber-500/80"
+            )}
+          >
+            → {assigneeName}
+          </p>
+        )}
       </div>
     </button>
   );
