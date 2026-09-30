@@ -67,3 +67,55 @@ export function formatBytes(bytes: number | null | undefined): string | null {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/**
+ * The other party's number from a phone recorder's file name, e.g.
+ * "Call recording +91 98765 43210_250930_101500.m4a" or
+ * "9876543210_20260930.mp3". Returns digits with the 91 country code
+ * ("919876543210"), or null when no Indian mobile number is found.
+ */
+export function phoneFromRecordingName(fileName: string): string | null {
+  const base = fileName.replace(/\.[^.]+$/, "");
+  const m = /(?<!\d)(?:\+?91[\s-]?)?([6-9]\d{4})[\s-]?(\d{5})(?!\d)/.exec(base);
+  return m ? `91${m[1]}${m[2]}` : null;
+}
+
+/** Storage key for a daily call log upload: `account-<id>/calls/<user>/<yyyy-mm-dd>/<ts>-<name>`. */
+export function dailyRecordingPath(
+  accountId: string,
+  userId: string,
+  callDate: string,
+  fileName: string,
+  now: number = Date.now(),
+): string {
+  const safe =
+    fileName
+      .normalize("NFKD")
+      .replace(/[^\w.-]+/g, "_")
+      .replace(/_+/g, "_")
+      .slice(-80) || "recording";
+  return `account-${accountId}/calls/${userId}/${callDate}/${now}-${safe}`;
+}
+
+/** Best-effort duration in seconds, read in the browser (null for formats it can't decode, e.g. AMR). */
+export function readAudioDuration(file: File): Promise<number | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    const done = (v: number | null) => {
+      URL.revokeObjectURL(url);
+      resolve(v);
+    };
+    const timer = setTimeout(() => done(null), 5000);
+    audio.preload = "metadata";
+    audio.onloadedmetadata = () => {
+      clearTimeout(timer);
+      done(Number.isFinite(audio.duration) ? Math.round(audio.duration) : null);
+    };
+    audio.onerror = () => {
+      clearTimeout(timer);
+      done(null);
+    };
+    audio.src = url;
+  });
+}

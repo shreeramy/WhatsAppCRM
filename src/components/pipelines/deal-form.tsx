@@ -33,7 +33,6 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
-import { CallRecordings } from "./call-recordings";
 import { CALL_RECORDINGS_BUCKET } from "@/lib/call-recordings";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -446,8 +445,6 @@ export function DealForm({
                 {tFollowUps("addForDeal")}
               </Button>
             )}
-
-            {deal && <CallRecordings dealId={deal.id} contactId={deal.contact_id} />}
 
             {deal && (
               <div className="space-y-2 rounded-lg border border-border bg-muted/50 p-3">
