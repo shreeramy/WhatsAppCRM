@@ -133,6 +133,23 @@
     },
     "emptyState": {
       "title": "Not enough data yet"
+    },
+    "leadsChart": {
+      "title": "New Leads",
+      "description": "New contacts — people who messaged you for the first time, or were added or imported.",
+      "dayWise": "Day-wise",
+      "monthWise": "Month-wise",
+      "days": "{count} days",
+      "months": "{count} months",
+      "total": "Total in period",
+      "today": "Today",
+      "thisMonth": "This month",
+      "avgPerDay": "Average per day",
+      "avgPerMonth": "Average per month",
+      "leadsCount": "{count} {count, plural, =1 {lead} other {leads}}",
+      "none": "No new leads in this period",
+      "noneHint": "New WhatsApp enquiries will show up here.",
+      "loadFailed": "Couldn't load lead numbers."
     }
   },
   "Inbox": {
