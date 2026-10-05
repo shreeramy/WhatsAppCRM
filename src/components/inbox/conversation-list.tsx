@@ -54,7 +54,8 @@ type InboxFilter =
   | "unread"
   | "unreplied"
   | "mine"
-  | "unassigned";
+  | "unassigned"
+  | "blocked";
 
 export function ConversationList({
   activeConversationId,
@@ -69,6 +70,7 @@ export function ConversationList({
     { label: t("filterAll"), value: "all" },
     { label: t("filterMine"), value: "mine" },
     { label: t("filterUnassigned"), value: "unassigned" },
+    { label: t("filterBlocked"), value: "blocked" },
     { label: t("filterUnread"), value: "unread" },
     { label: t("filterUnreplied"), value: "unreplied" },
     { label: t("filterOpen"), value: "open" },
@@ -222,7 +224,15 @@ export function ConversationList({
   const filtered = useMemo(() => {
     let result = conversations;
 
-    if (filter === "unread") {
+    // Blocked contacts only appear under the "Blocked" filter.
+    result =
+      filter === "blocked"
+        ? result.filter((c) => !!c.contact?.blocked_at)
+        : result.filter((c) => !c.contact?.blocked_at);
+
+    if (filter === "blocked") {
+      // already narrowed above
+    } else if (filter === "unread") {
       result = result.filter((c) => c.unread_count > 0);
     } else if (filter === "mine") {
       result = result.filter((c) => !!user && c.assigned_agent_id === user.id);
@@ -322,7 +332,7 @@ export function ConversationList({
               align="start"
               className="border-border bg-popover"
             >
-              {FILTER_OPTIONS.map((opt) => (
+              {FILTER_OPTIONS.filter((o) => o.value !== "blocked" || canManageMembers).map((opt) => (
                 <DropdownMenuItem
                   key={opt.value}
                   onClick={() => setFilter(opt.value)}

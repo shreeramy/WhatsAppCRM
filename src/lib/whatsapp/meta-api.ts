@@ -1223,3 +1223,50 @@ export async function downloadMedia(
   const buffer = Buffer.from(await response.arrayBuffer())
   return { buffer, contentType }
 }
+
+// ============================================================
+// Block / unblock a WhatsApp user
+// ============================================================
+//
+//   POST   /{phone_number_id}/block_users   → block
+//   DELETE /{phone_number_id}/block_users   → unblock
+//
+// Meta only allows blocking someone who messaged the business in the
+// last 24 hours. A refused user comes back in `failed_users` (sometimes
+// with HTTP 200), which is surfaced here as a MetaApiError.
+
+interface SetUserBlockedArgs {
+  phoneNumberId: string
+  accessToken: string
+  /** Phone number (digits) or BSUID of the user. */
+  user: string
+  blocked: boolean
+}
+
+export async function setUserBlocked(args: SetUserBlockedArgs): Promise<void> {
+  const { phoneNumberId, accessToken, user, blocked } = args
+  const response = await fetch(`${META_API_BASE}/${phoneNumberId}/block_users`, {
+    method: blocked ? 'POST' : 'DELETE',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messaging_product: 'whatsapp', block_users: [{ user }] }),
+  })
+  if (!response.ok) {
+    await throwMetaError(response, `Meta API error: ${response.status}`)
+  }
+  const json = (await response.json().catch(() => ({}))) as {
+    block_users?: {
+      failed_users?: { errors?: { message?: string; code?: number }[] }[]
+    }
+  }
+  const failed = json.block_users?.failed_users?.[0]
+  if (failed) {
+    const err = failed.errors?.[0]
+    throw new MetaApiError(err?.message ?? 'Meta refused to block this user', {
+      code: err?.code ?? null,
+      httpStatus: response.status,
+    })
+  }
+}

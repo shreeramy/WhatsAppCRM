@@ -693,6 +693,13 @@ async function processMessage(
   if (!contactOutcome) return
   const contactRecord = contactOutcome.contact
 
+  // Blocked by an owner/admin: drop the message entirely — no
+  // conversation, no notifications, no automations.
+  if (contactRecord.blocked_at) {
+    console.log('[webhook] dropped message from blocked contact', contactRecord.id)
+    return
+  }
+
   // Find or create conversation
   const convResult = await findOrCreateConversation(
     accountId,

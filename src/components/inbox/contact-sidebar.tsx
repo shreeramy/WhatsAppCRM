@@ -17,6 +17,7 @@ import {
   Plus,
   CalendarClock,
   X,
+  Ban,
 } from "lucide-react";
 import {
   Popover,
@@ -54,7 +55,7 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
   const tThread = useTranslations("Inbox.messageThread");
   const tFollowUps = useTranslations("FollowUps");
 
-  const { accountId, canSendMessages } = useAuth();
+  const { accountId, canSendMessages, canManageMembers } = useAuth();
   const [dealSheetOpen, setDealSheetOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [followUpFormOpen, setFollowUpFormOpen] = useState(false);
@@ -68,6 +69,7 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [savingTagId, setSavingTagId] = useState<string | null>(null);
+  const [blocking, setBlocking] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [addingNote, setAddingNote] = useState(false);
 
@@ -223,6 +225,40 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
     },
     [contact, tags, savingTagId, onContactUpdated, tSidebar],
   );
+
+  // Owners/admins: block or unblock this contact (WhatsApp + app-level).
+  const handleBlock = useCallback(async () => {
+    if (!contact || blocking) return;
+    const blocking_ = !contact.blocked_at;
+    if (!window.confirm(blocking_ ? tSidebar("blockConfirm") : tSidebar("unblockConfirm"))) return;
+    setBlocking(true);
+    try {
+      const res = await fetch(`/api/contacts/${contact.id}/block`, {
+        method: blocking_ ? "POST" : "DELETE",
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        meta?: { ok: boolean; error?: string };
+      };
+      if (!res.ok) throw new Error(body.error ?? tSidebar("blockFailed"));
+      onContactUpdated?.({
+        ...contact,
+        blocked_at: blocking_ ? new Date().toISOString() : null,
+      });
+      if (body.meta?.ok) {
+        toast.success(blocking_ ? tSidebar("blocked") : tSidebar("unblocked"));
+      } else {
+        // App-level block still applies; WhatsApp refused (e.g. 24h rule).
+        toast.warning(
+          blocking_ ? tSidebar("blockedAppOnly") : tSidebar("unblockedAppOnly"),
+          { description: body.meta?.error },
+        );
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : tSidebar("blockFailed"));
+    }
+    setBlocking(false);
+  }, [contact, blocking, onContactUpdated, tSidebar]);
 
   const handleToggleFollowUp = useCallback(
     async (f: FollowUp) => {
@@ -541,6 +577,32 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
               </div>
             </div>
           </div>
+
+          {canManageMembers && (
+            <>
+              <div className="my-4 border-t border-border" />
+              {contact.blocked_at && (
+                <p className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+                  {tSidebar("blockedNotice")}
+                </p>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBlock}
+                disabled={blocking}
+                className={cn(
+                  "w-full",
+                  contact.blocked_at
+                    ? "border-border text-foreground"
+                    : "border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300",
+                )}
+              >
+                <Ban className="h-3.5 w-3.5" />
+                {contact.blocked_at ? tSidebar("unblock") : tSidebar("block")}
+              </Button>
+            </>
+          )}
         </div>
       </ScrollArea>
 

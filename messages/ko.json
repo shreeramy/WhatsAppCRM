@@ -177,7 +177,8 @@
       "agent": "Agent",
       "allAgents": "All agents",
       "openChats": "{count} open",
-      "unassignedShort": "Unassigned"
+      "unassignedShort": "Unassigned",
+      "filterBlocked": "Blocked"
     },
     "messageThread": {
       "backToConversations": "대화 목록으로 돌아가기",
@@ -333,7 +334,17 @@
       "addTag": "Add",
       "noTagsDefined": "No tags yet — create them in Settings → Fields & tags.",
       "removeTag": "Remove {name}",
-      "tagUpdateFailed": "Couldn't update tags"
+      "tagUpdateFailed": "Couldn't update tags",
+      "block": "Block contact",
+      "unblock": "Unblock contact",
+      "blockConfirm": "Block this contact? Their new WhatsApp messages will be ignored and the chat will be hidden from the inbox.",
+      "unblockConfirm": "Unblock this contact? Their new messages will reach the inbox again.",
+      "blocked": "Contact blocked on WhatsApp",
+      "unblocked": "Contact unblocked",
+      "blockedAppOnly": "Blocked in the CRM — their messages will be ignored. WhatsApp didn't accept the block (it only allows blocking people who messaged in the last 24 hours).",
+      "unblockedAppOnly": "Unblocked in the CRM. WhatsApp didn't confirm the unblock.",
+      "blockFailed": "Couldn't block this contact",
+      "blockedNotice": "This contact is blocked. New messages from them are ignored."
     },
     "aiBanner": {
       "pausedTitle": "이 대화에서 AI 어시스턴트가 일시 중지됨",

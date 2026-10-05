@@ -110,6 +110,8 @@ export interface Contact {
    *  account, and the only identity Meta sends for a customer who has
    *  adopted a WhatsApp username. */
   wa_user_id?: string | null;
+  /** Set when an owner/admin blocked this contact (migration 049). */
+  blocked_at?: string | null;
   /** Portfolio-level BSUID. Reference only — never a lookup key. */
   wa_parent_user_id?: string | null;
   /** WhatsApp username without the leading @. Display only: usernames
