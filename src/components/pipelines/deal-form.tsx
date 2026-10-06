@@ -344,7 +344,14 @@ export function DealForm({
 
               {linkedConversation && (
                 <Link
-                  href="/inbox"
+                  // Prefer the chat the deal was created from; otherwise the
+                  // contact's latest conversation.
+                  href={`/inbox?c=${encodeURIComponent(
+                    deal?.contact_id === contactId && deal?.conversation_id
+                      ? deal.conversation_id
+                      : linkedConversation.id,
+                  )}`}
+                  onClick={() => onOpenChange(false)}
                   className="mt-1 inline-flex items-center gap-1.5 self-start rounded-md bg-primary/10 px-2 py-1 text-xs text-primary hover:bg-primary/20"
                 >
                   <MessageSquare className="h-3 w-3" />
