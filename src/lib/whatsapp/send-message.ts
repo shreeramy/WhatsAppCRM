@@ -87,6 +87,8 @@ export interface SendMessageParams {
   /** Structured payload for `messageType === 'interactive'`. */
   interactivePayload?: InteractiveMessagePayload | null;
   replyToMessageId?: string | null;
+  /** Teammate sending from the inbox — stored as messages.sender_id for reporting. */
+  senderUserId?: string | null;
 }
 
 export interface SendMessageResult {
@@ -200,6 +202,7 @@ export async function sendMessageToConversation(
     templateMessageParams,
     interactivePayload,
     replyToMessageId,
+    senderUserId,
   } = params;
 
   if (!conversationId) {
@@ -478,6 +481,7 @@ export async function sendMessageToConversation(
     .insert({
       conversation_id: conversationId,
       sender_type: 'agent',
+      sender_id: senderUserId ?? null,
       content_type: messageType,
       content_text: persistedText,
       media_url: mediaUrl || null,

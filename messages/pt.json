@@ -41,7 +41,8 @@
     "menuSettings": "Configurações",
     "menuSignOut": "Sair",
     "followUps": "Follow-ups",
-    "callRecordings": "Call Recordings"
+    "callRecordings": "Call Recordings",
+    "teamReport": "Team Report"
   },
   "Header": {
     "dashboard": "Painel",
@@ -2227,5 +2228,45 @@
     "openFailed": "Couldn't open the recording",
     "loadFailed": "Couldn't load recordings",
     "cantPlay": "This format can't play in the browser — use Download"
+  },
+  "TeamReport": {
+    "title": "Team Report",
+    "description": "What each teammate did in the chosen period. Click a row to see their activity.",
+    "period": "Period",
+    "adminsOnly": "Only owners and admins can see the team report.",
+    "loadFailed": "Couldn't load the report.",
+    "total": "Total",
+    "col": {
+      "member": "Teammate",
+      "messagesSent": "Messages sent",
+      "notes": "Notes",
+      "tagsAdded": "Tags added",
+      "dealsCreated": "Deals created",
+      "dealsWon": "Deals won",
+      "followUpsDone": "Follow-ups done",
+      "recordings": "Call recordings",
+      "followUpsOverdue": "Overdue follow-ups",
+      "openChats": "Open chats assigned",
+      "openDeals": "Open deals assigned"
+    },
+    "nowHint": "Columns marked * show the situation right now, not the chosen period.",
+    "trackingNote": "Messages sent and tags added are counted from 6 Oct 2026, when the CRM started recording who did them.",
+    "activityTitle": "{name} — activity",
+    "noActivity": "No activity in this period.",
+    "kind": {
+      "all": "All",
+      "note": "Notes",
+      "tag": "Tags",
+      "deal": "Deals",
+      "followUp": "Follow-ups",
+      "recording": "Recordings"
+    },
+    "verb": {
+      "note": "Note:",
+      "tag": "Tagged",
+      "deal": "Created deal",
+      "followUp": "Completed follow-up",
+      "recording": "Uploaded recording"
+    }
   }
 }
