@@ -599,7 +599,15 @@
       "toastNotLinkedToAccount": "Your profile is not linked to an account.",
       "filterCreated": "Created",
       "filterExpectedClose": "Expected close",
-      "filterShowing": "Showing {shown} of {total} deals"
+      "filterShowing": "Showing {shown} of {total} deals",
+      "filterAssignedTo": "Assigned to",
+      "filterAssignedToAnyone": "Assigned to: anyone",
+      "filterUnassigned": "Assigned to: nobody",
+      "filterAssignedToPerson": "Assigned to: {name}",
+      "filterCreatedBy": "Created by",
+      "filterCreatedByAnyone": "Created by: anyone",
+      "filterCreatedByPerson": "Created by: {name}",
+      "me": "me"
     },
     "board": {
       "dropDealHere": "Drop a deal here",

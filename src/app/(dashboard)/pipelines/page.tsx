@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { DateRangeFilter } from "@/components/ui/date-range-filter";
+import { cn } from "@/lib/utils";
 import {
   ALL_TIME,
   PAST_AND_FUTURE_PRESETS,
@@ -58,7 +59,7 @@ export default function PipelinesPage() {
   const supabase = createClient();
   const canEditSettings = useCan("edit-settings");
   const canCreateDeals = useCan("send-messages");
-  const { accountId } = useAuth();
+  const { accountId, user } = useAuth();
 
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("");
@@ -67,15 +68,46 @@ export default function PipelinesPage() {
   // Date filters narrow what the board and analytics show.
   const [createdRange, setCreatedRange] = useState<DateRangeValue>(ALL_TIME);
   const [closeRange, setCloseRange] = useState<DateRangeValue>(ALL_TIME);
+  // Person filters: who the deal is assigned to (profile id, "none" =
+  // unassigned) and who created it (auth user id). "" = anyone.
+  const [assigneeFilter, setAssigneeFilter] = useState("");
+  const [creatorFilter, setCreatorFilter] = useState("");
+  const [members, setMembers] = useState<{ id: string; user_id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!accountId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await createClient()
+        .from("profiles")
+        .select("id, user_id, full_name, email")
+        .eq("account_id", accountId)
+        .order("full_name");
+      if (cancelled) return;
+      setMembers(
+        (data ?? []).map((p) => ({
+          id: p.id as string,
+          user_id: p.user_id as string,
+          name: (p.full_name as string) || (p.email as string) || "—",
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountId]);
   const visibleDeals = useMemo(
     () =>
       deals.filter(
         (d) =>
           inRange(d.created_at, createdRange) &&
-          inRange(d.expected_close_date, closeRange),
+          inRange(d.expected_close_date, closeRange) &&
+          (assigneeFilter === "" ||
+            (assigneeFilter === "none" ? !d.assigned_to : d.assigned_to === assigneeFilter)) &&
+          (creatorFilter === "" || d.user_id === creatorFilter),
       ),
-    [deals, createdRange, closeRange],
+    [deals, createdRange, closeRange, assigneeFilter, creatorFilter],
   );
+  const personFilterActive = assigneeFilter !== "" || creatorFilter !== "";
   const [loading, setLoading] = useState(true);
 
   // Dialog / sheet state
@@ -438,7 +470,48 @@ export default function PipelinesPage() {
             label={t("filterExpectedClose")}
             presets={PAST_AND_FUTURE_PRESETS}
           />
-          {(isRangeActive(createdRange) || isRangeActive(closeRange)) && (
+          <select
+            value={assigneeFilter}
+            onChange={(e) => setAssigneeFilter(e.target.value)}
+            aria-label={t("filterAssignedTo")}
+            className={cn(
+              "h-8 rounded-lg border px-2 text-xs outline-none focus:border-primary",
+              assigneeFilter
+                ? "border-primary/50 bg-primary/10 text-primary"
+                : "border-border bg-muted text-muted-foreground",
+            )}
+          >
+            <option value="">{t("filterAssignedToAnyone")}</option>
+            <option value="none">{t("filterUnassigned")}</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {t("filterAssignedToPerson", {
+                  name: m.user_id === user?.id ? `${m.name} (${t("me")})` : m.name,
+                })}
+              </option>
+            ))}
+          </select>
+          <select
+            value={creatorFilter}
+            onChange={(e) => setCreatorFilter(e.target.value)}
+            aria-label={t("filterCreatedBy")}
+            className={cn(
+              "h-8 rounded-lg border px-2 text-xs outline-none focus:border-primary",
+              creatorFilter
+                ? "border-primary/50 bg-primary/10 text-primary"
+                : "border-border bg-muted text-muted-foreground",
+            )}
+          >
+            <option value="">{t("filterCreatedByAnyone")}</option>
+            {members.map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {t("filterCreatedByPerson", {
+                  name: m.user_id === user?.id ? `${m.name} (${t("me")})` : m.name,
+                })}
+              </option>
+            ))}
+          </select>
+          {(isRangeActive(createdRange) || isRangeActive(closeRange) || personFilterActive) && (
             <span className="text-xs text-muted-foreground">
               {t("filterShowing", { shown: visibleDeals.length, total: deals.length })}
             </span>

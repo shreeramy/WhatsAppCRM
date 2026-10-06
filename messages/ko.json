@@ -599,7 +599,15 @@
       "toastNotLinkedToAccount": "프로필이 계정에 연결되어 있지 않습니다.",
       "filterCreated": "Created",
       "filterExpectedClose": "Expected close",
-      "filterShowing": "Showing {shown} of {total} deals"
+      "filterShowing": "Showing {shown} of {total} deals",
+      "filterAssignedTo": "Assigned to",
+      "filterAssignedToAnyone": "Assigned to: anyone",
+      "filterUnassigned": "Assigned to: nobody",
+      "filterAssignedToPerson": "Assigned to: {name}",
+      "filterCreatedBy": "Created by",
+      "filterCreatedByAnyone": "Created by: anyone",
+      "filterCreatedByPerson": "Created by: {name}",
+      "me": "me"
     },
     "board": {
       "dropDealHere": "여기에 딜을 놓으세요",
