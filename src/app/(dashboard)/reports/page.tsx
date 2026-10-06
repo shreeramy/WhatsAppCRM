@@ -19,6 +19,9 @@ import { resolveRange, type DateRangeValue } from "@/lib/date-range";
 import { formatDuration } from "@/lib/call-recordings";
 import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 import {
+  formatHours,
+  loadMemberDailyTime,
+  type DailyTime,
   loadMemberActivity,
   loadMemberStats,
   type ActivityItem,
@@ -29,6 +32,8 @@ import {
 } from "@/lib/reports/team";
 
 const COLUMNS: { key: keyof MemberStats; labelKey: string; hintKey?: string }[] = [
+  { key: "activeSeconds", labelKey: "col.activeTime" },
+  { key: "onlineSeconds", labelKey: "col.onlineTime" },
   { key: "messagesSent", labelKey: "col.messagesSent" },
   { key: "notes", labelKey: "col.notes" },
   { key: "tagsAdded", labelKey: "col.tagsAdded" },
@@ -72,6 +77,7 @@ export default function TeamReportPage() {
   const [error, setError] = useState(false);
   const [selected, setSelected] = useState<TeamMember | null>(null);
   const [activity, setActivity] = useState<ActivityItem[] | null>(null);
+  const [dailyTime, setDailyTime] = useState<DailyTime[] | null>(null);
   const [kindFilter, setKindFilter] = useState<ActivityKind | "all">("all");
 
   const load = useCallback(async () => {
@@ -112,6 +118,10 @@ export default function TeamReportPage() {
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActivity(null);
+    setDailyTime(null);
+    loadMemberDailyTime(createClient(), selected, toRange(range))
+      .then((d) => !cancelled && setDailyTime(d))
+      .catch(() => !cancelled && setDailyTime([]));
     loadMemberActivity(createClient(), accountId, selected, toRange(range), contactLabel)
       .then((items) => !cancelled && setActivity(items))
       .catch((err) => {
@@ -141,7 +151,9 @@ export default function TeamReportPage() {
   }
 
   const cell = (s: MemberStats, key: keyof MemberStats) =>
-    key === "recordings" && s.recordings
+    key === "activeSeconds" || key === "onlineSeconds"
+      ? formatHours(s[key])
+      : key === "recordings" && s.recordings
       ? `${s.recordings} · ${formatDuration(s.recordingSeconds) ?? "0:00"}`
       : s[key].toLocaleString();
 
@@ -261,6 +273,50 @@ export default function TeamReportPage() {
               ))}
             </div>
           </div>
+          <div className="rounded-lg border border-border">
+            <p className="border-b border-border px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              {t("timeTitle")}
+            </p>
+            {dailyTime === null ? (
+              <Loader2 className="mx-auto my-3 h-4 w-4 animate-spin text-primary" />
+            ) : dailyTime.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-muted-foreground">{t("noTime")}</p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-left text-muted-foreground">
+                    <th className="px-3 py-1 font-medium">{t("time.day")}</th>
+                    <th className="px-3 py-1 text-right font-medium">{t("time.active")}</th>
+                    <th className="px-3 py-1 text-right font-medium">{t("time.online")}</th>
+                    <th className="px-3 py-1 text-right font-medium">{t("time.firstSeen")}</th>
+                    <th className="px-3 py-1 text-right font-medium">{t("time.lastSeen")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dailyTime.map((d) => (
+                    <tr key={d.day} className="border-t border-border">
+                      <td className="px-3 py-1 text-foreground">
+                        {format(new Date(`${d.day}T12:00:00`), "EEE, d MMM")}
+                      </td>
+                      <td className="px-3 py-1 text-right tabular-nums text-foreground">
+                        {formatHours(d.activeSeconds)}
+                      </td>
+                      <td className="px-3 py-1 text-right tabular-nums text-muted-foreground">
+                        {formatHours(d.onlineSeconds)}
+                      </td>
+                      <td className="px-3 py-1 text-right tabular-nums text-muted-foreground">
+                        {format(new Date(d.firstSeenAt), "HH:mm")}
+                      </td>
+                      <td className="px-3 py-1 text-right tabular-nums text-muted-foreground">
+                        {format(new Date(d.lastSeenAt), "HH:mm")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
           {activity === null ? (
             <Loader2 className="mx-auto h-5 w-5 animate-spin text-primary" />
           ) : shownActivity.length === 0 ? (

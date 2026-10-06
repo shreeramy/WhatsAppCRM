@@ -15,6 +15,10 @@ export interface TeamMember {
 }
 
 export interface MemberStats {
+  /** Seconds the tab was open and in use (not idle). */
+  activeSeconds: number;
+  /** Seconds the tab was open at all. */
+  onlineSeconds: number;
   messagesSent: number;
   notes: number;
   tagsAdded: number;
@@ -82,6 +86,7 @@ export async function loadMemberStats(
     openChats,
     openDeals,
     recs,
+    time,
   ] = await Promise.all([
     count(
       within(
@@ -153,15 +158,29 @@ export async function loadMemberStats(
       r.fromDay,
       r.toDay,
     ),
+    within(
+      db
+        .from("member_activity_daily")
+        .select("active_seconds, online_seconds")
+        .eq("user_id", m.userId)
+        .limit(1000),
+      "day",
+      r.fromDay,
+      r.toDay,
+    ),
   ]);
 
   if (recs.error) throw recs.error;
+  if (time.error) throw time.error;
+  const timeRows = (time.data ?? []) as { active_seconds: number; online_seconds: number }[];
   const recordingSeconds = (recs.data ?? []).reduce(
     (s, row) => s + ((row as { duration_seconds: number | null }).duration_seconds ?? 0),
     0,
   );
 
   return {
+    activeSeconds: timeRows.reduce((s, d) => s + d.active_seconds, 0),
+    onlineSeconds: timeRows.reduce((s, d) => s + d.online_seconds, 0),
     messagesSent,
     notes,
     tagsAdded,
@@ -291,4 +310,47 @@ export async function loadMemberActivity(
     });
   }
   return items.sort((a, b) => b.at.localeCompare(a.at));
+}
+
+export interface DailyTime {
+  day: string;
+  activeSeconds: number;
+  onlineSeconds: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+}
+
+/** One teammate's time on the platform, per day, newest first. */
+export async function loadMemberDailyTime(
+  db: SupabaseClient,
+  m: TeamMember,
+  r: Range,
+): Promise<DailyTime[]> {
+  const { data, error } = await within(
+    db
+      .from("member_activity_daily")
+      .select("day, active_seconds, online_seconds, first_seen_at, last_seen_at")
+      .eq("user_id", m.userId),
+    "day",
+    r.fromDay,
+    r.toDay,
+  )
+    .order("day", { ascending: false })
+    .limit(400);
+  if (error) throw error;
+  return (data ?? []).map((d) => ({
+    day: d.day as string,
+    activeSeconds: d.active_seconds as number,
+    onlineSeconds: d.online_seconds as number,
+    firstSeenAt: d.first_seen_at as string,
+    lastSeenAt: d.last_seen_at as string,
+  }));
+}
+
+/** "3h 25m" / "12m" / "0m". */
+export function formatHours(seconds: number): string {
+  const mins = Math.round(seconds / 60);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }

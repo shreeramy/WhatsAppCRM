@@ -2247,10 +2247,12 @@
       "recordings": "Call recordings",
       "followUpsOverdue": "Overdue follow-ups",
       "openChats": "Open chats assigned",
-      "openDeals": "Open deals assigned"
+      "openDeals": "Open deals assigned",
+      "activeTime": "Active time",
+      "onlineTime": "Logged in"
     },
     "nowHint": "Columns marked * show the situation right now, not the chosen period.",
-    "trackingNote": "Messages sent and tags added are counted from 6 Oct 2026, when the CRM started recording who did them.",
+    "trackingNote": "Active time = CRM open and in use (idle after 5 minutes without activity); Logged in = CRM open in a browser tab. Time is tracked from 6 Oct 2026. Messages sent and tags added are also counted from 6 Oct 2026.",
     "activityTitle": "{name} — activity",
     "noActivity": "No activity in this period.",
     "kind": {
@@ -2267,6 +2269,15 @@
       "deal": "Created deal",
       "followUp": "Completed follow-up",
       "recording": "Uploaded recording"
+    },
+    "timeTitle": "Time on the CRM, by day",
+    "noTime": "No time recorded in this period.",
+    "time": {
+      "day": "Day",
+      "active": "Active",
+      "online": "Logged in",
+      "firstSeen": "First seen",
+      "lastSeen": "Last seen"
     }
   }
 }
