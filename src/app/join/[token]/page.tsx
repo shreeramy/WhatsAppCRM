@@ -62,7 +62,8 @@ interface PeekOk {
 }
 interface PeekFail {
   ok: false;
-  reason: 'not_found' | 'used' | 'expired' | 'server_error';
+  // 'joined' = the caller already joined with this invite at signup.
+  reason: 'not_found' | 'used' | 'expired' | 'server_error' | 'joined';
 }
 type PeekResult = PeekOk | PeekFail;
 
@@ -72,6 +73,7 @@ type PeekResult = PeekOk | PeekFail;
 const FAIL_KEY: Record<PeekFail['reason'], 'notFound' | 'used' | 'expired' | 'serverError'> = {
   not_found: 'notFound',
   used: 'used',
+  joined: 'used',
   expired: 'expired',
   server_error: 'serverError',
 };
@@ -139,6 +141,12 @@ export default function JoinPage() {
         ]);
         const peekBody = (await peekRes.json()) as PeekResult;
         if (cancelled) return;
+        // Already joined at signup (e.g. returning from the email
+        // confirmation link) — nothing to accept, go to the app.
+        if (!peekBody.ok && peekBody.reason === 'joined') {
+          window.location.href = '/dashboard';
+          return;
+        }
         setPeek(peekBody);
         setAuthedUserId(authRes.data.user?.id ?? null);
       } catch (err) {
