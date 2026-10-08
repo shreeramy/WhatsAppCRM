@@ -644,7 +644,9 @@ function InboxPageInner() {
             On mobile it's always hidden (the `lg:block` below), so the
             toggle — which is itself desktop-only — never affects it. */}
         {contactPanelOpen && (
-          <div className="hidden lg:block">
+          // h-full keeps the panel at screen height so it scrolls instead of
+          // growing past the bottom and hiding its lower sections.
+          <div className="hidden h-full lg:block">
             <ContactSidebar
               contact={activeContact}
               conversationId={activeConversation?.id}

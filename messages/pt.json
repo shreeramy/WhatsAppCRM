@@ -2172,7 +2172,9 @@
     "toastFailedLoad": "Couldn't load follow-ups",
     "toastNotLinked": "Your profile isn't linked to an account.",
     "filterDue": "Due",
-    "openDeal": "Open deal"
+    "openDeal": "Open deal",
+    "showDone": "Show {count} done",
+    "hideDone": "Hide done"
   },
   "DateRange": {
     "preset": {

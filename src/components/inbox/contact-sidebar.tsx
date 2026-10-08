@@ -61,6 +61,8 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
   const [followUpFormOpen, setFollowUpFormOpen] = useState(false);
   const [editingFollowUp, setEditingFollowUp] = useState<FollowUp | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  // Completed follow-ups are tucked away so Notes stays in view.
+  const [showDoneFollowUps, setShowDoneFollowUps] = useState(false);
   const [copied, setCopied] = useState(false);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [notes, setNotes] = useState<ContactNote[]>([]);
@@ -289,7 +291,7 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
 
   return (
     <div className="flex h-full w-70 flex-col border-l border-border bg-card">
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="p-4">
           {/* Contact Info */}
           <div className="flex flex-col items-center text-center">
@@ -511,7 +513,9 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
               {followUps.length === 0 ? (
                 <p className="px-1 text-xs text-muted-foreground">{tFollowUps("noneForContact")}</p>
               ) : (
-                followUps.map((f) => (
+                followUps
+                  .filter((f) => showDoneFollowUps || !f.completed_at)
+                  .map((f) => (
                   <FollowUpRow
                     key={f.id}
                     followUp={f}
@@ -528,6 +532,17 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
                     }
                   />
                 ))
+              )}
+              {followUps.some((f) => f.completed_at) && (
+                <button
+                  type="button"
+                  onClick={() => setShowDoneFollowUps((v) => !v)}
+                  className="px-1 text-[11px] text-muted-foreground hover:text-foreground"
+                >
+                  {showDoneFollowUps
+                    ? tFollowUps("hideDone")
+                    : tFollowUps("showDone", { count: followUps.filter((f) => f.completed_at).length })}
+                </button>
               )}
             </div>
           </div>
