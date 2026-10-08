@@ -101,10 +101,23 @@ export interface HandoffNodeConfig {
   /** Optional internal note written to flow_run_events.payload.note. */
   note?: string;
   /**
-   * Optional agent user_id to assign on the conversation when this
-   * node fires. Leave unset to flip the status without assignment.
+   * How to assign the conversation when this node fires:
+   *   - "none"        flip status to pending only (default)
+   *   - "specific"    assign to `assign_to`
+   *   - "round_robin" rotate across `agent_ids` (empty = every
+   *                   Agent-role member) via assign_round_robin()
+   * Older flows without `assign_mode` but with `assign_to` behave as
+   * "specific".
    */
+  assign_mode?: "none" | "specific" | "round_robin";
+  /** Agent user_id for "specific". */
   assign_to?: string;
+  /** Round-robin pool (user ids). Empty = all Agent-role members. */
+  agent_ids?: string[];
+  /** Round robin: reassign even if the chat already has a pool agent. */
+  force_reassign?: boolean;
+  /** Round robin: prefer agents online right now. */
+  skip_offline?: boolean;
 }
 
 /**

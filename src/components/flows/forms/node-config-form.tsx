@@ -46,6 +46,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { uploadAccountMedia, MEDIA_MAX_BYTES } from "@/lib/storage/upload-media";
 import { slugify, type BuilderNode } from "../shared";
 import { NextNodeRow, NodeKeySelect, TextRow } from "./fields";
@@ -198,11 +200,10 @@ export function NodeConfigForm({
 
     case "handoff":
       return (
-        <TextRow
-          label={t("internalNote")}
-          value={(cfg as { note?: string }).note ?? ""}
-          onChange={(v) => onUpdateConfig({ note: v })}
-          rows={2}
+        <HandoffForm
+          cfg={cfg as HandoffCfg}
+          onUpdateConfig={onUpdateConfig}
+          t={t}
         />
       );
 
@@ -754,6 +755,161 @@ function ConditionForm({
 }
 
 // ============================================================
+// handoff
+// ============================================================
+
+interface HandoffCfg {
+  note?: string;
+  assign_mode?: "none" | "specific" | "round_robin";
+  assign_to?: string;
+  agent_ids?: string[];
+  force_reassign?: boolean;
+  skip_offline?: boolean;
+}
+
+interface AccountMemberOption {
+  user_id: string;
+  name: string;
+  role: string;
+}
+
+function useAccountMembers(): AccountMemberOption[] {
+  const { accountId } = useAuth();
+  const [members, setMembers] = useState<AccountMemberOption[]>([]);
+  useEffect(() => {
+    if (!accountId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await createClient()
+        .from("profiles")
+        .select("user_id, full_name, email, account_role")
+        .eq("account_id", accountId)
+        .order("full_name");
+      if (cancelled) return;
+      setMembers(
+        (data ?? []).map((p) => ({
+          user_id: p.user_id as string,
+          name: (p.full_name as string) || (p.email as string) || "—",
+          role: (p.account_role as string) ?? "",
+        })),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountId]);
+  return members;
+}
+
+function HandoffForm({
+  cfg,
+  onUpdateConfig,
+  t,
+}: {
+  cfg: HandoffCfg;
+  onUpdateConfig: (patch: Record<string, unknown>) => void;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const members = useAccountMembers();
+  const mode = cfg.assign_mode ?? (cfg.assign_to ? "specific" : "none");
+  const pool = cfg.agent_ids ?? [];
+  const agentCount = members.filter((m) => m.role === "agent").length;
+
+  return (
+    <div className="space-y-3">
+      <TextRow
+        label={t("internalNote")}
+        value={cfg.note ?? ""}
+        onChange={(v) => onUpdateConfig({ note: v })}
+        rows={2}
+      />
+      <div>
+        <label className="mb-1 block text-xs text-muted-foreground">{t("assignLabel")}</label>
+        <Select value={mode} onValueChange={(v) => onUpdateConfig({ assign_mode: v })}>
+          <SelectTrigger className="bg-muted">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t("assignNone")}</SelectItem>
+            <SelectItem value="round_robin">{t("assignRoundRobin")}</SelectItem>
+            <SelectItem value="specific">{t("assignSpecific")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {mode === "specific" && (
+        <Select
+          value={cfg.assign_to ?? ""}
+          onValueChange={(v) => onUpdateConfig({ assign_to: v })}
+        >
+          <SelectTrigger className="bg-muted">
+            <SelectValue placeholder={t("pickAgent")} />
+          </SelectTrigger>
+          <SelectContent>
+            {members.map((m) => (
+              <SelectItem key={m.user_id} value={m.user_id}>
+                {m.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {mode === "round_robin" && (
+        <div className="space-y-2 rounded-lg border border-border p-2">
+          <p className="text-xs text-muted-foreground">
+            {pool.length === 0
+              ? t("poolAllAgents", { count: agentCount })
+              : t("poolSelected", { count: pool.length })}
+          </p>
+          <div className="space-y-0.5">
+            {members.map((m) => {
+              const checked = pool.includes(m.user_id);
+              return (
+                <label
+                  key={m.user_id}
+                  className="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() =>
+                      onUpdateConfig({
+                        agent_ids: checked
+                          ? pool.filter((id) => id !== m.user_id)
+                          : [...pool, m.user_id],
+                      })
+                    }
+                  />
+                  <span className="flex-1 truncate">{m.name}</span>
+                  <span className="text-[10px] uppercase text-muted-foreground">{m.role}</span>
+                </label>
+              );
+            })}
+          </div>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={!!cfg.force_reassign}
+              onChange={(e) => onUpdateConfig({ force_reassign: e.target.checked })}
+            />
+            {t("forceReassign")}
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={!!cfg.skip_offline}
+              onChange={(e) => onUpdateConfig({ skip_offline: e.target.checked })}
+            />
+            {t("skipOffline")}
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // set_tag
 // ============================================================
 
@@ -777,6 +933,20 @@ function SetTagForm({
   t: ReturnType<typeof useTranslations>;
 }) {
   const tags = useUserTags();
+
+  // Flows saved while the picker was broken hold a tag NAME in tag_id.
+  // Swap it for the matching tag's id once tags load so the picker shows
+  // it (the engine accepts names too, so this is just tidy-up).
+  const legacyName =
+    cfg.tag_id && tags.length > 0 && !tags.some((tag) => tag.id === cfg.tag_id)
+      ? cfg.tag_id
+      : null;
+  const legacyMatch = legacyName
+    ? tags.find((tag) => tag.name.toLowerCase() === legacyName.toLowerCase())
+    : undefined;
+  useEffect(() => {
+    if (legacyMatch) onUpdateConfig({ tag_id: legacyMatch.id });
+  }, [legacyMatch, onUpdateConfig]);
 
   return (
     <>
@@ -820,9 +990,14 @@ function SetTagForm({
             <Input
               value={cfg.tag_id ?? ""}
               onChange={(e) => onUpdateConfig({ tag_id: e.target.value })}
-              placeholder={t("tagUuidPlaceholder")}
-              className="bg-muted font-mono text-xs"
+              placeholder={t("tagNamePlaceholder")}
+              className="bg-muted text-xs"
             />
+          )}
+          {legacyName && !legacyMatch && (
+            <p className="mt-1 text-[11px] text-amber-400">
+              {t("tagWillBeCreated", { name: legacyName })}
+            </p>
           )}
         </div>
       </div>
@@ -839,27 +1014,29 @@ function SetTagForm({
 
 /**
  * Shared loader for both `condition` (subject=tag) and `set_tag`.
- * Falls back to raw UUID input if the endpoint is absent on older
- * deployments — the form remains authorable in that case.
+ * Reads the account's tags straight from the DB (RLS scopes it). This
+ * used to fetch /api/tags, which doesn't exist — so the picker never
+ * appeared and people typed tag NAMES into a raw "Tag UUID" box, which
+ * made every set_tag step fail.
  */
 function useUserTags(): UserTag[] {
+  const { accountId } = useAuth();
   const [tags, setTags] = useState<UserTag[]>([]);
   useEffect(() => {
+    if (!accountId) return;
     let cancelled = false;
     (async () => {
-      try {
-        const res = await fetch("/api/tags").catch(() => null);
-        if (!res || !res.ok) return;
-        const json = (await res.json()) as { tags?: UserTag[] };
-        if (!cancelled) setTags(json.tags ?? []);
-      } catch {
-        // Tags endpoint absent — caller falls back to raw input.
-      }
+      const { data } = await createClient()
+        .from("tags")
+        .select("id, name, color")
+        .eq("account_id", accountId)
+        .order("name");
+      if (!cancelled) setTags((data ?? []) as UserTag[]);
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [accountId]);
   return tags;
 }
 

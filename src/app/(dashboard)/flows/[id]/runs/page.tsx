@@ -342,11 +342,21 @@ function EventLine({ ev }: { ev: EventRow }) {
 function summarizePayload(payload: Record<string, unknown>): string {
   // Show the keys that matter most to a human debugger; full JSON is
   // available via the "Captured vars" details panel for the run.
-  const keys = ["reply_id", "captured_key", "reason", "advancing_to"];
-  for (const k of keys) {
-    if (k in payload && payload[k] !== null && payload[k] !== undefined) {
-      return `${k}=${String(payload[k]).slice(0, 80)}`;
-    }
-  }
-  return "";
+  // Errors show the reason AND the message, so a failed tag or
+  // assignment is readable here instead of only in server logs.
+  const keys = [
+    "reply_id",
+    "captured_key",
+    "reason",
+    "detail",
+    "tag",
+    "tag_created",
+    "assign_mode",
+    "assigned_to",
+    "advancing_to",
+  ];
+  return keys
+    .filter((k) => payload[k] !== null && payload[k] !== undefined && payload[k] !== "")
+    .map((k) => `${k}=${String(payload[k]).slice(0, 160)}`)
+    .join(" · ");
 }

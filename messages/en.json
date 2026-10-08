@@ -1285,7 +1285,18 @@
         "fileUploaded": "File uploaded.",
         "uploadFailed": "Upload failed.",
         "fileTooLarge": "File is {size} MB — limit is 16 MB.",
-        "defaultOptionTitle": "Option"
+        "defaultOptionTitle": "Option",
+        "tagNamePlaceholder": "Tag name (created if it doesn't exist)",
+        "tagWillBeCreated": "No tag named \"{name}\" yet. It will be created the first time this step runs.",
+        "assignLabel": "Assign the chat",
+        "assignNone": "Don't assign (just mark as pending)",
+        "assignRoundRobin": "Round-robin across agents",
+        "assignSpecific": "To a specific teammate",
+        "pickAgent": "Pick a teammate",
+        "poolAllAgents": "Nobody ticked: rotates across all {count} Agent-role members (owner and admins excluded). Tick people to choose the pool.",
+        "poolSelected": "Rotates across the {count} ticked {count, plural, =1 {person} other {people}}.",
+        "forceReassign": "Reassign even if the chat already has an agent from this pool",
+        "skipOffline": "Prefer agents who are online right now"
       },
       "categories": {
         "messaging": "Messaging",
@@ -2281,5 +2292,15 @@
       "firstSeen": "First seen",
       "lastSeen": "Last seen"
     }
+  },
+  "AutoAssign": {
+    "title": "Auto-assign new chats (round-robin)",
+    "description": "Every new WhatsApp conversation is assigned to the next agent in turn. Chats already with an agent keep their agent.",
+    "poolAllAgents": "Nobody ticked: rotates across all {count} Agent-role members (owner and admins excluded). Tick people to choose the pool.",
+    "poolSelected": "Rotates across the {count} ticked {count, plural, =1 {person} other {people}}.",
+    "skipOffline": "Prefer agents who are online right now (falls back to everyone if nobody is)",
+    "save": "Save",
+    "saved": "Auto-assign settings saved",
+    "saveFailed": "Couldn't save auto-assign settings"
   }
 }

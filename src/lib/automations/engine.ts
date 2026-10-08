@@ -24,7 +24,7 @@ import { MAX_TAG_CHAIN_DEPTH, getTagChainDepth } from '@/lib/contacts/tag-chain'
 import { engineSendText, engineSendTemplate, engineSendInteractive } from './meta-send'
 import { validateInteractivePayload } from '@/lib/whatsapp/interactive'
 import { isDeliverableUrl } from '@/lib/webhooks/ssrf'
-import { nextRoundRobinAgent, roundRobinPool } from './round-robin'
+import { assignRoundRobin } from '@/lib/assignment/round-robin'
 
 // ------------------------------------------------------------
 // Public API
@@ -484,23 +484,28 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
     case 'assign_conversation': {
       const cfg = step.step_config as AssignConversationStepConfig
       if (!args.contactId) throw new Error('assign_conversation needs a contact')
-      let agentId = cfg.agent_id
+      const agentId = cfg.agent_id
       if (cfg.mode === 'round_robin') {
         // Rotate between the picked members, or every Agent-role member
-        // when none are picked (owners/admins only if picked). The last
-        // assignee is kept on the step's config so the next run moves on.
-        const { data: profiles } = await db
-          .from('profiles')
-          .select('user_id, account_role')
+        // when none are picked (owners/admins only if picked). The DB
+        // function locks the pool's pointer, so concurrent chats never
+        // double-assign; a chat already with a pool agent keeps them.
+        const { data: conv } = await db
+          .from('conversations')
+          .select('id')
           .eq('account_id', args.automation.account_id)
-        const pool = roundRobinPool(profiles ?? [], cfg.agent_ids)
-        agentId = nextRoundRobinAgent(pool, cfg.last_agent_id) ?? undefined
-        if (agentId && step.id) {
-          await db
-            .from('automation_steps')
-            .update({ step_config: { ...cfg, last_agent_id: agentId } })
-            .eq('id', step.id)
-        }
+          .eq('contact_id', args.contactId)
+          .order('last_message_at', { ascending: false, nullsFirst: false })
+          .limit(1)
+          .maybeSingle()
+        if (!conv) return 'no conversation to assign'
+        const assigned = await assignRoundRobin(db, {
+          accountId: args.automation.account_id,
+          agentIds: cfg.agent_ids,
+          conversationId: conv.id as string,
+        })
+        if (!assigned) throw new Error('round-robin pool is empty: no agents to assign')
+        return `assigned to ${assigned} (round robin)`
       }
       if (!agentId) return 'no agent resolved'
       await db

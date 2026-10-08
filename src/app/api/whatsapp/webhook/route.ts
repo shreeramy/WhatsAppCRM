@@ -26,6 +26,7 @@ import {
   formatInboundInteractive,
   type InboundInteractive,
 } from '@/lib/whatsapp/interactive-inbound'
+import { assignRoundRobin } from '@/lib/assignment/round-robin'
 
 // The `after()` callback in POST runs within this route's max duration.
 // Inbound processing can fan out to per-media Meta verification calls, so
@@ -718,6 +719,7 @@ async function processMessage(
       conversation_id: conversation.id,
       contact_id: contactRecord.id,
     })
+    await autoAssignNewConversation(accountId, conversation.id)
   }
 
   // Reactions short-circuit here — they aren't messages. We never insert
@@ -1386,6 +1388,36 @@ async function findOrCreateContact(
   }
 
   return { contact: newContact, wasCreated: true }
+}
+
+/**
+ * Inbox setting "auto-assign new conversations round-robin"
+ * (inbox_settings, migration 053). Runs once, when a chat is first
+ * opened. Failures are logged and never block the inbound message.
+ */
+async function autoAssignNewConversation(accountId: string, conversationId: string) {
+  const db = supabaseAdmin()
+  const { data: settings, error } = await db
+    .from('inbox_settings')
+    .select('auto_assign_round_robin, auto_assign_agent_ids, auto_assign_skip_offline')
+    .eq('account_id', accountId)
+    .maybeSingle()
+  if (error) {
+    console.error('[webhook] inbox_settings lookup failed:', error.message)
+    return
+  }
+  if (!settings?.auto_assign_round_robin) return
+  try {
+    const agent = await assignRoundRobin(db, {
+      accountId,
+      agentIds: settings.auto_assign_agent_ids as string[] | null,
+      conversationId,
+      skipOffline: settings.auto_assign_skip_offline as boolean,
+    })
+    if (!agent) console.warn('[webhook] auto-assign: round-robin pool is empty for account', accountId)
+  } catch (err) {
+    console.error('[webhook] auto-assign failed:', err instanceof Error ? err.message : err)
+  }
 }
 
 async function findOrCreateConversation(

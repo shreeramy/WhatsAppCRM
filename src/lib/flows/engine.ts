@@ -42,6 +42,8 @@ import {
 import { decideFallback, resolveFallbackPolicy } from "./fallback";
 import { addContactTagAndDispatch } from "@/lib/contacts/tag-events";
 import { removeContactTag } from "@/lib/contacts/tag-write";
+import { assignRoundRobin } from "@/lib/assignment/round-robin";
+import { resolveTagRef } from "./tag-ref";
 import {
   type CollectInputNodeConfig,
   type ConditionNodeConfig,
@@ -50,6 +52,7 @@ import {
   type FlowNodeRow,
   type FlowRow,
   type FlowRunRow,
+  type HandoffNodeConfig,
   type ParsedInbound,
   type SendButtonsNodeConfig,
   type SendListNodeConfig,
@@ -481,21 +484,55 @@ async function executeHandoff(
   run: FlowRunRow,
   node: FlowNodeRow,
 ): Promise<void> {
-  const cfg = node.config as { assign_to?: string; note?: string };
+  const cfg = node.config as HandoffNodeConfig;
+  const mode = cfg.assign_mode ?? (cfg.assign_to ? "specific" : "none");
   const convUpdate: Record<string, unknown> = {
     status: "pending",
     updated_at: new Date().toISOString(),
   };
-  if (cfg.assign_to) convUpdate.assigned_agent_id = cfg.assign_to;
+  if (mode === "specific" && cfg.assign_to) convUpdate.assigned_agent_id = cfg.assign_to;
+
+  let assignedTo: string | null = mode === "specific" ? (cfg.assign_to ?? null) : null;
+  let assignError: string | null = null;
   if (run.conversation_id) {
-    await db
+    const { error: updErr } = await db
       .from("conversations")
       .update(convUpdate)
-      .eq("id", run.conversation_id);
+      .eq("id", run.conversation_id)
+      .eq("account_id", run.account_id);
+    if (updErr) assignError = `Couldn't update conversation: ${updErr.message}`;
+
+    if (mode === "round_robin") {
+      try {
+        assignedTo = await assignRoundRobin(db, {
+          accountId: run.account_id,
+          agentIds: cfg.agent_ids,
+          conversationId: run.conversation_id,
+          force: cfg.force_reassign ?? false,
+          skipOffline: cfg.skip_offline ?? false,
+        });
+        if (!assignedTo) assignError = "Round-robin pool is empty — no agents to assign";
+      } catch (err) {
+        assignError = err instanceof Error ? err.message : String(err);
+      }
+    }
+  } else if (mode !== "none") {
+    assignError = "Run has no conversation to assign";
+  }
+
+  // Assignment problems are logged as a visible error event (run history),
+  // never swallowed; the handoff itself still completes.
+  if (assignError) {
+    await logEvent(db, run.id, "error", node.node_key, {
+      reason: "assign_failed",
+      assign_mode: mode,
+      detail: assignError,
+    });
   }
   await logEvent(db, run.id, "handoff", node.node_key, {
     note: cfg.note ?? null,
-    assigned_to: cfg.assign_to ?? null,
+    assign_mode: mode,
+    assigned_to: assignedTo,
   });
   await endRun(db, run.id, "handed_off", "handoff_node");
 }
@@ -770,12 +807,24 @@ async function advanceFromNodeKey(
     if (node.node_type === "set_tag") {
       const cfg = node.config as unknown as SetTagNodeConfig;
       try {
+        if (!run.contact_id) throw new Error("Run has no contact to tag");
+        // Accepts the tag's id or its name (flows saved while the
+        // builder's tag picker was broken store the name); a missing
+        // tag is created on "add".
+        const tag = await resolveTagRef(db, run.account_id, cfg.tag_id, {
+          createMissing: cfg.mode === "add",
+        });
+        if (tag.created) {
+          await logEvent(db, run.id, "node_entered", node.node_key, {
+            tag_created: cfg.tag_id,
+          });
+        }
         if (cfg.mode === "add") {
           await addContactTagAndDispatch({
             db,
             accountId: run.account_id,
-            contactId: run.contact_id!,
-            tagId: cfg.tag_id,
+            contactId: run.contact_id,
+            tagId: tag.id,
             context: {
               conversation_id: run.conversation_id ?? undefined,
               vars: run.vars,
@@ -784,16 +833,19 @@ async function advanceFromNodeKey(
         } else {
           await removeContactTag(db, {
             accountId: run.account_id,
-            contactId: run.contact_id!,
-            tagId: cfg.tag_id,
+            contactId: run.contact_id,
+            tagId: tag.id,
           });
         }
       } catch (err) {
         // Non-fatal — log + advance. A tag-write failure shouldn't
         // strand the customer mid-flow.
+        const detail = err instanceof Error ? err.message : String(err);
+        console.error(`[flows] set_tag failed on ${node.node_key} (run ${run.id}):`, detail);
         await logEvent(db, run.id, "error", node.node_key, {
           reason: "set_tag_failed",
-          detail: err instanceof Error ? err.message : String(err),
+          tag: cfg.tag_id,
+          detail,
         });
       }
       currentKey = cfg.next_node_key;
