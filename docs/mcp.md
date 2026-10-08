@@ -1,3 +1,21 @@
+# Connect to Claude (remote MCP, no install)
+
+The app itself serves a read-only MCP endpoint at `/api/mcp`, so you can
+add it to Claude as a custom connector with just a URL.
+
+1. **Settings → API keys → New API key**, tick only `mcp:read`, copy the key.
+2. In Claude: **Settings → Connectors → Add custom connector**, paste
+   `https://<your-domain>/api/mcp?key=<your key>`.
+
+Tools: `list_team_members`, `team_report`, `list_conversations`,
+`get_conversation_messages`, `pipeline_summary`, `list_deals`,
+`list_follow_ups`, `list_call_recordings` (24-hour download links),
+`new_leads`, `search_contacts`. Everything is read-only and limited to
+the key's account. Anyone with the URL can read this data — treat it like
+a password, and revoke the key in Settings → API keys if it leaks.
+
+---
+
 # MCP server
 
 wacrm ships a [Model Context Protocol](https://modelcontextprotocol.io)
