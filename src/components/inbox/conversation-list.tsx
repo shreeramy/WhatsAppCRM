@@ -48,6 +48,9 @@ const STATUS_COLORS: Record<ConversationStatus, string> = {
 
 
 
+/** Tags shown per chat row; the rest collapse into "+N". */
+const MAX_ROW_TAGS = 3;
+
 type InboxFilter =
   | ConversationStatus
   | "all"
@@ -647,6 +650,25 @@ function ConversationItem({
             />
           </div>
         </div>
+        {(contact?.tags?.length ?? 0) > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {contact!.tags!.slice(0, MAX_ROW_TAGS).map((tag) => (
+              <span
+                key={tag.id}
+                className="max-w-[7rem] truncate rounded-full px-1.5 py-px text-[10px] font-medium leading-4"
+                style={{ backgroundColor: `${tag.color}26`, color: tag.color }}
+                title={tag.name}
+              >
+                {tag.name}
+              </span>
+            ))}
+            {contact!.tags!.length > MAX_ROW_TAGS && (
+              <span className="rounded-full bg-muted px-1.5 py-px text-[10px] leading-4 text-muted-foreground">
+                +{contact!.tags!.length - MAX_ROW_TAGS}
+              </span>
+            )}
+          </div>
+        )}
         {assigneeName && (
           <p
             className={cn(
