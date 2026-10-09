@@ -650,34 +650,41 @@ function ConversationItem({
             />
           </div>
         </div>
-        {(contact?.tags?.length ?? 0) > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {contact!.tags!.slice(0, MAX_ROW_TAGS).map((tag) => (
-              <span
-                key={tag.id}
-                className="max-w-[7rem] truncate rounded-full px-1.5 py-px text-[10px] font-medium leading-4"
-                style={{ backgroundColor: `${tag.color}26`, color: tag.color }}
-                title={tag.name}
+        {/* One line: assignee on the left, tags on the right. */}
+        {(assigneeName || (contact?.tags?.length ?? 0) > 0) && (
+          <div className="mt-1 flex items-center justify-between gap-2">
+            {assigneeName ? (
+              <p
+                className={cn(
+                  "min-w-0 truncate text-[10px]",
+                  conversation.assigned_agent_id ? "text-primary/80" : "text-amber-500/80"
+                )}
               >
-                {tag.name}
-              </span>
-            ))}
-            {contact!.tags!.length > MAX_ROW_TAGS && (
-              <span className="rounded-full bg-muted px-1.5 py-px text-[10px] leading-4 text-muted-foreground">
-                +{contact!.tags!.length - MAX_ROW_TAGS}
-              </span>
+                → {assigneeName}
+              </p>
+            ) : (
+              <span />
+            )}
+            {(contact?.tags?.length ?? 0) > 0 && (
+              <div className="flex min-w-0 shrink justify-end gap-1 overflow-hidden">
+                {contact!.tags!.slice(0, MAX_ROW_TAGS).map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="max-w-[6rem] truncate rounded-full px-1.5 py-px text-[10px] font-medium leading-4"
+                    style={{ backgroundColor: `${tag.color}26`, color: tag.color }}
+                    title={tag.name}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+                {contact!.tags!.length > MAX_ROW_TAGS && (
+                  <span className="shrink-0 rounded-full bg-muted px-1.5 py-px text-[10px] leading-4 text-muted-foreground">
+                    +{contact!.tags!.length - MAX_ROW_TAGS}
+                  </span>
+                )}
+              </div>
             )}
           </div>
-        )}
-        {assigneeName && (
-          <p
-            className={cn(
-              "mt-0.5 truncate text-[10px]",
-              conversation.assigned_agent_id ? "text-primary/80" : "text-amber-500/80"
-            )}
-          >
-            → {assigneeName}
-          </p>
         )}
       </div>
     </button>
