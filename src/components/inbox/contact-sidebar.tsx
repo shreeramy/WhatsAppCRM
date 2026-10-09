@@ -48,9 +48,11 @@ interface ContactSidebarProps {
   conversationId?: string;
   /** Called after the contact is edited here (e.g. renamed). */
   onContactUpdated?: (contact: Contact) => void;
+  /** Extra classes for the root (the mobile sheet makes it full width). */
+  className?: string;
 }
 
-export function ContactSidebar({ contact, conversationId, onContactUpdated }: ContactSidebarProps) {
+export function ContactSidebar({ contact, conversationId, onContactUpdated, className }: ContactSidebarProps) {
   const tSidebar = useTranslations("Inbox.sidebar");
   const tThread = useTranslations("Inbox.messageThread");
   const tFollowUps = useTranslations("FollowUps");
@@ -290,7 +292,7 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated }: Co
   const initials = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex h-full w-70 flex-col border-l border-border bg-card">
+    <div className={cn("flex h-full w-70 flex-col border-l border-border bg-card", className)}>
       <ScrollArea className="min-h-0 flex-1">
         <div className="p-4">
           {/* Contact Info */}

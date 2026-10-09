@@ -13,6 +13,7 @@ import { useRealtime } from "@/hooks/use-realtime";
 import { ConversationList } from "@/components/inbox/conversation-list";
 import { MessageThread } from "@/components/inbox/message-thread";
 import { ContactSidebar } from "@/components/inbox/contact-sidebar";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,8 @@ function InboxPageInner() {
    * below reconciles to the stored value right after mount instead.
    */
   const [contactPanelOpen, setContactPanelOpen] = useState(true);
+  // Mobile/tablet: contact panel (notes, follow-ups, tags…) as a sheet.
+  const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
   useEffect(() => {
     try {
       const stored = localStorage.getItem(CONTACT_PANEL_STORAGE_KEY);
@@ -574,7 +577,9 @@ function InboxPageInner() {
   const hasActiveConv = !!activeConversation;
 
   return (
-    <div className="-m-4 flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden sm:-m-6">
+    // dvh, not vh: on phones 100vh includes the area under the browser's
+    // address bar, which pushed the message composer off-screen.
+    <div className="-m-4 flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden sm:-m-6">
       {/* WhatsApp connection banner — in the flex column, not absolute,
           so it pushes the panels down instead of overlapping them. */}
       {whatsappConnected === false && (
@@ -635,6 +640,7 @@ function InboxPageInner() {
             onRefresh={handleManualRefresh}
             contactPanelOpen={contactPanelOpen}
             onToggleContactPanel={handleToggleContactPanel}
+            onOpenContactDetails={() => setMobileDetailsOpen(true)}
             onContactUpdated={handleContactUpdated}
           />
         </div>
@@ -643,6 +649,20 @@ function InboxPageInner() {
             agent hasn't collapsed it via the thread-header toggle (#258).
             On mobile it's always hidden (the `lg:block` below), so the
             toggle — which is itself desktop-only — never affects it. */}
+        {/* Mobile/tablet: the same contact panel as a full-height sheet,
+            opened from the thread header. */}
+        <Sheet open={mobileDetailsOpen} onOpenChange={setMobileDetailsOpen}>
+          <SheetContent side="right" className="w-full max-w-md p-0 sm:max-w-md lg:hidden">
+            <SheetTitle className="sr-only">{t("contactDetails")}</SheetTitle>
+            <ContactSidebar
+              contact={activeContact}
+              conversationId={activeConversation?.id}
+              onContactUpdated={handleContactUpdated}
+              className="w-full border-l-0"
+            />
+          </SheetContent>
+        </Sheet>
+
         {contactPanelOpen && (
           // h-full keeps the panel at screen height so it scrolls instead of
           // growing past the bottom and hiding its lower sections.

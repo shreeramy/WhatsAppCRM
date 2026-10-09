@@ -26,6 +26,7 @@ import {
   ArrowLeft,
   RefreshCw,
   PanelRightOpen,
+  Phone,
   PanelRightClose,
 } from "lucide-react";
 import { format, isToday, isYesterday, differenceInHours } from "date-fns";
@@ -110,6 +111,8 @@ interface MessageThreadProps {
    */
   contactPanelOpen?: boolean;
   onToggleContactPanel?: () => void;
+  /** Mobile: open the contact panel (notes, follow-ups, tags) as a sheet. */
+  onOpenContactDetails?: () => void;
 }
 
 function formatDateSeparator(dateStr: string, t: ReturnType<typeof useTranslations>): string {
@@ -169,6 +172,7 @@ export function MessageThread({
   onRefresh,
   contactPanelOpen,
   onToggleContactPanel,
+  onOpenContactDetails,
 }: MessageThreadProps) {
   const t = useTranslations("Inbox.messageThread");
   const tTimer = useTranslations("Inbox.sessionTimer");
@@ -887,6 +891,10 @@ export function MessageThread({
   }
 
   const displayName = contact.name || contactHandle(contact);
+  // tel: link for tap-to-call (phone contacts only; BSUID-only contacts
+  // have no number). Stored numbers are digits with the country code.
+  const phoneDigits = contact.phone?.replace(/\D/g, "") ?? "";
+  const telHref = phoneDigits.length >= 8 ? `tel:+${phoneDigits}` : null;
   const messageGroups = groupMessagesByDate(messages);
   const currentStatus = STATUS_OPTIONS.find(
     (s) => s.value === conversation.status
@@ -934,9 +942,19 @@ export function MessageThread({
                 onSaved={(c) => onContactUpdated?.(c)}
               />
             </h2>
-            <p className="truncate text-xs text-muted-foreground">
-              {contactHandle(contact)}
-            </p>
+            {telHref ? (
+              <a
+                href={telHref}
+                className="block truncate text-xs text-muted-foreground hover:text-primary hover:underline"
+                title={t("callContact")}
+              >
+                {contactHandle(contact)}
+              </a>
+            ) : (
+              <p className="truncate text-xs text-muted-foreground">
+                {contactHandle(contact)}
+              </p>
+            )}
           </div>
           {/* Session timer badge — hidden on the narrowest phones so
               the name + back arrow keep their room. */}
@@ -952,7 +970,35 @@ export function MessageThread({
           </Badge>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          {/* Tap-to-call: opens the phone's dialer (or a desktop
+              calling app) with the contact's number. */}
+          {telHref && (
+            <a
+              href={telHref}
+              aria-label={t("callContact")}
+              title={t("callContact")}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/10 lg:h-7 lg:w-7"
+            >
+              <Phone className="h-4 w-4" />
+            </a>
+          )}
+
+          {/* Contact details — mobile/tablet only (the panel is a
+              permanent column on lg+). Opens notes, follow-ups, tags,
+              deals in a sheet. */}
+          {onOpenContactDetails && (
+            <button
+              type="button"
+              onClick={onOpenContactDetails}
+              aria-label={t("showContactPanel")}
+              title={t("showContact")}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden"
+            >
+              <PanelRightOpen className="h-4 w-4" />
+            </button>
+          )}
+
           {/* Contact-panel toggle — desktop only. The contact sidebar
               eats a chunk of horizontal width that crowds the thread on
               smaller laptops; this lets agents reclaim it when they just
@@ -993,7 +1039,9 @@ export function MessageThread({
               aria-label={t("refreshConversation")}
               title={t("refresh")}
               className={cn(
-                "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60",
+                // Hidden on phones to keep the header uncluttered;
+                // pull-to-refresh / reopening the chat does the same.
+                "hidden h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60 sm:inline-flex",
               )}
             >
               <RefreshCw
