@@ -23,6 +23,11 @@ import { DateRangeFilter } from "@/components/ui/date-range-filter";
 import { resolveRange, type DateRangeValue } from "@/lib/date-range";
 import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
 import {
+  CallInsights,
+  requestTranscription,
+  type TranscriptFields,
+} from "@/components/calls/call-insights";
+import {
   CALL_RECORDINGS_BUCKET,
   MAX_RECORDING_BYTES,
   RECORDING_ACCEPT,
@@ -48,6 +53,8 @@ interface Recording {
   call_date: string;
   created_at: string;
 }
+
+type RecordingRow = Recording & TranscriptFields;
 
 type UploadStatus = "pending" | "uploading" | "done" | "error";
 interface QueueItem {
@@ -77,7 +84,7 @@ export default function CallRecordingsPage() {
   // ---- list --------------------------------------------------------
   const [range, setRange] = useState<DateRangeValue>({ preset: "last7" });
   const [agentFilter, setAgentFilter] = useState<string>("all");
-  const [items, setItems] = useState<Recording[] | null>(null);
+  const [items, setItems] = useState<RecordingRow[] | null>(null);
   const [members, setMembers] = useState<Map<string, string>>(new Map());
   const [contactNames, setContactNames] = useState<Map<string, string>>(new Map());
   const [dealTitles, setDealTitles] = useState<Map<string, string>>(new Map());
@@ -91,7 +98,7 @@ export default function CallRecordingsPage() {
     let q = supabase
       .from("call_recordings")
       .select(
-        "id, storage_path, file_name, size_bytes, duration_seconds, notes, phone, contact_id, deal_id, uploaded_by, call_date, created_at",
+        "id, storage_path, file_name, size_bytes, duration_seconds, notes, phone, contact_id, deal_id, uploaded_by, call_date, created_at, transcript_status, transcript, transcript_segments, transcript_error, analysis",
       )
       .eq("account_id", accountId)
       .order("call_date", { ascending: false })
@@ -110,7 +117,7 @@ export default function CallRecordingsPage() {
       setItems([]);
       return;
     }
-    const rows = (recs.data ?? []) as Recording[];
+    const rows = (recs.data ?? []) as RecordingRow[];
     setItems(rows);
     setMembers(
       new Map(
@@ -292,11 +299,37 @@ export default function CallRecordingsPage() {
     toast.success(t("deleted"));
   }
 
+  // ---- transcription ---------------------------------------------
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const updateTranscript = useCallback(
+    (id: string) => (f: TranscriptFields) =>
+      setItems((prev) => prev?.map((r) => (r.id === id ? { ...r, ...f } : r)) ?? prev),
+    [],
+  );
+
+  async function transcribeAll(recs: RecordingRow[]) {
+    const todo = recs.filter(
+      (r) => !r.transcript_status && (canManageMembers || r.uploaded_by === user?.id),
+    );
+    setBulkBusy(true);
+    let failed = 0;
+    for (const r of todo) {
+      try {
+        updateTranscript(r.id)(await requestTranscription(r.id, "POST"));
+      } catch {
+        failed++;
+      }
+    }
+    setBulkBusy(false);
+    if (failed) toast.error(t("insights.someFailed", { count: failed }));
+  }
+
   // ---- grouping: day → agent ---------------------------------------
   const grouped = useMemo(() => {
-    const days = new Map<string, Map<string, Recording[]>>();
+    const days = new Map<string, Map<string, RecordingRow[]>>();
     for (const r of items ?? []) {
-      const byAgent = days.get(r.call_date) ?? new Map<string, Recording[]>();
+      const byAgent = days.get(r.call_date) ?? new Map<string, RecordingRow[]>();
       const key = r.uploaded_by ?? "unknown";
       byAgent.set(key, [...(byAgent.get(key) ?? []), r]);
       days.set(r.call_date, byAgent);
@@ -304,7 +337,7 @@ export default function CallRecordingsPage() {
     return [...days.entries()];
   }, [items]);
 
-  const totalSeconds = (rs: Recording[]) =>
+  const totalSeconds = (rs: RecordingRow[]) =>
     rs.reduce((s, r) => s + (r.duration_seconds ?? 0), 0);
 
   const pendingCount = queue.filter((q) => q.status === "pending" || q.status === "error").length;
@@ -481,7 +514,21 @@ export default function CallRecordingsPage() {
                       <span className="text-sm font-medium text-foreground">
                         {members.get(agentId) ?? t("unknownAgent")}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {canSendMessages &&
+                          recs.some((r) => !r.transcript_status && (canManageMembers || r.uploaded_by === user?.id)) && (
+                            <button
+                              type="button"
+                              onClick={() => transcribeAll(recs)}
+                              disabled={bulkBusy}
+                              className="inline-flex items-center gap-1 font-medium text-primary hover:underline disabled:opacity-60"
+                            >
+                              {bulkBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                              {t("insights.transcribeAll", {
+                                count: recs.filter((r) => !r.transcript_status && (canManageMembers || r.uploaded_by === user?.id)).length,
+                              })}
+                            </button>
+                          )}
                         {t("groupSummary", {
                           count: recs.length,
                           duration: formatDuration(totalSeconds(recs)) ?? "0:00",
@@ -572,6 +619,12 @@ export default function CallRecordingsPage() {
                                 onError={() => toast.error(t("cantPlay"))}
                               />
                             )}
+                            <CallInsights
+                              recordingId={rec.id}
+                              fields={rec}
+                              canStart={canDelete}
+                              onChange={updateTranscript(rec.id)}
+                            />
                           </li>
                         );
                       })}

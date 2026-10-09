@@ -2240,7 +2240,36 @@
     "deleteFailed": "Couldn't delete the recording",
     "openFailed": "Couldn't open the recording",
     "loadFailed": "Couldn't load recordings",
-    "cantPlay": "This format can't play in the browser — use Download"
+    "cantPlay": "This format can't play in the browser — use Download",
+    "insights": {
+      "transcribe": "Transcribe & analyse",
+      "processing": "Transcribing… this takes under a minute",
+      "failed": "Transcription failed",
+      "failedWith": "Transcription failed: {error}",
+      "retry": "Try again",
+      "redo": "Transcribe again",
+      "agent": "Agent",
+      "customer": "Customer",
+      "speaker": "Speaker {n}",
+      "quality": {
+        "hot": "Hot",
+        "warm": "Warm",
+        "cold": "Cold"
+      },
+      "score": "Agent {score}/10",
+      "noAnalysis": "Transcript ready (no AI analysis)",
+      "noSpeech": "No speech found in this recording.",
+      "customerNeed": "Customer need",
+      "nextStep": "Next step",
+      "teamSize": "Team size",
+      "objections": "Objections",
+      "didWell": "Agent did well",
+      "improve": "Agent can improve",
+      "none": "None",
+      "transcript": "Transcript",
+      "transcribeAll": "Transcribe all ({count})",
+      "someFailed": "{count} {count, plural, =1 {recording} other {recordings}} couldn't be sent for transcription"
+    }
   },
   "TeamReport": {
     "title": "Team Report",

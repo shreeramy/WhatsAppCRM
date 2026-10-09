@@ -7,7 +7,7 @@ add it to Claude as a custom connector with just a URL.
 2. In Claude: **Settings → Connectors → Add custom connector**, paste
    `https://<your-domain>/api/mcp?key=<your key>`.
 
-Tools: `list_team_members`, `team_report`, `list_conversations`,
+Tools: `list_team_members`, `team_report`, `list_conversations`, `get_call_transcript`,
 `get_conversation_messages`, `pipeline_summary`, `list_deals`,
 `list_follow_ups`, `list_call_recordings` (24-hour download links),
 `new_leads`, `search_contacts`. Everything is read-only and limited to

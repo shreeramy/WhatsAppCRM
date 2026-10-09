@@ -471,7 +471,7 @@ export const TOOLS: ToolDef[] = [
   {
     name: "list_call_recordings",
     description:
-      "List phone-call recordings uploaded by the team, with call date, teammate, contact/number, duration and a download link valid for 24 hours. Defaults to the last 7 days.",
+      "List phone-call recordings uploaded by the team, with call date, teammate, contact/number, duration, a download link valid for 24 hours and — when transcribed — the AI call analysis (summary, lead quality hot/warm/cold, agent score 0-10, objections, next step). Use get_call_transcript for the full conversation. Defaults to the last 7 days.",
     inputSchema: {
       type: "object",
       properties: {
@@ -488,7 +488,7 @@ export const TOOLS: ToolDef[] = [
       const nameOf = new Map(team.map((m) => [m.userId, m.name]));
       let q = ctx.db
         .from("call_recordings")
-        .select("storage_path, file_name, call_date, created_at, duration_seconds, phone, notes, uploaded_by, contact:contacts(name, phone)")
+        .select("id, storage_path, file_name, call_date, created_at, duration_seconds, phone, notes, uploaded_by, transcript_status, analysis, contact:contacts(name, phone)")
         .eq("account_id", ctx.accountId)
         .gte("call_date", from)
         .lte("call_date", to)
@@ -517,8 +517,63 @@ export const TOOLS: ToolDef[] = [
           duration_minutes: r.duration_seconds ? Math.round((r.duration_seconds as number) / 6) / 10 : null,
           file_name: r.file_name,
           notes: r.notes,
+          recording_id: r.id,
+          transcribed: r.transcript_status === "done",
+          analysis: r.analysis ?? null,
           download_url: urlOf.get(r.storage_path as string) ?? null,
         })),
+      };
+    },
+  },
+
+  {
+    name: "get_call_transcript",
+    description:
+      "Full transcript of one transcribed call recording (speaker turns labelled Agent/Customer, Hinglish) plus its AI analysis. Get recording_id from list_call_recordings.",
+    inputSchema: {
+      type: "object",
+      properties: { recording_id: { type: "string" } },
+      required: ["recording_id"],
+    },
+    run: async (ctx, args) => {
+      const id = str(args, "recording_id");
+      if (!id) throw new Error("recording_id is required");
+      const { data: r, error } = await ctx.db
+        .from("call_recordings")
+        .select("call_date, uploaded_by, file_name, transcript_status, transcript, transcript_segments, transcript_language, analysis, contact:contacts(name, phone), phone")
+        .eq("account_id", ctx.accountId)
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!r) throw new Error("Recording not found");
+      if (r.transcript_status !== "done") {
+        throw new Error(
+          r.transcript_status === "processing"
+            ? "This recording is still being transcribed — try again in a minute."
+            : "This recording hasn't been transcribed yet. Use 'Transcribe & analyse' on the Call Recordings page.",
+        );
+      }
+      const team = await members(ctx);
+      const analysis = r.analysis as { agent_speaker?: number } | null;
+      const segments = (r.transcript_segments ?? []) as { speaker: number; text: string; start: number }[];
+      return {
+        call_date: r.call_date,
+        teammate: team.find((m) => m.userId === r.uploaded_by)?.name ?? null,
+        contact:
+          contactName(one(r.contact as never)) ?? (r.phone ? formatPhoneDisplay(r.phone as string) : null),
+        language: r.transcript_language,
+        analysis: r.analysis,
+        conversation: segments.length
+          ? segments.map((s) => ({
+              at_seconds: s.start,
+              speaker: analysis?.agent_speaker
+                ? s.speaker === analysis.agent_speaker
+                  ? "Agent"
+                  : "Customer"
+                : `Speaker ${s.speaker}`,
+              text: s.text,
+            }))
+          : r.transcript,
       };
     },
   },
