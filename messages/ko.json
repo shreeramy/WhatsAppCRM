@@ -347,7 +347,9 @@
       "blockedAppOnly": "Blocked in the CRM — their messages will be ignored. WhatsApp didn't accept the block (it only allows blocking people who messaged in the last 24 hours).",
       "unblockedAppOnly": "Unblocked in the CRM. WhatsApp didn't confirm the unblock.",
       "blockFailed": "Couldn't block this contact",
-      "blockedNotice": "This contact is blocked. New messages from them are ignored."
+      "blockedNotice": "This contact is blocked. New messages from them are ignored.",
+      "callNumber": "Call this number",
+      "copyNumber": "Copy number"
     },
     "aiBanner": {
       "pausedTitle": "이 대화에서 AI 어시스턴트가 일시 중지됨",

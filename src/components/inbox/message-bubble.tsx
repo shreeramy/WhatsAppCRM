@@ -62,13 +62,14 @@ function StatusIcon({
 }) {
   switch (status) {
     case "sending":
-      return <Clock className="h-3 w-3 text-muted-foreground" />;
+      return <Clock className="h-3 w-3 text-[var(--wa-out-meta)]" />;
     case "sent":
-      return <Check className="h-3 w-3 text-muted-foreground" />;
+      return <Check className="h-3.5 w-3.5 text-[var(--wa-out-meta)]" />;
     case "delivered":
-      return <CheckCheck className="h-3 w-3 text-muted-foreground" />;
+      return <CheckCheck className="h-3.5 w-3.5 text-[var(--wa-out-meta)]" />;
     case "read":
-      return <CheckCheck className="h-3 w-3 text-blue-400" />;
+      // WhatsApp's blue ticks.
+      return <CheckCheck className="h-3.5 w-3.5 text-[var(--wa-tick-read)]" />;
     case "failed":
       return (
         <span className="inline-flex" title={title ?? undefined}>
@@ -263,10 +264,13 @@ export function MessageBubble({
     >
       <div
         className={cn(
-          "relative rounded-2xl px-3 py-2",
+          // WhatsApp bubbles: green out / white-grey in, small radius with
+          // a squared "tail" corner, soft shadow. Outgoing bubbles remap
+          // --primary-foreground so inner chips/quotes stay readable.
+          "relative rounded-lg px-2.5 py-1.5 shadow-[0_1px_0.5px_rgb(11_20_26/0.13)]",
           isAgent
-            ? "rounded-br-md bg-primary text-primary-foreground"
-            : "rounded-bl-md bg-muted text-foreground",
+            ? "rounded-tr-none bg-[var(--wa-out)] text-[var(--wa-out-text)] [--primary-foreground:var(--wa-out-text)]"
+            : "rounded-tl-none bg-[var(--wa-in)] text-[var(--wa-in-text)]",
         )}
       >
         {reply && (
@@ -308,7 +312,7 @@ export function MessageBubble({
               // timestamp must read against that (not the neutral
               // foreground) — otherwise it goes low-contrast in light
               // mode. Inbound bubbles use the muted surface.
-              isAgent ? "text-primary-foreground/70" : "text-muted-foreground",
+              isAgent ? "text-[var(--wa-out-meta)]" : "text-[var(--wa-in-meta)]",
             )}
           >
             {time}

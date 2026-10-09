@@ -289,6 +289,8 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated, clas
   }
 
   const displayName = contact.name || contactHandle(contact);
+  const phoneDigits = contact.phone?.replace(/\D/g, "") ?? "";
+  const telHref = phoneDigits.length >= 8 ? `tel:+${phoneDigits}` : null;
   const initials = displayName.charAt(0).toUpperCase();
 
   return (
@@ -323,20 +325,38 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated, clas
 
           {/* Phone */}
           <div className="mt-4 space-y-2">
-            <button
-              onClick={handleCopyPhone}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
-            >
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span className="flex-1 text-left">
-                {contactHandle(contact)}
-              </span>
-              {copied ? (
-                <Check className="h-3 w-3 text-primary" />
+            {/* Tapping the number opens the phone dialer; the small
+                copy icon remains for pasting the number elsewhere. */}
+            <div className="flex w-full items-center gap-1 rounded-lg text-sm text-muted-foreground">
+              {telHref ? (
+                <a
+                  href={telHref}
+                  className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-primary transition-colors hover:bg-muted"
+                  title={tSidebar("callNumber")}
+                >
+                  <Phone className="h-4 w-4" />
+                  <span className="flex-1 text-left">{contactHandle(contact)}</span>
+                </a>
               ) : (
-                <Copy className="h-3 w-3 text-muted-foreground" />
+                <span className="flex flex-1 items-center gap-2 px-3 py-2">
+                  <Phone className="h-4 w-4" />
+                  <span className="flex-1 text-left">{contactHandle(contact)}</span>
+                </span>
               )}
-            </button>
+              <button
+                type="button"
+                onClick={handleCopyPhone}
+                aria-label={tSidebar("copyNumber")}
+                title={tSidebar("copyNumber")}
+                className="rounded-md p-2 transition-colors hover:bg-muted"
+              >
+                {copied ? (
+                  <Check className="h-3 w-3 text-primary" />
+                ) : (
+                  <Copy className="h-3 w-3 text-muted-foreground" />
+                )}
+              </button>
+            </div>
 
             {contact.email && (
               <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground">
