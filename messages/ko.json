@@ -2212,7 +2212,7 @@
     "callDate": "Calls made on",
     "callDateHint": "Pick the day the calls happened (usually today), then add all the recordings at once.",
     "dropHere": "Drop recordings here, or click to choose several files",
-    "formats": "MP3, M4A, AMR, AAC, WAV, OGG — up to 50 MB each",
+    "formats": "MP3, M4A, AMR, AAC, WAV, OGG — up to 50 MB each. Each recording is transcribed and analysed automatically.",
     "uploadCount": "Upload {count} {count, plural, =1 {recording} other {recordings}}",
     "uploading": "Uploading…",
     "clearList": "Clear list",
@@ -2291,7 +2291,9 @@
       "openChats": "Open chats assigned",
       "openDeals": "Open deals assigned",
       "activeTime": "Active time",
-      "onlineTime": "Logged in"
+      "onlineTime": "Logged in",
+      "avgCallScore": "Avg call score",
+      "leadQuality": "Leads hot / warm / cold"
     },
     "nowHint": "Columns marked * show the situation right now, not the chosen period.",
     "trackingNote": "Active time = CRM open and in use (idle after 5 minutes without activity); Logged in = CRM open in a browser tab. Time is tracked from 6 Oct 2026. Messages sent and tags added are also counted from 6 Oct 2026.",
@@ -2320,7 +2322,8 @@
       "online": "Logged in",
       "firstSeen": "First seen",
       "lastSeen": "Last seen"
-    }
+    },
+    "callScoreHint": "From AI analysis of the agent's transcribed call recordings in this period."
   },
   "AutoAssign": {
     "title": "Auto-assign new chats (round-robin)",

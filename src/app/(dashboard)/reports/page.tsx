@@ -41,6 +41,8 @@ const COLUMNS: { key: keyof MemberStats; labelKey: string; hintKey?: string }[] 
   { key: "dealsWon", labelKey: "col.dealsWon" },
   { key: "followUpsDone", labelKey: "col.followUpsDone" },
   { key: "recordings", labelKey: "col.recordings" },
+  { key: "avgCallScore", labelKey: "col.avgCallScore", hintKey: "callScoreHint" },
+  { key: "hotLeads", labelKey: "col.leadQuality", hintKey: "callScoreHint" },
   { key: "followUpsOverdue", labelKey: "col.followUpsOverdue", hintKey: "nowHint" },
   { key: "openChats", labelKey: "col.openChats", hintKey: "nowHint" },
   { key: "openDeals", labelKey: "col.openDeals", hintKey: "nowHint" },
@@ -135,12 +137,20 @@ export default function TeamReportPage() {
 
   const totals = useMemo(() => {
     if (!stats) return null;
+    const rows = Object.values(stats);
+    const sum = (k: keyof MemberStats) => rows.reduce((n, s) => n + (Number(s[k]) || 0), 0);
     const out = {} as MemberStats;
-    for (const c of COLUMNS) out[c.key] = 0;
-    out.recordingSeconds = 0;
-    for (const s of Object.values(stats)) {
-      for (const k of Object.keys(out) as (keyof MemberStats)[]) out[k] += s[k];
+    for (const k of Object.keys(rows[0] ?? {}) as (keyof MemberStats)[]) {
+      (out as unknown as Record<string, number>)[k] = sum(k);
     }
+    // Average of averages would skew toward agents with few calls —
+    // weight each agent's average by their analysed calls instead.
+    const analysed = sum("callsAnalysed");
+    out.avgCallScore = analysed
+      ? Math.round(
+          (rows.reduce((n, s) => n + (s.avgCallScore ?? 0) * s.callsAnalysed, 0) / analysed) * 10,
+        ) / 10
+      : null;
     return out;
   }, [stats]);
 
@@ -150,12 +160,20 @@ export default function TeamReportPage() {
     return <p className="text-sm text-muted-foreground">{t("adminsOnly")}</p>;
   }
 
-  const cell = (s: MemberStats, key: keyof MemberStats) =>
+  const cell = (s: MemberStats, key: keyof MemberStats): string =>
     key === "activeSeconds" || key === "onlineSeconds"
       ? formatHours(s[key])
       : key === "recordings" && s.recordings
-      ? `${s.recordings} · ${formatDuration(s.recordingSeconds) ?? "0:00"}`
-      : s[key].toLocaleString();
+        ? `${s.recordings} · ${formatDuration(s.recordingSeconds) ?? "0:00"}`
+        : key === "avgCallScore"
+          ? s.avgCallScore == null
+            ? "—"
+            : `${s.avgCallScore}/10`
+          : key === "hotLeads"
+            ? s.callsAnalysed
+              ? `${s.hotLeads} / ${s.warmLeads} / ${s.coldLeads}`
+              : "—"
+            : (s[key] ?? 0).toLocaleString();
 
   return (
     <div className="space-y-6">
@@ -179,7 +197,7 @@ export default function TeamReportPage() {
                   title={c.hintKey ? t(c.hintKey) : undefined}
                 >
                   {t(c.labelKey)}
-                  {c.hintKey && <span className="text-muted-foreground/60">*</span>}
+                  {c.hintKey === "nowHint" && <span className="text-muted-foreground/60">*</span>}
                 </th>
               ))}
             </tr>
@@ -219,7 +237,9 @@ export default function TeamReportPage() {
                         key={c.key}
                         className={cn(
                           "px-3 py-2 text-right tabular-nums",
-                          s[c.key] === 0 ? "text-muted-foreground/50" : "text-foreground",
+                          s[c.key] === 0 || s[c.key] == null || (c.key === "hotLeads" && !s.callsAnalysed)
+                            ? "text-muted-foreground/50"
+                            : "text-foreground",
                           c.key === "followUpsOverdue" && s.followUpsOverdue > 0 && "font-semibold text-red-400",
                         )}
                       >

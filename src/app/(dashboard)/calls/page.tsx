@@ -224,25 +224,37 @@ export default function CallRecordingsPage() {
         return setStatus(item.key, "error", t("uploadFailed"));
       }
       const phone = phoneFromRecordingName(file.name);
-      const { error } = await supabase.from("call_recordings").insert({
-        account_id: accountId,
-        uploaded_by: user!.id,
-        call_date: callDate,
-        storage_path: path,
-        file_name: file.name,
-        mime_type: mime,
-        size_bytes: file.size,
-        duration_seconds: duration,
-        phone,
-        contact_id: phone ? contactByPhone.get(phone) ?? null : null,
-      });
-      if (error) {
+      const { data: row, error } = await supabase
+        .from("call_recordings")
+        .insert({
+          account_id: accountId,
+          uploaded_by: user!.id,
+          call_date: callDate,
+          storage_path: path,
+          file_name: file.name,
+          mime_type: mime,
+          size_bytes: file.size,
+          duration_seconds: duration,
+          phone,
+          contact_id: phone ? contactByPhone.get(phone) ?? null : null,
+        })
+        .select("id")
+        .single();
+      if (error || !row) {
         await supabase.storage.from(CALL_RECORDINGS_BUCKET).remove([path]);
         failed++;
         return setStatus(item.key, "error", t("uploadFailed"));
       }
       ok++;
       setStatus(item.key, "done");
+      // Auto-transcribe: start the Sarvam job right away. The upload
+      // already succeeded, so a failure here only shows on the row
+      // (with a retry button) rather than failing the upload.
+      try {
+        await requestTranscription(row.id as string, "POST");
+      } catch (err) {
+        console.warn("[calls] auto-transcribe failed to start:", err);
+      }
     }
 
     await Promise.all(

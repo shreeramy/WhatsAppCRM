@@ -28,6 +28,13 @@ export interface MemberStats {
   followUpsOverdue: number;
   recordings: number;
   recordingSeconds: number;
+  /** Recordings with an AI analysis in the period. */
+  callsAnalysed: number;
+  /** Average agent score (0-10) over analysed calls; null if none. */
+  avgCallScore: number | null;
+  hotLeads: number;
+  warmLeads: number;
+  coldLeads: number;
   openChats: number;
   openDeals: number;
 }
@@ -64,6 +71,33 @@ async function count(
   const { count: n, error } = await q;
   if (error) throw error;
   return n ?? 0;
+}
+
+interface CallRow {
+  duration_seconds: number | null;
+  lead_quality: string | null;
+  agent_score: string | number | null;
+}
+
+/** Lead-quality counts and average agent score from analysed calls. */
+export function summarizeCallAnalyses(rows: Pick<CallRow, "lead_quality" | "agent_score">[]): Pick<
+  MemberStats,
+  "callsAnalysed" | "avgCallScore" | "hotLeads" | "warmLeads" | "coldLeads"
+> {
+  const analysed = rows.filter((r) => r.lead_quality != null || r.agent_score != null);
+  const scores = analysed
+    .map((r) => Number(r.agent_score))
+    .filter((n) => Number.isFinite(n));
+  const count = (q: string) => analysed.filter((r) => r.lead_quality === q).length;
+  return {
+    callsAnalysed: analysed.length,
+    avgCallScore: scores.length
+      ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+      : null,
+    hotLeads: count("hot"),
+    warmLeads: count("warm"),
+    coldLeads: count("cold"),
+  };
 }
 
 export async function loadMemberStats(
@@ -150,7 +184,10 @@ export async function loadMemberStats(
     within(
       db
         .from("call_recordings")
-        .select("duration_seconds", { count: "exact" })
+        .select(
+          "duration_seconds, lead_quality:analysis->>lead_quality, agent_score:analysis->>agent_score",
+          { count: "exact" },
+        )
         .eq("account_id", accountId)
         .eq("uploaded_by", m.userId)
         .limit(5000),
@@ -173,10 +210,9 @@ export async function loadMemberStats(
   if (recs.error) throw recs.error;
   if (time.error) throw time.error;
   const timeRows = (time.data ?? []) as { active_seconds: number; online_seconds: number }[];
-  const recordingSeconds = (recs.data ?? []).reduce(
-    (s, row) => s + ((row as { duration_seconds: number | null }).duration_seconds ?? 0),
-    0,
-  );
+  const recRows = (recs.data ?? []) as unknown as CallRow[];
+  const recordingSeconds = recRows.reduce((s, row) => s + (row.duration_seconds ?? 0), 0);
+  const calls = summarizeCallAnalyses(recRows);
 
   return {
     activeSeconds: timeRows.reduce((s, d) => s + d.active_seconds, 0),
@@ -190,6 +226,7 @@ export async function loadMemberStats(
     followUpsOverdue,
     recordings: recs.count ?? 0,
     recordingSeconds,
+    ...calls,
     openChats,
     openDeals,
   };
