@@ -1823,6 +1823,21 @@
       "title": "Login e segurança",
       "description": "Altere sua senha e saia dos seus dispositivos. Isso mantém sua conta segura."
     },
+    "pushNotifications": {
+      "title": "Notificações no telefone e em segundo plano",
+      "description": "Receba uma notificação neste telefone ou computador para cada nova mensagem nos chats atribuídos a você, mesmo com o CRM fechado. Chats sem responsável notificam proprietários e administradores.",
+      "toggleLabel": "Notificações push neste dispositivo",
+      "toggleDesc": "Aparece como uma notificação do WhatsApp, no topo da tela.",
+      "sendTest": "Enviar notificação de teste",
+      "enabledToast": "As notificações push estão ativadas neste dispositivo",
+      "deniedToast": "As notificações estão bloqueadas",
+      "deniedHint": "Permita notificações deste site nas configurações do navegador e tente novamente.",
+      "unconfigured": "O push ainda não está configurado no servidor.",
+      "unsupported": "Este navegador não suporta notificações push.",
+      "iosHint": "No iPhone: toque em Compartilhar → Adicionar à Tela de Início, abra o CRM por esse ícone e ative aqui.",
+      "testNone": "Nenhum dispositivo recebeu. Desligue e ligue o botão novamente.",
+      "failed": "Algo deu errado"
+    },
     "browserNotifications": {
       "title": "Notificações do navegador",
       "description": "Receba um alerta na área de trabalho para cada nova mensagem de cliente, mesmo quando estiver em outra página. Salvo neste dispositivo.",

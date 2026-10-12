@@ -1823,6 +1823,21 @@
       "title": "Login & security",
       "description": "Change your password and sign out of your devices. These keep your account safe."
     },
+    "pushNotifications": {
+      "title": "Phone & background notifications",
+      "description": "Get a notification on this phone or computer for every new message in chats assigned to you, even when the CRM is closed. Unassigned chats notify owners and admins.",
+      "toggleLabel": "Push notifications on this device",
+      "toggleDesc": "Shows like a WhatsApp notification, from the top of the screen.",
+      "sendTest": "Send test notification",
+      "enabledToast": "Push notifications are on for this device",
+      "deniedToast": "Notifications are blocked",
+      "deniedHint": "Allow notifications for this site in your browser's site settings, then try again.",
+      "unconfigured": "Push isn't set up on the server yet.",
+      "unsupported": "This browser doesn't support push notifications.",
+      "iosHint": "On iPhone: tap Share → Add to Home Screen, open the CRM from that icon, then turn this on here.",
+      "testNone": "No device received it. Turn the switch off and on again.",
+      "failed": "Something went wrong"
+    },
     "browserNotifications": {
       "title": "Browser notifications",
       "description": "Get a desktop alert for every new customer message, even while you're on another page. Saved to this device.",

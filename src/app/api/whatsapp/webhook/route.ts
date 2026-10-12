@@ -27,6 +27,8 @@ import {
   type InboundInteractive,
 } from '@/lib/whatsapp/interactive-inbound'
 import { assignRoundRobin } from '@/lib/assignment/round-robin'
+import { pushRecipientsForConversation, sendPushToUsers } from '@/lib/push/send'
+import { buildNotificationContent, conversationHref } from '@/lib/notifications/browser-notify'
 
 // The `after()` callback in POST runs within this route's max duration.
 // Inbound processing can fan out to per-media Meta verification calls, so
@@ -865,6 +867,13 @@ async function processMessage(
   // SQL — see the helper for why that matters.
   await reopenClosedConversation(supabaseAdmin(), conversation)
 
+  // Phone / background push to whoever owns this chat. Never throws.
+  await pushNewMessage(accountId, conversation.id, insertedRows[0].id as string, {
+    contentType,
+    contentText,
+    contactName: contactRecord.name || contactRecord.phone,
+  })
+
   // If this contact was a recent broadcast recipient, flag the reply
   // so the broadcast's `replied_count` advances (via the aggregate
   // trigger installed in migration 003).
@@ -1395,6 +1404,44 @@ async function findOrCreateContact(
  * (inbox_settings, migration 053). Runs once, when a chat is first
  * opened. Failures are logged and never block the inbound message.
  */
+async function pushNewMessage(
+  accountId: string,
+  conversationId: string,
+  messageId: string,
+  msg: { contentType: string; contentText: string | null; contactName: string | null },
+) {
+  try {
+    const { data: conv } = await supabaseAdmin()
+      .from('conversations')
+      .select('assigned_agent_id')
+      .eq('id', conversationId)
+      .maybeSingle()
+    const recipients = await pushRecipientsForConversation(
+      supabaseAdmin(),
+      accountId,
+      (conv?.assigned_agent_id as string | null) ?? null,
+    )
+    const { title, body } = buildNotificationContent(
+      {
+        id: messageId,
+        conversation_id: conversationId,
+        sender_type: 'customer',
+        content_type: msg.contentType as never,
+        content_text: msg.contentText,
+      },
+      msg.contactName,
+    )
+    await sendPushToUsers(supabaseAdmin(), accountId, recipients, {
+      title,
+      body,
+      url: conversationHref(conversationId),
+      tag: conversationId,
+    })
+  } catch (err) {
+    console.error('[webhook] push notification failed:', err)
+  }
+}
+
 async function autoAssignNewConversation(accountId: string, conversationId: string) {
   const db = supabaseAdmin()
   const { data: settings, error } = await db
