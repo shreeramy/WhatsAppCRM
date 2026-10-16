@@ -169,7 +169,32 @@
         ],
         "title_aliases": {
           "Want to become DSA": "e2"
-        }
+        },
+        "actions": [
+          {
+            "type": "schedule_no_reply",
+            "delay_minutes": 120,
+            "actions": [
+              {
+                "type": "assign"
+              },
+              {
+                "type": "add_tag",
+                "tag": "No reply"
+              },
+              {
+                "type": "create_follow_up",
+                "kind": "call",
+                "title": "No reply – call {{contact_name}}"
+              },
+              {
+                "type": "notify_agent",
+                "title": "📵 No reply: {{contact_name}}",
+                "body": "Didn't answer the welcome in 2 hours — please call"
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -539,7 +564,32 @@
         "title_aliases": {
           "DSA बनना है": "h2",
           "बस price जानना है": "h3"
-        }
+        },
+        "actions": [
+          {
+            "type": "schedule_no_reply",
+            "delay_minutes": 120,
+            "actions": [
+              {
+                "type": "assign"
+              },
+              {
+                "type": "add_tag",
+                "tag": "No reply"
+              },
+              {
+                "type": "create_follow_up",
+                "kind": "call",
+                "title": "No reply – call {{contact_name}}"
+              },
+              {
+                "type": "notify_agent",
+                "title": "📵 No reply: {{contact_name}}",
+                "body": "Didn't answer the welcome in 2 hours — please call"
+              }
+            ]
+          }
+        ]
       }
     },
     {

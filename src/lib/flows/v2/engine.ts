@@ -76,7 +76,9 @@ export type V2Action =
   | { type: "flag_hot" }
   | { type: "schedule_nudge"; nodes: Partial<Record<V2Lang, string>>; delay_minutes: number }
   | { type: "schedule_auto_close"; hours: number }
-  | { type: "mark_fallback_replied" };
+  | { type: "mark_fallback_replied" }
+  /** If the lead taps / writes nothing for `delay_minutes`, run `actions` (assign, tag, follow-up…). */
+  | { type: "schedule_no_reply"; delay_minutes: number; actions: V2Action[] };
 
 interface V2NodeConfig {
   lang?: V2Lang;
@@ -1072,6 +1074,26 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
       if (error) throw new Error(`schedule auto-close: ${error.message}`);
       return `auto-close at ${due.toISOString()}`;
     }
+    case "schedule_no_reply": {
+      const delay =
+        (ctx.isTest ? settings.test_overrides?.no_reply_delay_minutes : undefined) ?? action.delay_minutes;
+      const ignoreHours = ctx.isTest && settings.test_overrides?.working_hours_mode === "open";
+      const due = nudgeDue(ctx.now, settings.working_hours, delay, "10:30", ignoreHours);
+      const { error } = await db.from("flow_scheduled_jobs").insert({
+        account_id: ctx.accountId,
+        flow_id: ctx.flow.id,
+        run_id: run.id,
+        contact_id: ctx.contact.id,
+        conversation_id: ctx.conversationId,
+        kind: "no_reply",
+        node_key: run.current_node_key,
+        actions: action.actions,
+        cancel_on: ["customer", "agent"],
+        due_at: due.toISOString(),
+      });
+      if (error) throw new Error(`schedule no-reply: ${error.message}`);
+      return `no-reply check at ${due.toISOString()}`;
+    }
     case "mark_fallback_replied": {
       const { error } = await db
         .from("flow_contact_state")
@@ -1128,8 +1150,9 @@ interface JobRow {
   run_id: string | null;
   contact_id: string | null;
   conversation_id: string | null;
-  kind: "nudge" | "auto_close";
+  kind: "nudge" | "auto_close" | "no_reply";
   node_key: string | null;
+  actions: V2Action[] | null;
   cancel_on: string[];
   due_at: string;
   created_at: string;
@@ -1182,7 +1205,7 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
     return { status: "done", result: "conversation closed (no reply in time)" };
   }
 
-  // Nudge
+  // Nudge / no-reply: need the flow, contact and run.
   const bundles = await loadV2Flows(db, job.account_id);
   const bundle = bundles.find((b) => b.flow.id === job.flow_id);
   if (!bundle) return { status: "skipped", result: "flow no longer on v2" };
@@ -1209,6 +1232,16 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
   };
   if (isBotPaused(await lastAgentMessageAt(ctx), ctx.now, bundle.settings.bot_pause_hours)) {
     return { status: "cancelled", result: "agent active on the chat" };
+  }
+
+  if (job.kind === "no_reply") {
+    // The lead never answered the welcome: hand them to an agent to call.
+    // Every action is logged (failures as error events) by runAction.
+    for (const action of job.actions ?? []) {
+      await runAction(ctx, run, job.node_key ?? "no_reply", action);
+    }
+    await ctx.db.from("flow_runs").update({ vars: run.vars }).eq("id", run.id);
+    return { status: "done", result: `no reply — ran ${(job.actions ?? []).map((a) => a.type).join(", ")}` };
   }
 
   // WhatsApp's 24h customer-service window.

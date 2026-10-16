@@ -103,6 +103,7 @@ export interface V2Settings {
   /** Only applied to contacts on the test allow-list. */
   test_overrides?: {
     nudge_delay_minutes?: number;
+    no_reply_delay_minutes?: number;
     /** "open" / "closed" forces working hours for test contacts. */
     working_hours_mode?: "auto" | "open" | "closed";
   };
