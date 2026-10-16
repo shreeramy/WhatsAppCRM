@@ -42,7 +42,8 @@
     "menuSignOut": "Sair",
     "followUps": "Follow-ups",
     "callRecordings": "Call Recordings",
-    "teamReport": "Team Report"
+    "teamReport": "Team Report",
+    "callNext": "Próxima ligação"
   },
   "Header": {
     "dashboard": "Painel",
@@ -59,7 +60,8 @@
     "defaultAvatar": "Avatar",
     "menuProfile": "Perfil",
     "menuSettings": "Configurações",
-    "menuSignOut": "Sair"
+    "menuSignOut": "Sair",
+    "callNext": "Próxima ligação"
   },
   "ModeToggle": {
     "switchMode": "Mudar para o modo {mode}"
@@ -2335,7 +2337,9 @@
       "activeTime": "Active time",
       "onlineTime": "Logged in",
       "avgCallScore": "Avg call score",
-      "leadQuality": "Leads hot / warm / cold"
+      "leadQuality": "Leads hot / warm / cold",
+      "callsLogged": "Ligações registradas",
+      "demosFixed": "Demos marcadas"
     },
     "nowHint": "Columns marked * show the situation right now, not the chosen period.",
     "trackingNote": "Active time = CRM open and in use (idle after 5 minutes without activity); Logged in = CRM open in a browser tab. Time is tracked from 6 Oct 2026. Messages sent and tags added are also counted from 6 Oct 2026.",
@@ -2376,5 +2380,79 @@
     "save": "Save",
     "saved": "Auto-assign settings saved",
     "saveFailed": "Couldn't save auto-assign settings"
+  },
+  "CallNext": {
+    "agentPicker": "De quem são as ligações",
+    "remaining": "{count, plural, =0 {Nenhuma ligação pendente} one {# ligação pendente} other {# ligações pendentes}}",
+    "doneToday": "{count} feitas hoje",
+    "split": "{now} agora · {today} hoje",
+    "loadFailed": "Não foi possível carregar a lista",
+    "saveFailed": "Não salvou, tente de novo",
+    "emptyTitle": "Todas as ligações feitas",
+    "emptyBody": "Novos leads e follow-ups aparecem aqui.",
+    "tierNow": "Ligue agora",
+    "tierToday": "Hoje",
+    "call": "Ligar",
+    "chat": "Chat",
+    "later": "Depois",
+    "alreadyCalled": "Já ligou? Registre o resultado",
+    "noPhone": "Este lead não tem número — use o chat.",
+    "upNext": "Próximos",
+    "whatHappened": "O que aconteceu com {name}?",
+    "cancel": "Voltar",
+    "autoHint": "Um toque — o CRM cria o follow-up, a tag e atualiza o negócio.",
+    "whenDemo": "Quando é a demo?",
+    "whenCall": "Quando ligar?",
+    "pickTime": "Escolha o horário",
+    "save": "Salvar",
+    "back": "Voltar",
+    "whyNot": "Por que não tem interesse?",
+    "outcome": {
+      "demo_booked": "Demo marcada",
+      "will_pay": "Vai pagar",
+      "call_later": "Ligar depois",
+      "no_answer": "Não atendeu",
+      "not_interested": "Sem interesse"
+    },
+    "time": {
+      "todayEvening": "Hoje às 18h",
+      "tomorrowMorning": "Amanhã às 11h",
+      "tomorrowEvening": "Amanhã às 17h"
+    },
+    "notInterestedReason": {
+      "price": "Preço alto",
+      "not_dsa": "Não é DSA",
+      "other_tool": "Usa outro software",
+      "other": "Outro"
+    },
+    "saved": {
+      "demo_booked": "Demo salva — follow-up criado",
+      "will_pay": "Follow-up de pagamento para amanhã",
+      "call_later": "Retorno salvo",
+      "no_answer": "Volta em 2 horas",
+      "not_interested": "Lead encerrado"
+    },
+    "reason": {
+      "followUpOverdue": "Follow-up atrasado há {ago}: {title}",
+      "callRequested": "Pediu ligação há {ago}",
+      "demoSoon": "Demo às {at} — envie o link",
+      "customerWaiting": "Cliente esperando resposta há {ago}",
+      "retryCall": "Não atendeu da última vez — tente de novo",
+      "noReply": "Não respondeu a boas-vindas",
+      "priceSent": "Viu o preço, sem próximo passo",
+      "followUpToday": "Follow-up hoje {at}: {title}",
+      "nurture": "Viu o vídeo há {ago}"
+    },
+    "short": {
+      "followUpOverdue": "Follow-up atrasado",
+      "callRequested": "Pediu ligação",
+      "demoSoon": "Demo em breve",
+      "customerWaiting": "Esperando",
+      "retryCall": "Tentar de novo",
+      "noReply": "Sem resposta",
+      "priceSent": "Viu preço",
+      "followUpToday": "Follow-up hoje",
+      "nurture": "Viu vídeo"
+    }
   }
 }

@@ -42,7 +42,8 @@
     "menuSignOut": "로그아웃",
     "followUps": "Follow-ups",
     "callRecordings": "Call Recordings",
-    "teamReport": "Team Report"
+    "teamReport": "Team Report",
+    "callNext": "다음 통화"
   },
   "Header": {
     "dashboard": "대시보드",
@@ -59,7 +60,8 @@
     "defaultAvatar": "아바타",
     "menuProfile": "프로필",
     "menuSettings": "설정",
-    "menuSignOut": "로그아웃"
+    "menuSignOut": "로그아웃",
+    "callNext": "다음 통화"
   },
   "ModeToggle": {
     "switchMode": "{mode} 모드로 전환"
@@ -2335,7 +2337,9 @@
       "activeTime": "Active time",
       "onlineTime": "Logged in",
       "avgCallScore": "Avg call score",
-      "leadQuality": "Leads hot / warm / cold"
+      "leadQuality": "Leads hot / warm / cold",
+      "callsLogged": "기록된 통화",
+      "demosFixed": "확정된 데모"
     },
     "nowHint": "Columns marked * show the situation right now, not the chosen period.",
     "trackingNote": "Active time = CRM open and in use (idle after 5 minutes without activity); Logged in = CRM open in a browser tab. Time is tracked from 6 Oct 2026. Messages sent and tags added are also counted from 6 Oct 2026.",
@@ -2376,5 +2380,79 @@
     "save": "Save",
     "saved": "Auto-assign settings saved",
     "saveFailed": "Couldn't save auto-assign settings"
+  },
+  "CallNext": {
+    "agentPicker": "누구의 통화",
+    "remaining": "{count, plural, =0 {남은 통화 없음} other {남은 통화 #건}}",
+    "doneToday": "오늘 {count}건 완료",
+    "split": "지금 {now} · 오늘 {today}",
+    "loadFailed": "통화 목록을 불러오지 못했습니다",
+    "saveFailed": "저장하지 못했습니다. 다시 시도하세요",
+    "emptyTitle": "모든 통화 완료",
+    "emptyBody": "새 리드나 후속 조치가 생기면 여기에 표시됩니다.",
+    "tierNow": "지금 전화",
+    "tierToday": "오늘",
+    "call": "전화하기",
+    "chat": "채팅",
+    "later": "나중에",
+    "alreadyCalled": "이미 통화했나요? 결과를 기록하세요",
+    "noPhone": "이 리드는 번호가 없습니다 — 채팅을 이용하세요.",
+    "upNext": "다음",
+    "whatHappened": "{name}님과 어떻게 됐나요?",
+    "cancel": "돌아가기",
+    "autoHint": "한 번 탭 — 후속 조치, 태그, 거래를 CRM이 업데이트합니다.",
+    "whenDemo": "데모는 언제인가요?",
+    "whenCall": "언제 전화할까요?",
+    "pickTime": "시간 선택",
+    "save": "저장",
+    "back": "돌아가기",
+    "whyNot": "관심 없는 이유는?",
+    "outcome": {
+      "demo_booked": "데모 확정",
+      "will_pay": "결제 예정",
+      "call_later": "나중에 전화 요청",
+      "no_answer": "받지 않음",
+      "not_interested": "관심 없음"
+    },
+    "time": {
+      "todayEvening": "오늘 오후 6시",
+      "tomorrowMorning": "내일 오전 11시",
+      "tomorrowEvening": "내일 오후 5시"
+    },
+    "notInterestedReason": {
+      "price": "가격이 높음",
+      "not_dsa": "DSA 아님",
+      "other_tool": "다른 소프트웨어 사용",
+      "other": "기타"
+    },
+    "saved": {
+      "demo_booked": "데모 저장 — 후속 조치 생성",
+      "will_pay": "내일 결제 확인 후속 조치 생성",
+      "call_later": "재통화 저장",
+      "no_answer": "2시간 후 다시 표시",
+      "not_interested": "리드 종료"
+    },
+    "reason": {
+      "followUpOverdue": "{ago} 지연된 후속 조치: {title}",
+      "callRequested": "{ago} 전에 통화 요청",
+      "demoSoon": "{at} 데모 — 링크 보내기",
+      "customerWaiting": "고객이 {ago}째 답장 대기",
+      "retryCall": "지난번 받지 않음 — 다시 시도",
+      "noReply": "환영 메시지에 답 없음",
+      "priceSent": "가격 확인 후 다음 단계 없음",
+      "followUpToday": "오늘 {at} 후속 조치: {title}",
+      "nurture": "{ago} 전에 영상 시청"
+    },
+    "short": {
+      "followUpOverdue": "후속 지연",
+      "callRequested": "통화 요청",
+      "demoSoon": "곧 데모",
+      "customerWaiting": "답장 대기",
+      "retryCall": "재시도",
+      "noReply": "무응답",
+      "priceSent": "가격 확인",
+      "followUpToday": "오늘 후속",
+      "nurture": "영상 시청"
+    }
   }
 }

@@ -40,6 +40,8 @@ const COLUMNS: { key: keyof MemberStats; labelKey: string; hintKey?: string }[] 
   { key: "dealsCreated", labelKey: "col.dealsCreated" },
   { key: "dealsWon", labelKey: "col.dealsWon" },
   { key: "followUpsDone", labelKey: "col.followUpsDone" },
+  { key: "callsLogged", labelKey: "col.callsLogged" },
+  { key: "demosFixed", labelKey: "col.demosFixed" },
   { key: "recordings", labelKey: "col.recordings" },
   { key: "avgCallScore", labelKey: "col.avgCallScore", hintKey: "callScoreHint" },
   { key: "hotLeads", labelKey: "col.leadQuality", hintKey: "callScoreHint" },

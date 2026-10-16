@@ -18,6 +18,7 @@ import {
   LogOut,
   MessageSquare,
   PhoneCall,
+  PhoneOutgoing,
   Radio,
   Settings,
   Shield,
@@ -97,6 +98,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
   { href: "/inbox", labelKey: "inbox", icon: MessageSquare },
+  { href: "/call-next", labelKey: "callNext", icon: PhoneOutgoing },
   { href: "/notifications", labelKey: "notifications", icon: Bell },
   { href: "/follow-ups", labelKey: "followUps", icon: CalendarClock },
   { href: "/calls", labelKey: "callRecordings", icon: PhoneCall },

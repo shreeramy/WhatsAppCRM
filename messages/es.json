@@ -42,7 +42,8 @@
     "menuSignOut": "Cerrar sesión",
     "followUps": "Follow-ups",
     "callRecordings": "Call Recordings",
-    "teamReport": "Team Report"
+    "teamReport": "Team Report",
+    "callNext": "Próxima llamada"
   },
   "Header": {
     "dashboard": "Panel",
@@ -59,7 +60,8 @@
     "defaultAvatar": "Avatar",
     "menuProfile": "Perfil",
     "menuSettings": "Configuración",
-    "menuSignOut": "Cerrar sesión"
+    "menuSignOut": "Cerrar sesión",
+    "callNext": "Próxima llamada"
   },
   "ModeToggle": {
     "switchMode": "Cambiar al modo {mode}"
@@ -2335,7 +2337,9 @@
       "activeTime": "Active time",
       "onlineTime": "Logged in",
       "avgCallScore": "Avg call score",
-      "leadQuality": "Leads hot / warm / cold"
+      "leadQuality": "Leads hot / warm / cold",
+      "callsLogged": "Llamadas registradas",
+      "demosFixed": "Demos agendadas"
     },
     "nowHint": "Columns marked * show the situation right now, not the chosen period.",
     "trackingNote": "Active time = CRM open and in use (idle after 5 minutes without activity); Logged in = CRM open in a browser tab. Time is tracked from 6 Oct 2026. Messages sent and tags added are also counted from 6 Oct 2026.",
@@ -2376,5 +2380,79 @@
     "save": "Save",
     "saved": "Auto-assign settings saved",
     "saveFailed": "Couldn't save auto-assign settings"
+  },
+  "CallNext": {
+    "agentPicker": "De quién son las llamadas",
+    "remaining": "{count, plural, =0 {Sin llamadas pendientes} one {# llamada pendiente} other {# llamadas pendientes}}",
+    "doneToday": "{count} hechas hoy",
+    "split": "{now} ahora · {today} hoy",
+    "loadFailed": "No se pudo cargar la lista",
+    "saveFailed": "No se guardó, inténtalo de nuevo",
+    "emptyTitle": "Todas las llamadas hechas",
+    "emptyBody": "Los nuevos leads y seguimientos aparecerán aquí.",
+    "tierNow": "Llama ahora",
+    "tierToday": "Hoy",
+    "call": "Llamar",
+    "chat": "Chat",
+    "later": "Más tarde",
+    "alreadyCalled": "¿Ya llamaste? Registra el resultado",
+    "noPhone": "Este lead no tiene número — usa el chat.",
+    "upNext": "Siguientes",
+    "whatHappened": "¿Qué pasó con {name}?",
+    "cancel": "Volver",
+    "autoHint": "Un toque — el CRM crea el seguimiento, la etiqueta y actualiza el trato.",
+    "whenDemo": "¿Cuándo es la demo?",
+    "whenCall": "¿Cuándo llamar?",
+    "pickTime": "Elige la hora",
+    "save": "Guardar",
+    "back": "Volver",
+    "whyNot": "¿Por qué no le interesa?",
+    "outcome": {
+      "demo_booked": "Demo agendada",
+      "will_pay": "Va a pagar",
+      "call_later": "Llamar más tarde",
+      "no_answer": "No contestó",
+      "not_interested": "No le interesa"
+    },
+    "time": {
+      "todayEvening": "Hoy a las 6 PM",
+      "tomorrowMorning": "Mañana a las 11 AM",
+      "tomorrowEvening": "Mañana a las 5 PM"
+    },
+    "notInterestedReason": {
+      "price": "Precio alto",
+      "not_dsa": "No es DSA",
+      "other_tool": "Usa otro software",
+      "other": "Otro"
+    },
+    "saved": {
+      "demo_booked": "Demo guardada — seguimiento creado",
+      "will_pay": "Seguimiento de pago para mañana",
+      "call_later": "Rellamada guardada",
+      "no_answer": "Volverá en 2 horas",
+      "not_interested": "Lead cerrado"
+    },
+    "reason": {
+      "followUpOverdue": "Seguimiento pendiente hace {ago}: {title}",
+      "callRequested": "Pidió una llamada hace {ago}",
+      "demoSoon": "Demo a las {at} — envía el enlace",
+      "customerWaiting": "El cliente espera respuesta hace {ago}",
+      "retryCall": "No contestó la última vez — vuelve a intentar",
+      "noReply": "No respondió la bienvenida",
+      "priceSent": "Vio el precio, sin siguiente paso",
+      "followUpToday": "Seguimiento hoy {at}: {title}",
+      "nurture": "Vio el video hace {ago}"
+    },
+    "short": {
+      "followUpOverdue": "Seguimiento tarde",
+      "callRequested": "Pidió llamada",
+      "demoSoon": "Demo pronto",
+      "customerWaiting": "Espera respuesta",
+      "retryCall": "Reintentar",
+      "noReply": "Sin respuesta",
+      "priceSent": "Vio precio",
+      "followUpToday": "Seguimiento hoy",
+      "nurture": "Vio video"
+    }
   }
 }

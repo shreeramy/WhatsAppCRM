@@ -42,7 +42,8 @@
     "menuSignOut": "Sign out",
     "followUps": "Follow-ups",
     "callRecordings": "Call Recordings",
-    "teamReport": "Team Report"
+    "teamReport": "Team Report",
+    "callNext": "Call Next"
   },
   "Header": {
     "dashboard": "Dashboard",
@@ -59,7 +60,8 @@
     "defaultAvatar": "Avatar",
     "menuProfile": "Profile",
     "menuSettings": "Settings",
-    "menuSignOut": "Sign out"
+    "menuSignOut": "Sign out",
+    "callNext": "Call Next"
   },
   "ModeToggle": {
     "switchMode": "Switch to {mode} mode"
@@ -2335,7 +2337,9 @@
       "activeTime": "Active time",
       "onlineTime": "Logged in",
       "avgCallScore": "Avg call score",
-      "leadQuality": "Leads hot / warm / cold"
+      "leadQuality": "Leads hot / warm / cold",
+      "callsLogged": "Calls logged",
+      "demosFixed": "Demos fixed"
     },
     "nowHint": "Columns marked * show the situation right now, not the chosen period.",
     "trackingNote": "Active time = CRM open and in use (idle after 5 minutes without activity); Logged in = CRM open in a browser tab. Time is tracked from 6 Oct 2026. Messages sent and tags added are also counted from 6 Oct 2026.",
@@ -2376,5 +2380,79 @@
     "save": "Save",
     "saved": "Auto-assign settings saved",
     "saveFailed": "Couldn't save auto-assign settings"
+  },
+  "CallNext": {
+    "agentPicker": "Whose calls",
+    "remaining": "{count, plural, =0 {Koi call baaki nahi} one {# call baaki} other {# calls baaki}}",
+    "doneToday": "Aaj {count} ho gayi",
+    "split": "{now} abhi · {today} aaj",
+    "loadFailed": "Call list load nahi hui",
+    "saveFailed": "Save nahi hua, dobara try karo",
+    "emptyTitle": "Sab calls ho gayi",
+    "emptyBody": "Nayi lead ya follow-up aate hi yahan dikhegi.",
+    "tierNow": "Abhi call karo",
+    "tierToday": "Aaj karo",
+    "call": "Call karo",
+    "chat": "Chat",
+    "later": "Baad mein",
+    "alreadyCalled": "Call ho chuki hai? Nateeja daalo",
+    "noPhone": "Is lead ka number nahi hai — chat se baat karo.",
+    "upNext": "Iske baad",
+    "whatHappened": "{name} se kya hua?",
+    "cancel": "Wapas",
+    "autoHint": "Ek tap — agla follow-up, tag aur deal CRM khud update karega.",
+    "whenDemo": "Demo kab hai?",
+    "whenCall": "Kab call karna hai?",
+    "pickTime": "Time chuno",
+    "save": "Save",
+    "back": "Wapas",
+    "whyNot": "Kyun interested nahi?",
+    "outcome": {
+      "demo_booked": "Demo fix hua",
+      "will_pay": "Payment karega",
+      "call_later": "Baad mein call karo bola",
+      "no_answer": "Phone nahi uthaya",
+      "not_interested": "Interested nahi"
+    },
+    "time": {
+      "todayEvening": "Aaj shaam 6 baje",
+      "tomorrowMorning": "Kal subah 11 baje",
+      "tomorrowEvening": "Kal shaam 5 baje"
+    },
+    "notInterestedReason": {
+      "price": "Price zyada laga",
+      "not_dsa": "DSA nahi hai",
+      "other_tool": "Doosra software use karta hai",
+      "other": "Kuch aur"
+    },
+    "saved": {
+      "demo_booked": "Demo save hua — follow-up ban gaya",
+      "will_pay": "Payment follow-up kal ke liye ban gaya",
+      "call_later": "Call-back save hua",
+      "no_answer": "2 ghante baad dobara aayegi",
+      "not_interested": "Lead band kar di"
+    },
+    "reason": {
+      "followUpOverdue": "Follow-up {ago} se pending: {title}",
+      "callRequested": "{ago} pehle call maangi",
+      "demoSoon": "Demo {at} baje — Meet link bhejo",
+      "customerWaiting": "Customer {ago} se reply ka wait kar raha hai",
+      "retryCall": "Pichhli baar phone nahi uthaya — dobara try karo",
+      "noReply": "Welcome ka jawab nahi diya",
+      "priceSent": "Price dekh liya, aage kuch nahi",
+      "followUpToday": "Follow-up aaj {at}: {title}",
+      "nurture": "Video dekha tha, {ago} ho gaye"
+    },
+    "short": {
+      "followUpOverdue": "Follow-up late",
+      "callRequested": "Call maangi",
+      "demoSoon": "Demo jaldi",
+      "customerWaiting": "Reply pending",
+      "retryCall": "Dobara try",
+      "noReply": "No reply",
+      "priceSent": "Price dekha",
+      "followUpToday": "Follow-up aaj",
+      "nurture": "Video dekha"
+    }
   }
 }

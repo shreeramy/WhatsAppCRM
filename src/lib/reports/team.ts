@@ -26,6 +26,10 @@ export interface MemberStats {
   dealsWon: number;
   followUpsDone: number;
   followUpsOverdue: number;
+  /** Calls logged from Call Next in the period. */
+  callsLogged: number;
+  /** Of those, calls where a demo was fixed. */
+  demosFixed: number;
   recordings: number;
   recordingSeconds: number;
   /** Recordings with an AI analysis in the period. */
@@ -121,6 +125,8 @@ export async function loadMemberStats(
     openDeals,
     recs,
     time,
+    callsLogged,
+    demosFixed,
   ] = await Promise.all([
     count(
       within(
@@ -205,6 +211,27 @@ export async function loadMemberStats(
       r.fromDay,
       r.toDay,
     ),
+    count(
+      within(
+        db.from("call_outcomes").select("id", head).eq("account_id", accountId).eq("agent_id", m.userId),
+        "created_at",
+        r.from,
+        r.to,
+      ),
+    ),
+    count(
+      within(
+        db
+          .from("call_outcomes")
+          .select("id", head)
+          .eq("account_id", accountId)
+          .eq("agent_id", m.userId)
+          .eq("outcome", "demo_booked"),
+        "created_at",
+        r.from,
+        r.to,
+      ),
+    ),
   ]);
 
   if (recs.error) throw recs.error;
@@ -224,6 +251,8 @@ export async function loadMemberStats(
     dealsWon,
     followUpsDone,
     followUpsOverdue,
+    callsLogged,
+    demosFixed,
     recordings: recs.count ?? 0,
     recordingSeconds,
     ...calls,
