@@ -492,7 +492,31 @@ const scenarios = [
     check("every chat has exactly one pool agent", assigned.every((a) => POOL.includes(a)));
   }),
 
+  scenario(13, "No reply to the welcome → assigned with a call follow-up (2h, shortened to 1 min)", async () => {
+    await setOverrides({ no_reply_delay_minutes: 1, working_hours_mode: "open" });
+    const [a, b] = [P(20), P(21)];
+    await Promise.all([text(a, EN_PREFILL), text(b, EN_PREFILL)]);
+    await Promise.all([waitSent(a, 1), waitSent(b, 1)]);
+    check("not assigned yet while waiting for a reply", !(await convOf(a)).assigned_agent_id);
+    await tap(b, "v2.e1.dsa", "I run a DSA business"); // b replies, a stays silent
+    await waitSent(b, 2);
+    await sleep(65000);
+    const tick = await fetch(`${BASE}/api/flows/tick`, { method: "POST", headers: { "x-push-secret": env.PUSH_DISPATCH_SECRET } });
+    current.log.push(`tick: ${JSON.stringify((await tick.json()).processed?.map((j) => `${j.status}: ${j.result}`))}`);
+    await sleep(3000);
+    const conv = await convOf(a);
+    check("silent lead assigned to a pool agent", POOL.includes(conv.assigned_agent_id), agentName(conv.assigned_agent_id));
+    check("'No reply' tag", (await tagsOf(a)).includes("No reply"), (await tagsOf(a)).join(", "));
+    const fu = await followUpsOf(a);
+    check("call follow-up for that agent", fu.some((f) => f.type === "call" && f.assigned_to === conv.assigned_agent_id), fu.map((f) => f.title).join("; "));
+    check("agent alerted", (await alertsOf(a)).some((x) => x.title.includes("No reply")));
+    const { data: jobsB } = await db.from("flow_scheduled_jobs").select("kind, status").eq("contact_id", (await contactOf(b)).id).eq("kind", "no_reply");
+    check("lead who replied: check cancelled, no 'No reply' tag", jobsB.every((j) => j.status === "cancelled") && !(await tagsOf(b)).includes("No reply"), jobsB.map((j) => j.status).join(","));
+    await setOverrides({ no_reply_delay_minutes: undefined, working_hours_mode: "auto" });
+  }),
+
   scenario(12, "Old flow still runs for numbers not on the test list", async () => {
+    if (ORIGINAL_SETTINGS.routing === "live") return check("skipped — v2 is live for everyone, so there is no old-flow traffic to compare", true);
     if (!OLD_FLOW) return check("old flow id given", false);
     await text(OLD_PHONE, "hi");
     await sleep(8000);
@@ -531,7 +555,8 @@ await setSettings({
   test_phones: PHONES,
   dry_run_phones: PHONES,
   sim_phones: ALL_SIM,
-  routing: "test",
+  // Never switch a live flow back to test mode while real leads arrive.
+  routing: ORIGINAL_SETTINGS.routing === "live" ? "live" : "test",
   test_overrides: { working_hours_mode: "auto" },
 });
 
