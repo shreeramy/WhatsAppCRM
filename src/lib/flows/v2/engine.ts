@@ -141,6 +141,20 @@ export async function loadV2Flows(db: Db, accountId: string): Promise<V2FlowBund
     .map((r) => ({ flow: r.flow as FlowRow, settings: r.settings }));
 }
 
+/**
+ * True when a v2 flow handles this contact and owns assignment — the
+ * inbox's "auto-assign new conversations" then stays out, so v2 can
+ * assign at the qualifying step (E3/H3, E8/H8) and leave not-a-fit
+ * chats unassigned. Set `respect_inbox_auto_assign: true` in the flow's
+ * settings to keep the inbox auto-assign for v2 contacts too.
+ */
+export async function v2OwnsAssignment(accountId: string, phone: string | null | undefined): Promise<boolean> {
+  const bundles = await loadV2Flows(supabaseAdmin(), accountId);
+  return bundles.some(
+    (b) => b.flow.status === "active" && v2AppliesTo(b.settings, phone) && !b.settings.respect_inbox_auto_assign,
+  );
+}
+
 async function loadNodes(db: Db, flowId: string): Promise<Map<string, FlowNodeRow>> {
   const { data, error } = await db.from("flow_nodes").select("*").eq("flow_id", flowId);
   if (error) throw new Error(`load nodes: ${error.message}`);

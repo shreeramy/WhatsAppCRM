@@ -81,7 +81,9 @@ async function setOverrides(o) {
 // ---------------------------------------------------------------- webhook
 let tsCounter = Math.floor(Date.now() / 1000);
 async function post(phone, message, name = `[TEST] ${phone.slice(-3)}`) {
-  const msg = { from: phone, id: `wamid.TEST.${randomUUID()}`, timestamp: String(++tsCounter), ...message };
+  // Real Meta timestamps track the clock; keep them increasing too.
+  tsCounter = Math.max(tsCounter + 1, Math.floor(Date.now() / 1000));
+  const msg = { from: phone, id: `wamid.TEST.${randomUUID()}`, timestamp: String(tsCounter), ...message };
   const body = JSON.stringify({
     object: "whatsapp_business_account",
     entry: [
@@ -357,7 +359,8 @@ const scenarios = [
     const s = await waitSent(p, 5);
     check("e7 (video) → tap 'Book free demo' on the plan message → e5 slot picker", s.slice(-2).join(",") === "e7,e5", s.join(" → "));
     const tags = await tagsOf(p);
-    check("Nurture tag", tags.includes("Nurture"));
+    // An existing "nurture" tag is reused (tag names match case-insensitively).
+    check("Nurture tag", tags.some((t) => t.toLowerCase() === "nurture"), tags.join(", "));
   }),
 
   scenario(6, "Double taps", async () => {
@@ -365,7 +368,8 @@ const scenarios = [
     await text(p, EN_PREFILL);
     await waitSent(p, 1);
     await Promise.all([tap(p, "v2.e1.dsa", "I run a DSA business"), sleep(700).then(() => tap(p, "v2.e1.dsa", "I run a DSA business"))]);
-    await sleep(12000);
+    await waitSent(p, 2);
+    await sleep(15000); // give a duplicate time to show up
     const s = await sent(p);
     check("same button twice within 1s → one reply", s.join(",") === "e1,e3", s.join(" → "));
     const q = P(9);
@@ -374,7 +378,8 @@ const scenarios = [
     await tap(q, "v2.e1.code", "Want DSA code");
     await sleep(1500);
     await tap(q, "v2.e1.dsa", "I run a DSA business");
-    await sleep(12000);
+    await waitSent(q, 2);
+    await sleep(15000);
     const sq = await sent(q);
     check("'Want DSA code' then 'I run a DSA business' within 2s → only the last one answered", sq.join(",") === "e1,e3", sq.join(" → "));
   }),

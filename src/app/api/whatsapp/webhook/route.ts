@@ -28,6 +28,7 @@ import {
 } from '@/lib/whatsapp/interactive-inbound'
 import { assignRoundRobin } from '@/lib/assignment/round-robin'
 import { pushRecipientsForConversation, sendPushToUsers } from '@/lib/push/send'
+import { v2OwnsAssignment } from '@/lib/flows/v2/engine'
 import { buildNotificationContent, conversationHref } from '@/lib/notifications/browser-notify'
 
 // The `after()` callback in POST runs within this route's max duration.
@@ -733,7 +734,10 @@ async function processMessage(
       conversation_id: conversation.id,
       contact_id: contactRecord.id,
     })
-    await autoAssignNewConversation(accountId, conversation.id)
+    // A v2 flow assigns at its own qualifying step instead.
+    if (!(await v2OwnsAssignment(accountId, contactRecord.phone))) {
+      await autoAssignNewConversation(accountId, conversation.id)
+    }
   }
 
   // Reactions short-circuit here — they aren't messages. We never insert
