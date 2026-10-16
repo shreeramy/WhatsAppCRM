@@ -352,6 +352,12 @@ export interface DispatchInboundInput {
   contactId: string;
   conversationId: string;
   message: ParsedInbound;
+  /** v2 engine: a form (WhatsApp Flow / Instant Form) submission's answers. */
+  form?: { responseJson: string } | null;
+  /** v2 engine: a later tap from the same sender is in this webhook batch. */
+  hasNewerTapInBatch?: boolean;
+  /** v2 engine: Meta's message timestamp (seconds) — orders taps. */
+  messageTs?: number;
 }
 
 export interface DispatchInboundResult {

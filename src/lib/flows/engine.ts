@@ -44,6 +44,7 @@ import { addContactTagAndDispatch } from "@/lib/contacts/tag-events";
 import { removeContactTag } from "@/lib/contacts/tag-write";
 import { assignRoundRobin } from "@/lib/assignment/round-robin";
 import { resolveTagRef } from "./tag-ref";
+import { dispatchV2IfApplicable } from "./v2/engine";
 import {
   type CollectInputNodeConfig,
   type ConditionNodeConfig,
@@ -975,6 +976,12 @@ export async function dispatchInboundToFlows(
 ): Promise<DispatchInboundResult> {
   const db = supabaseAdmin();
   try {
+    // Flows on the v2 engine (flow_engine_settings) take the contacts
+    // their routing covers; everyone else falls through to the original
+    // engine below, unchanged.
+    const v2 = await dispatchV2IfApplicable(input);
+    if (v2) return v2;
+
     const activeRun = await loadActiveRunForContact(
       db,
       input.accountId,

@@ -43,6 +43,8 @@ export async function sendPushToUsers(
   payload: PushPayload,
 ): Promise<number> {
   if (!pushConfigured() || userIds.length === 0) return 0
+  // Simulated test contacts (flow v2 test mode) never buzz real phones.
+  if (`${payload.title} ${payload.body}`.includes('[TEST]')) return 0
   try {
     const { data: subs, error } = await db
       .from('push_subscriptions')

@@ -1,0 +1,887 @@
+{
+  "name": "DSA Welcome v2",
+  "description": "Welcome + qualification flow on engine v2 (global buttons, dedupe, form/Hindi entry, bot pause, nudges).",
+  "settings": {
+    "engine": "v2",
+    "routing": "test",
+    "test_phones": [],
+    "dry_run_phones": [],
+    "replaces_flow_id": null,
+    "entry_nodes": {
+      "en": "e1",
+      "hi": "h1"
+    },
+    "fallback_nodes": {
+      "en": "e8",
+      "hi": "h8"
+    },
+    "working_hours": {
+      "timezone": "Asia/Kolkata",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start": "10:00",
+      "end": "19:00"
+    },
+    "agent_pool": [],
+    "skip_offline": false,
+    "fallback_agent_name": {
+      "en": "Someone",
+      "hi": "कोई"
+    },
+    "entry": {
+      "reengage_after_days": 30,
+      "skip_if_agent_active_hours": 72,
+      "skip_if_run_finished_days": 30,
+      "opening_grace_seconds": 120
+    },
+    "language": {
+      "hindi_prefill": [
+        "नमस्ते! क्या मुझे इस बारे में और पता चल सकता है?"
+      ],
+      "contact_field": "flow_language"
+    },
+    "form": {
+      "field_map": {
+        "screen_0__0": "name"
+      },
+      "language_field": null
+    },
+    "dedupe_window_seconds": 10,
+    "tap_debounce_seconds": 4,
+    "bot_pause_hours": 72,
+    "fallback_reply_cooldown_hours": 24,
+    "text_intents": [
+      {
+        "keywords": [
+          "team",
+          "5 log",
+          "log hai",
+          "staff",
+          "मेरी team",
+          "टीम"
+        ],
+        "at_nodes": [
+          "e3",
+          "h3"
+        ],
+        "target": {
+          "en": "e4b",
+          "hi": "h4b"
+        }
+      },
+      {
+        "keywords": [
+          "akela",
+          "akele",
+          "single",
+          "just me",
+          "only me",
+          "main hi",
+          "सिर्फ मैं",
+          "अकेला"
+        ],
+        "at_nodes": [
+          "e3",
+          "h3"
+        ],
+        "target": {
+          "en": "e4a",
+          "hi": "h4a"
+        }
+      },
+      {
+        "keywords": [
+          "price",
+          "pricing",
+          "kitna",
+          "kitne",
+          "charges",
+          "cost",
+          "fees",
+          "कितना",
+          "कीमत"
+        ],
+        "target": {
+          "en": "e3",
+          "hi": "h3"
+        },
+        "by_var": {
+          "var": "plan",
+          "map": {
+            "individual": {
+              "en": "e4a",
+              "hi": "h4a"
+            },
+            "team": {
+              "en": "e4b",
+              "hi": "h4b"
+            }
+          }
+        }
+      }
+    ],
+    "deal": {
+      "pipeline": "Sales Pipeline",
+      "new_stage": "New Lead",
+      "currency": "INR"
+    },
+    "nudge_template": null,
+    "test_overrides": {
+      "working_hours_mode": "auto"
+    }
+  },
+  "nodes": [
+    {
+      "node_key": "start",
+      "node_type": "start",
+      "config": {
+        "next_node_key": "e1"
+      }
+    },
+    {
+      "node_key": "e1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Hi 👋 Welcome to DSA Management, the CRM built for loan DSAs to track every file, follow-up and commission in one place.\n\nYour bank DSA code stays yours. This is just software to manage your files.\n\nQuick question so we can help you better:",
+        "buttons": [
+          {
+            "reply_id": "v2.e1.dsa",
+            "title": "I run a DSA business",
+            "next_node_key": "e3"
+          },
+          {
+            "reply_id": "v2.e1.code",
+            "title": "Want DSA code",
+            "next_node_key": "e2"
+          },
+          {
+            "reply_id": "v2.e1.hindi",
+            "title": "हिंदी में बताएं",
+            "next_node_key": "h1"
+          }
+        ],
+        "title_aliases": {
+          "Want to become DSA": "e2"
+        }
+      }
+    },
+    {
+      "node_key": "e2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Thanks for reaching out! 🙏 We're a software company. We don't provide DSA codes or bank tie-ups. Our CRM is for people who already work as DSAs/loan agents. If you start your DSA work later, we'd love to help you manage it. All the best!",
+        "buttons": [
+          {
+            "reply_id": "v2.e2.dsa",
+            "title": "Oops, I am a DSA",
+            "next_node_key": "e3"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Not-DSA"
+          },
+          {
+            "type": "schedule_auto_close",
+            "hours": 24
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e3",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Great! How many people work on loan files in your setup?",
+        "buttons": [
+          {
+            "reply_id": "v2.e3.solo",
+            "title": "Just me",
+            "next_node_key": "e4a"
+          },
+          {
+            "reply_id": "v2.e3.team",
+            "title": "I have a team",
+            "next_node_key": "e4b"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Contacted"
+          },
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e4a",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Perfect, the Individual Plan fits you:\n\n💰 ₹600/month\n✅ Track every loan file & its status\n✅ Follow-up reminders, so no file slips away\n✅ Commission tracking\n\nWant to see it live in a free 15-min demo?",
+        "buttons": [
+          {
+            "reply_id": "v2.e4a.demo",
+            "title": "Book free demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v2.e4a.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v2.e4a.video",
+            "title": "Watch video first",
+            "next_node_key": "e7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 600,
+            "plan": "individual"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e4b",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "For teams, we have the Team Plan:\n\n💰 ₹1,397/month 🔥 or ₹14,400/year (save ₹2,364, about 2 months free)\n\n✅ Everything in Individual\n✅ Assign files to team members\n✅ See every member's pipeline & follow-ups\n✅ Team performance reports\n\nWant to see it live in a free 15-min demo?",
+        "buttons": [
+          {
+            "reply_id": "v2.e4b.demo",
+            "title": "Book free demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v2.e4b.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v2.e4b.video",
+            "title": "Watch video first",
+            "next_node_key": "e7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 1397,
+            "plan": "team"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e5",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Pick a time that suits you for a free 15-min demo 👇",
+        "dynamic_slots": {
+          "cutoff": "17:00",
+          "slots": [
+            {
+              "day": "today",
+              "start": "17:00",
+              "end": "19:00",
+              "range": {
+                "en": "5–7 PM",
+                "hi": "शाम 5–7"
+              }
+            },
+            {
+              "day": "next",
+              "start": "11:00",
+              "end": "13:00",
+              "range": {
+                "en": "11 AM–1 PM",
+                "hi": "सुबह 11–1"
+              }
+            },
+            {
+              "day": "next",
+              "start": "17:00",
+              "end": "19:00",
+              "range": {
+                "en": "5–7 PM",
+                "hi": "शाम 5–7"
+              }
+            }
+          ],
+          "words": {
+            "en": {
+              "today": "Today",
+              "tomorrow": "Tomorrow",
+              "days": [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun"
+              ]
+            },
+            "hi": {
+              "today": "आज",
+              "tomorrow": "कल",
+              "days": [
+                "सोम",
+                "मंगल",
+                "बुध",
+                "गुरु",
+                "शुक्र",
+                "शनि",
+                "रवि"
+              ]
+            }
+          },
+          "next_node_key": "e5_done"
+        }
+      }
+    },
+    {
+      "node_key": "e5_done",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Done ✅ Your demo is booked for {{slot}}. {{agent_first_name}} from our team will send the Google Meet link 10 min before. 🙂",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Demo Booked"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Demo Booked"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "demo",
+            "title": "Demo – {{slot}} – {{plan_label}}"
+          },
+          {
+            "type": "notify_agent",
+            "title": "📅 Demo booked: {{contact_name}}",
+            "body": "{{slot}}"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e6",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Sure! {{agent_first_name}} from our team will call you within 30 minutes. Please keep this number reachable 📞",
+        "text_off_hours": "Thanks! Our team will call you tomorrow between 10–11 AM 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Call Requested"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Call back – {{contact_name}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Call requested: {{contact_name}}",
+            "body": "Call within 30 minutes"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e7",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "text": "Here's a 2-min video showing exactly how DSAs use it 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Nurture"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n1",
+              "hi": "h_n1"
+            },
+            "delay_minutes": 120
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Did you get a chance to watch the video? 🙂 Shall we set up a free 15-min live demo for you?",
+        "buttons": [
+          {
+            "reply_id": "v2.n1.demo",
+            "title": "Yes, book demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v2.n1.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v2.n1.question",
+            "title": "I have a question",
+            "next_node_key": "e8"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e8",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Thanks! {{agent_first_name}} from our team will reply within 30 minutes (10 AM–7 PM).",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "Reply within 30 minutes"
+          },
+          {
+            "type": "mark_fallback_replied"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "नमस्ते 🙏 DSA Management में आपका स्वागत है, loan DSAs के लिए बना CRM जिसमें हर file, follow-up और commission एक जगह track होता है।\n\nआपका bank का DSA code आपका ही रहेगा, ये सिर्फ आपकी files manage करने का software है।\n\nआपको सही जानकारी देने के लिए एक छोटा सवाल:",
+        "buttons": [
+          {
+            "reply_id": "v2.h1.dsa",
+            "title": "मेरा DSA business है",
+            "next_node_key": "h3"
+          },
+          {
+            "reply_id": "v2.h1.code",
+            "title": "DSA code चाहिए",
+            "next_node_key": "h2"
+          },
+          {
+            "reply_id": "v2.h1.english",
+            "title": "English please",
+            "next_node_key": "e1"
+          }
+        ],
+        "title_aliases": {
+          "DSA बनना है": "h2",
+          "बस price जानना है": "h3"
+        }
+      }
+    },
+    {
+      "node_key": "h2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "संपर्क करने के लिए धन्यवाद 🙏 हम एक software company हैं। हम DSA code या bank tie-up नहीं देते। हमारा CRM उनके लिए है जो पहले से DSA/loan agent का काम करते हैं। जब आप DSA काम शुरू करें, हम आपकी मदद ज़रूर करेंगे। All the best!",
+        "buttons": [
+          {
+            "reply_id": "v2.h2.dsa",
+            "title": "मैं DSA हूँ",
+            "next_node_key": "h3"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Not-DSA"
+          },
+          {
+            "type": "schedule_auto_close",
+            "hours": 24
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h3",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "बढ़िया! आपके यहाँ कितने लोग loan files पर काम करते हैं?",
+        "buttons": [
+          {
+            "reply_id": "v2.h3.solo",
+            "title": "सिर्फ मैं",
+            "next_node_key": "h4a"
+          },
+          {
+            "reply_id": "v2.h3.team",
+            "title": "मेरी team है",
+            "next_node_key": "h4b"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Contacted"
+          },
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h4a",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "आपके लिए Individual Plan सही रहेगा:\n\n💰 ₹600/महीना\n✅ हर loan file और उसका status track करें\n✅ Follow-up reminders, कोई file नहीं छूटेगी\n✅ Commission tracking\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?",
+        "buttons": [
+          {
+            "reply_id": "v2.h4a.demo",
+            "title": "Free demo book करें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v2.h4a.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v2.h4a.video",
+            "title": "पहले video देखूँगा",
+            "next_node_key": "h7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 600,
+            "plan": "individual"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h4b",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "Team के लिए हमारा Team Plan:\n\n💰 ₹1,397/महीना 🔥 या ₹14,400/साल (₹2,364 की बचत, लगभग 2 महीने free)\n\n✅ Individual plan के सारे features\n✅ Team members को files assign करें\n✅ हर member की pipeline और follow-ups देखें\n✅ Team performance reports\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?",
+        "buttons": [
+          {
+            "reply_id": "v2.h4b.demo",
+            "title": "Free demo book करें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v2.h4b.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v2.h4b.video",
+            "title": "पहले video देखूँगा",
+            "next_node_key": "h7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 1397,
+            "plan": "team"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h5",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "Free 15-min demo के लिए अपना time चुनें 👇",
+        "dynamic_slots": {
+          "cutoff": "17:00",
+          "slots": [
+            {
+              "day": "today",
+              "start": "17:00",
+              "end": "19:00",
+              "range": {
+                "en": "5–7 PM",
+                "hi": "शाम 5–7"
+              }
+            },
+            {
+              "day": "next",
+              "start": "11:00",
+              "end": "13:00",
+              "range": {
+                "en": "11 AM–1 PM",
+                "hi": "सुबह 11–1"
+              }
+            },
+            {
+              "day": "next",
+              "start": "17:00",
+              "end": "19:00",
+              "range": {
+                "en": "5–7 PM",
+                "hi": "शाम 5–7"
+              }
+            }
+          ],
+          "words": {
+            "en": {
+              "today": "Today",
+              "tomorrow": "Tomorrow",
+              "days": [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun"
+              ]
+            },
+            "hi": {
+              "today": "आज",
+              "tomorrow": "कल",
+              "days": [
+                "सोम",
+                "मंगल",
+                "बुध",
+                "गुरु",
+                "शुक्र",
+                "शनि",
+                "रवि"
+              ]
+            }
+          },
+          "next_node_key": "h5_done"
+        }
+      }
+    },
+    {
+      "node_key": "h5_done",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "Done ✅ आपका demo {{slot}} के लिए book हो गया है। हमारी team से {{agent_first_name}} 10 मिनट पहले Google Meet link भेजेंगे। 🙂",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Demo Booked"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Demo Booked"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "demo",
+            "title": "Demo – {{slot}} – {{plan_label}}"
+          },
+          {
+            "type": "notify_agent",
+            "title": "📅 Demo booked: {{contact_name}}",
+            "body": "{{slot}}"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h6",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "ज़रूर! हमारी team से {{agent_first_name}} 30 मिनट के अंदर आपको call करेंगे। कृपया ये number reachable रखें 📞",
+        "text_off_hours": "धन्यवाद! हमारी team कल सुबह 10–11 बजे आपको call करेगी 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Call Requested"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Call back – {{contact_name}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Call requested: {{contact_name}}",
+            "body": "Call within 30 minutes"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h7",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "text": "ये 2-min video देखिए कि DSAs इसे कैसे use करते हैं 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Nurture"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n1",
+              "hi": "h_n1"
+            },
+            "delay_minutes": 120
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_n1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "क्या आपने video देखा? 🙂 आपके लिए free 15-min live demo set करें?",
+        "buttons": [
+          {
+            "reply_id": "v2.h_n1.demo",
+            "title": "हाँ, demo चाहिए",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v2.h_n1.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v2.h_n1.question",
+            "title": "एक सवाल है",
+            "next_node_key": "h8"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h8",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "धन्यवाद! हमारी team से {{agent_first_name}} 30 मिनट के अंदर reply करेंगे (10 AM–7 PM)।",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "Reply within 30 minutes"
+          },
+          {
+            "type": "mark_fallback_replied"
+          }
+        ]
+      }
+    }
+  ]
+}

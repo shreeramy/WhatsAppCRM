@@ -16,6 +16,11 @@ import {
 import { resolveContactSendTarget } from '@/lib/whatsapp/wa-identity'
 import { supabaseAdmin } from './admin-client'
 
+/** Fake Meta id for a message written to the inbox but never sent. */
+function dryRunMessageId(): string {
+  return `dryrun.${crypto.randomUUID()}`
+}
+
 // ------------------------------------------------------------
 // Flows-side Meta sender (interactive variants).
 //
@@ -71,6 +76,8 @@ interface SendTextEngineArgs {
    *  badges it as an AI reply. Only the auto-reply bot sets this;
    *  deterministic Flow/automation sends leave it false. */
   aiGenerated?: boolean
+  /** Write the message to the inbox but don't send it to Meta (v2 test contacts). */
+  dryRun?: boolean
 }
 
 /**
@@ -129,7 +136,8 @@ export async function engineSendText(
   let workingPhone = sanitized
   let waMessageId = ''
   let lastError: unknown = null
-  for (const v of variants) {
+  if (args.dryRun) waMessageId = dryRunMessageId()
+  else for (const v of variants) {
     try {
       waMessageId = await attempt(v)
       workingPhone = v
@@ -183,6 +191,7 @@ interface SendMediaEngineArgs {
   caption?: string
   /** Document-only; ignored by Meta for image/video. */
   filename?: string
+  dryRun?: boolean
 }
 
 /**
@@ -241,7 +250,8 @@ export async function engineSendMedia(
   let workingPhone = sanitized
   let waMessageId = ''
   let lastError: unknown = null
-  for (const v of variants) {
+  if (args.dryRun) waMessageId = dryRunMessageId()
+  else for (const v of variants) {
     try {
       waMessageId = await attempt(v)
       workingPhone = v
@@ -297,6 +307,7 @@ interface SendInteractiveButtonsEngineArgs {
   buttons: InteractiveButton[]
   headerText?: string
   footerText?: string
+  dryRun?: boolean
 }
 
 interface SendInteractiveListEngineArgs {
@@ -309,6 +320,7 @@ interface SendInteractiveListEngineArgs {
   sections: InteractiveListSection[]
   headerText?: string
   footerText?: string
+  dryRun?: boolean
 }
 
 /**
@@ -408,7 +420,8 @@ async function sendInteractiveViaMeta(
   let workingPhone = sanitized
   let waMessageId = ''
   let lastError: unknown = null
-  for (const v of variants) {
+  if (input.dryRun) waMessageId = dryRunMessageId()
+  else for (const v of variants) {
     try {
       waMessageId = await attempt(v)
       workingPhone = v

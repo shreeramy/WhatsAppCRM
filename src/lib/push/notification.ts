@@ -41,5 +41,10 @@ export function notificationToPush(n: NotificationRow): PushPayload {
       tag: `notif-${n.id}`,
     }
   }
-  return { title: n.title, body: n.body ?? '', url: '/inbox', tag: `notif-${n.id}` }
+  return {
+    title: n.title,
+    body: n.body ?? '',
+    url: n.conversation_id ? conversationHref(n.conversation_id) : '/inbox',
+    tag: `notif-${n.id}`,
+  }
 }

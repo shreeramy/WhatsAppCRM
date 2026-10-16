@@ -22,6 +22,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatPhoneDisplay } from "@/lib/whatsapp/phone-utils";
+import { V2RoutingCard } from "@/components/flows/v2-routing-card";
 
 /**
  * Run history viewer.
@@ -183,6 +184,8 @@ export default function FlowRunsPage() {
       <p className="mt-1 text-sm text-muted-foreground">
         {t("description")}
       </p>
+
+      <V2RoutingCard flowId={flow.id} />
 
       {runs.length === 0 ? (
         <div className="mt-6 rounded-lg border border-dashed border-border bg-card/50 px-6 py-12 text-center text-sm text-muted-foreground">

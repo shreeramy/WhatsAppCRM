@@ -1394,6 +1394,29 @@
       "save": "Guardar",
       "descriptionPlaceholder": "Agrega una breve descripción (interna; los clientes no la ven)",
       "descriptionLabel": "Descripción del flujo"
+    },
+    "routing": {
+      "title": "Enrutamiento de tráfico (motor v2)",
+      "description": "Elige a quién atiende este flujo. El cambio es inmediato y se puede deshacer.",
+      "mode": {
+        "off": "Apagado",
+        "test": "Solo números de prueba",
+        "live": "En vivo — todos"
+      },
+      "help": {
+        "off": "Nadie recibe este flujo; el flujo original atiende a todos.",
+        "test": "Solo los números de prueba reciben este flujo; los demás siguen en el original.",
+        "live": "Todos reciben este flujo; el flujo que reemplaza deja de iniciar chats."
+      },
+      "testPhones": "Números de prueba (uno por línea)",
+      "savePhones": "Guardar números de prueba",
+      "confirmLive": "¿Pasar TODO el tráfico de WhatsApp a este flujo?",
+      "saveFailed": "No se pudo guardar",
+      "saved": {
+        "off": "Flujo apagado",
+        "test": "Modo de prueba activado",
+        "live": "El flujo está en vivo para todos"
+      }
     }
   },
   "Settings": {

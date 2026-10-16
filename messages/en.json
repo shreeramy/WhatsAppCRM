@@ -1394,6 +1394,29 @@
       "save": "Save",
       "descriptionPlaceholder": "Add a short description (internal — customers don't see this)",
       "descriptionLabel": "Flow description"
+    },
+    "routing": {
+      "title": "Traffic routing (v2 engine)",
+      "description": "Choose who this flow handles. Switching is instant and can be undone any time.",
+      "mode": {
+        "off": "Off",
+        "test": "Test numbers only",
+        "live": "Live — everyone"
+      },
+      "help": {
+        "off": "Nobody gets this flow; the original flow handles everyone.",
+        "test": "Only the test numbers below get this flow; everyone else stays on the original flow.",
+        "live": "Everyone gets this flow; the flow it replaces stops starting new chats."
+      },
+      "testPhones": "Test phone numbers (one per line)",
+      "savePhones": "Save test numbers",
+      "confirmLive": "Switch ALL WhatsApp traffic to this flow?",
+      "saveFailed": "Could not save routing",
+      "saved": {
+        "off": "Flow switched off",
+        "test": "Test mode on",
+        "live": "Flow is live for everyone"
+      }
     }
   },
   "Settings": {

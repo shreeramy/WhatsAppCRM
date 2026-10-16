@@ -1394,6 +1394,29 @@
       "save": "Salvar",
       "descriptionPlaceholder": "Adicione uma breve descrição (interna — os clientes não a veem)",
       "descriptionLabel": "Descrição do fluxo"
+    },
+    "routing": {
+      "title": "Roteamento de tráfego (motor v2)",
+      "description": "Escolha quem este fluxo atende. A troca é imediata e pode ser desfeita.",
+      "mode": {
+        "off": "Desligado",
+        "test": "Só números de teste",
+        "live": "Ao vivo — todos"
+      },
+      "help": {
+        "off": "Ninguém recebe este fluxo; o fluxo original atende todos.",
+        "test": "Só os números de teste recebem este fluxo; os demais seguem no original.",
+        "live": "Todos recebem este fluxo; o fluxo substituído para de iniciar conversas."
+      },
+      "testPhones": "Números de teste (um por linha)",
+      "savePhones": "Salvar números de teste",
+      "confirmLive": "Mudar TODO o tráfego do WhatsApp para este fluxo?",
+      "saveFailed": "Não foi possível salvar",
+      "saved": {
+        "off": "Fluxo desligado",
+        "test": "Modo de teste ativado",
+        "live": "O fluxo está ao vivo para todos"
+      }
     }
   },
   "Settings": {

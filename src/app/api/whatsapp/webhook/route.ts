@@ -351,6 +351,16 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
       for (let i = 0; i < value.messages.length; i++) {
         const message = value.messages[i]
         const contact = value.contacts[i] || value.contacts[0]
+        // A later button tap from the same sender in this same batch
+        // supersedes this one (flow v2: latest tap wins).
+        const isTap = (m: WhatsAppMessage) =>
+          m.type === 'button' ||
+          (m.type === 'interactive' && !!(m.interactive?.button_reply || m.interactive?.list_reply))
+        const hasNewerTapInBatch =
+          isTap(message) &&
+          value.messages
+            .slice(i + 1)
+            .some((m) => isTap(m) && (m.from ?? m.from_user_id) === (message.from ?? message.from_user_id))
 
         await processMessage(
           message,
@@ -366,7 +376,8 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
           // Default ON: the column is NOT NULL DEFAULT TRUE, but a row
           // read before migration 039 lands would have it undefined,
           // and losing attachments is the failure mode worth avoiding.
-          config.mirror_inbound_media !== false
+          config.mirror_inbound_media !== false,
+          hasNewerTapInBatch
         )
       }
     }
@@ -671,7 +682,8 @@ async function processMessage(
   accessToken: string,
   // Per-account opt-out for the inbound-media mirror (migration 039).
   // See parseMessageContent for what it turns off.
-  mirrorMedia: boolean
+  mirrorMedia: boolean,
+  hasNewerTapInBatch = false
 ) {
   // Phone number OR business-scoped user ID — Meta sends only the
   // latter for a sender who has adopted a WhatsApp username (#519).
@@ -917,6 +929,15 @@ async function processMessage(
             meta_message_id: message.id,
           },
     isFirstInboundMessage,
+    // Form (WhatsApp Flow / Instant Form) answers, for the v2 engine.
+    form:
+      message.type === 'interactive' &&
+      message.interactive?.nfm_reply?.response_json &&
+      message.interactive.nfm_reply.name !== 'address_message'
+        ? { responseJson: message.interactive.nfm_reply.response_json }
+        : null,
+    hasNewerTapInBatch,
+    messageTs: parseInt(message.timestamp) || undefined,
   })
   const flowConsumed = flowResult.consumed
 

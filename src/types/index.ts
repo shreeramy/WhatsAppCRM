@@ -202,7 +202,7 @@ export interface Conversation {
 // Notifications (migration 027)
 // ============================================================
 
-export type NotificationType = 'conversation_assigned' | 'follow_up_due';
+export type NotificationType = 'conversation_assigned' | 'follow_up_due' | 'flow_alert';
 
 export interface Notification {
   id: string;
