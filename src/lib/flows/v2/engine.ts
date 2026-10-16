@@ -490,6 +490,8 @@ async function fallback(
     // Already told them a human will reply — just make sure one is assigned.
     await runAction(ctx, run, settings.fallback_nodes[lang], { type: "assign" });
     await logEvent(db, run.id, "fallback_fired", run.current_node_key, { action: "assign_only", reason, cooldown: true, meta_message_id: metaId });
+    // Back to waiting for the human (the run was only reopened to log this).
+    await finishRun(ctx, run, "completed", "waiting_for_agent");
     return { consumed: true, flow_run_id: run.id, outcome: "fallback_fired" };
   }
   await logEvent(db, run.id, "fallback_fired", run.current_node_key, { action: "question_reply", reason, meta_message_id: metaId });
