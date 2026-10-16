@@ -33,6 +33,7 @@ const OLD_FLOW = arg("old-flow");
 const ONLY = arg("only") ? arg("only").split(",").map(Number) : null;
 const KEEP = argv.includes("--keep");
 const OUT = arg("out", "flow-v2-test-results.md");
+const SIGN_LOCALLY = argv.includes("--sign-locally");
 
 const env = Object.fromEntries(
   readFileSync(".env.local", "utf8")
@@ -100,12 +101,23 @@ async function post(phone, message, name = `[TEST] ${phone.slice(-3)}`) {
       },
     ],
   });
-  const sig = "sha256=" + createHmac("sha256", APP_SECRET).update(body).digest("hex");
-  const res = await fetch(`${BASE}/api/whatsapp/webhook`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-hub-signature-256": sig },
-    body,
-  });
+  // Local app with this machine's META_APP_SECRET: post to the real
+  // webhook. Deployed app: go through /api/flows/simulate, which signs
+  // with the server's own secret (only for simulation numbers).
+  const res = SIGN_LOCALLY
+    ? await fetch(`${BASE}/api/whatsapp/webhook`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hub-signature-256": "sha256=" + createHmac("sha256", APP_SECRET).update(body).digest("hex"),
+        },
+        body,
+      })
+    : await fetch(`${BASE}/api/flows/simulate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-push-secret": env.PUSH_DISPATCH_SECRET },
+        body,
+      });
   if (!res.ok) throw new Error(`webhook ${res.status}: ${await res.text()}`);
   return msg.id;
 }
@@ -509,7 +521,14 @@ async function cleanup() {
 }
 
 await cleanup(); // start clean
-await setSettings({ test_phones: PHONES, dry_run_phones: PHONES, routing: "test", test_overrides: { working_hours_mode: "auto" } });
+const ALL_SIM = [...PHONES, P(1).replace(/01$/, "23"), OLD_PHONE];
+await setSettings({
+  test_phones: PHONES,
+  dry_run_phones: PHONES,
+  sim_phones: ALL_SIM,
+  routing: "test",
+  test_overrides: { working_hours_mode: "auto" },
+});
 
 for (const s of scenarios) {
   if (ONLY && !ONLY.includes(s.n)) continue;
