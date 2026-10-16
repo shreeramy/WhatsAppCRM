@@ -48,6 +48,32 @@ interface NodeInput {
   config: Record<string, unknown>;
 }
 
+/**
+ * Flow-engine-v2 steps (see src/lib/flows/v2) carry extra config: a
+ * step can end the bot's part (`terminal`), wait for a scheduled nudge
+ * (`actions` with schedule_nudge), or build its buttons at send time
+ * (`dynamic_slots`). These extra edges/rules are only read for such
+ * steps, so classic flows validate exactly as before.
+ */
+function v2Extras(config: Record<string, unknown>): {
+  isV2: boolean;
+  terminal: boolean;
+  dynamicNext: string | null;
+  nudgeTargets: string[];
+} {
+  const actions = Array.isArray(config.actions) ? (config.actions as Array<Record<string, unknown>>) : [];
+  const dyn = config.dynamic_slots as { next_node_key?: string } | undefined;
+  const nudgeTargets = actions
+    .filter((a) => a.type === "schedule_nudge")
+    .flatMap((a) => Object.values((a.nodes as Record<string, string> | undefined) ?? {}));
+  return {
+    isV2: "lang" in config || "actions" in config || !!dyn || "terminal" in config,
+    terminal: config.terminal === true,
+    dynamicNext: dyn?.next_node_key ?? null,
+    nudgeTargets,
+  };
+}
+
 export function validateFlowForActivation(
   flow: FlowInput,
   nodes: NodeInput[],
@@ -222,7 +248,9 @@ function validateNode(
           message: "Send-message node needs a text body.",
         });
       }
-      if (!cfg.next_node_key) {
+      const v2 = v2Extras(node.config);
+      // v2: a step may end the bot's part, or wait for a scheduled nudge.
+      if (!cfg.next_node_key && !(v2.terminal || v2.nudgeTargets.length)) {
         issues.push({
           severity: "error",
           scope: "node",
@@ -230,7 +258,7 @@ function validateNode(
           field: "next_node_key",
           message: "Send-message node must point to a next node.",
         });
-      } else if (!knownKeys.has(cfg.next_node_key)) {
+      } else if (cfg.next_node_key && !knownKeys.has(cfg.next_node_key)) {
         issues.push({
           severity: "error",
           scope: "node",
@@ -320,7 +348,18 @@ function validateNode(
         });
       }
       const btns = cfg.buttons ?? [];
-      if (btns.length < 1) {
+      const v2b = v2Extras(node.config);
+      if (v2b.dynamicNext !== null && !knownKeys.has(v2b.dynamicNext)) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "dynamic_slots",
+          message: `Slot picker points to non-existent node "${v2b.dynamicNext}".`,
+        });
+      }
+      // v2 slot pickers build their buttons at send time.
+      if (btns.length < 1 && v2b.dynamicNext === null) {
         issues.push({
           severity: "error",
           scope: "node",
@@ -738,7 +777,9 @@ export function reachableFromEntry(
     visited.add(key);
     const node = byKey.get(key);
     if (!node) continue;
-    for (const next of outgoingEdges(node)) {
+    const v2 = v2Extras(node.config);
+    const extra = [...(v2.dynamicNext ? [v2.dynamicNext] : []), ...v2.nudgeTargets];
+    for (const next of [...outgoingEdges(node), ...extra]) {
       if (!visited.has(next)) queue.push(next);
     }
   }

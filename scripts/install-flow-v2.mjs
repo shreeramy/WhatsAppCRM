@@ -86,21 +86,15 @@ if (!flowId) {
   console.log("updating flow", flowId);
 }
 
-// Lay nodes out in two columns (English / Hindi) so the builder canvas is readable.
-let en = 0;
-let hi = 0;
-const rows = def.nodes.map((n) => {
-  const isHi = n.config.lang === "hi";
-  const y = (isHi ? hi++ : en++) * 180;
-  return {
-    flow_id: flowId,
-    node_key: n.node_key,
-    node_type: n.node_type,
-    config: n.config,
-    position_x: isHi ? 520 : 0,
-    position_y: y,
-  };
-});
+// Positions at 0,0 → the builder canvas auto-lays the graph out (dagre).
+const rows = def.nodes.map((n) => ({
+  flow_id: flowId,
+  node_key: n.node_key,
+  node_type: n.node_type,
+  config: n.config,
+  position_x: 0,
+  position_y: 0,
+}));
 const { error: nodesErr } = await db.from("flow_nodes").insert(rows);
 if (nodesErr) throw nodesErr;
 

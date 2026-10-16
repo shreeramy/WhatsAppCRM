@@ -143,6 +143,19 @@ export function deriveCanvasEdges(nodes: BuilderNode[]): CanvasEdge[] {
         // Terminal nodes — no outgoing edges.
         break;
     }
+
+    // Flow-engine-v2 extras: slot picker → confirmation, and a step
+    // that schedules a nudge → the nudge step. Read-only arrows.
+    for (const extra of v2ExtraSlots(node)) {
+      if (!knownKeys.has(extra.target)) continue;
+      edges.push({
+        id: `${node.node_key}--${extra.id}--${extra.target}`,
+        source: node.node_key,
+        target: extra.target,
+        sourceHandle: extra.id,
+        label: extra.label,
+      });
+    }
   }
 
   return edges;
@@ -171,7 +184,28 @@ export interface OutgoingSlot {
   label: string;
 }
 
+/** v2-only outgoing slots (see src/lib/flows/v2): slot picks and scheduled nudges. */
+export function v2ExtraSlots(node: BuilderNode): Array<OutgoingSlot & { target: string }> {
+  const cfg = node.config as Record<string, unknown>;
+  const out: Array<OutgoingSlot & { target: string }> = [];
+  const dyn = cfg.dynamic_slots as { next_node_key?: string } | undefined;
+  if (dyn?.next_node_key) out.push({ id: "slot", label: "Slot picked", target: dyn.next_node_key });
+  const actions = Array.isArray(cfg.actions) ? (cfg.actions as Array<Record<string, unknown>>) : [];
+  for (const a of actions) {
+    if (a.type !== "schedule_nudge") continue;
+    const nodes = (a.nodes as Record<string, string> | undefined) ?? {};
+    const lang = typeof cfg.lang === "string" ? cfg.lang : "en";
+    const target = nodes[lang] ?? Object.values(nodes)[0];
+    if (target) out.push({ id: "nudge", label: `Nudge after ${a.delay_minutes ?? "?"} min`, target });
+  }
+  return out;
+}
+
 export function outgoingSlots(node: BuilderNode): OutgoingSlot[] {
+  return [...baseOutgoingSlots(node), ...v2ExtraSlots(node).map(({ id, label }) => ({ id, label }))];
+}
+
+function baseOutgoingSlots(node: BuilderNode): OutgoingSlot[] {
   const cfg = node.config;
   switch (node.node_type) {
     case "start":
