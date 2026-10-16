@@ -861,7 +861,13 @@ async function ensureDeal(ctx: Ctx, run: FlowRunRow): Promise<{ id: string; pipe
     return { ...existing, created: false };
   }
   const stageId = await stageIdByName(ctx, pipelineId, settings.deal.new_stage, false);
-  const agent = await currentAgent(ctx);
+  // deals.assigned_to references profiles.id (not the auth user id).
+  const agentUserId = await currentAgent(ctx);
+  let agent: string | null = null;
+  if (agentUserId) {
+    const { data: prof } = await db.from("profiles").select("id").eq("user_id", agentUserId).maybeSingle();
+    agent = (prof as { id?: string } | null)?.id ?? null;
+  }
   const { data: deal, error } = await db
     .from("deals")
     .insert({
