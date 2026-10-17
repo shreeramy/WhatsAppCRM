@@ -406,7 +406,7 @@
       "config": {
         "lang": "en",
         "terminal": true,
-        "text": "Done ✅ Your demo is booked for {{slot}}. {{agent_first_name}} from our team will send the Google Meet link 10 min before. 🙂",
+        "text": "Done ✅ Your demo is booked for {{slot}}. {{agent_first_name}} from our team will send the Google Meet link 10 min before. 🙂\n\nBefore the demo, watch this 2-min video so we can focus on your questions 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
         "actions": [
           {
             "type": "assign"
@@ -868,7 +868,7 @@
       "config": {
         "lang": "hi",
         "terminal": true,
-        "text": "Done ✅ आपका demo {{slot}} के लिए book हो गया है। हमारी team से {{agent_first_name}} 10 मिनट पहले Google Meet link भेजेंगे। 🙂",
+        "text": "Done ✅ आपका demo {{slot}} के लिए book हो गया है। हमारी team से {{agent_first_name}} 10 मिनट पहले Google Meet link भेजेंगे। 🙂\n\nDemo से पहले ये 2-min video देख लीजिए, ताकि demo में आपके सवालों पर बात हो सके 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
         "actions": [
           {
             "type": "assign"
