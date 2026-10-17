@@ -460,9 +460,26 @@ const scenarios = [
     check("N1 cancelled because the lead messaged", !sb.includes("n1"), sb.join(" → "));
     const sc = await sent(c);
     check("N1 cancelled because an agent messaged", !sc.includes("n1"), sc.join(" → "));
-    await tap(a, "v2.n1.demo", "Yes, book demo");
+    await tap(a, "v2.n1.ready", "Yes, I want it");
     const s2 = await waitSent(a, 6);
-    check("N1 'Yes, book demo' → slot picker", s2.at(-1) === "e5");
+    check("N1 'Yes, I want it' → ready-to-buy reply", s2.at(-1) === "e_ready", s2.join(" → "));
+    await sleep(4000);
+    check("tagged Ready to buy + agent alerted", (await tagsOf(a)).includes("Ready to buy") && (await alertsOf(a)).some((x) => x.title.includes("Ready to buy")));
+    // A lead who hasn't watched it gets the link again and another nudge.
+    const d = P(17);
+    await text(d, EN_PREFILL);
+    await waitSent(d, 1);
+    await tap(d, "v2.e1.dsa", "I run a DSA business");
+    await waitSent(d, 2);
+    await tap(d, "v2.e3.solo", "Just me");
+    await waitSent(d, 3);
+    await tap(d, "v2.e4a.video", "Watch video first");
+    await waitSent(d, 4);
+    await tap(d, "v2.n1.later", "Not watched yet");
+    const sd = await waitSent(d, 5);
+    await sleep(3000);
+    const { data: jobsD } = await db.from("flow_scheduled_jobs").select("kind, status").eq("contact_id", (await contactOf(d)).id).eq("kind", "nudge");
+    check("'Not watched yet' → video again + a new nudge scheduled", sd.at(-1) === "e_later" && jobsD.filter((j) => j.status === "pending").length >= 1, `${sd.join(" → ")} / ${jobsD.map((j) => j.status).join(",")}`);
     await setOverrides({ nudge_delay_minutes: undefined, working_hours_mode: "auto" });
   }),
 
