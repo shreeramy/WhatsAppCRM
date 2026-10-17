@@ -1237,6 +1237,16 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
   }
 
   if (job.kind === "no_reply") {
+    // One hand-over per lead: a run can collect several no-reply checks
+    // (e.g. a language switch re-enters the welcome). Only the first acts.
+    const { count: handed } = await db
+      .from("flow_scheduled_jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("contact_id", job.contact_id)
+      .eq("kind", "no_reply")
+      .eq("status", "done")
+      .gt("processed_at", new Date(Date.now() - 24 * 3600 * 1000).toISOString());
+    if ((handed ?? 0) > 0) return { status: "skipped", result: "already handed to an agent in the last 24h" };
     // The lead never answered the welcome: hand them to an agent to call.
     // Every action is logged (failures as error events) by runAction.
     for (const action of job.actions ?? []) {
