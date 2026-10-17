@@ -2441,7 +2441,8 @@
       "noReply": "환영 메시지에 답 없음",
       "priceSent": "가격 확인 후 다음 단계 없음",
       "followUpToday": "오늘 {at} 후속 조치: {title}",
-      "nurture": "{ago} 전에 영상 시청"
+      "nurture": "{ago} 전에 영상 시청",
+      "readyToBuy": "{ago} 전 영상 시청 후 구매 희망"
     },
     "short": {
       "followUpOverdue": "후속 지연",
@@ -2452,7 +2453,8 @@
       "noReply": "무응답",
       "priceSent": "가격 확인",
       "followUpToday": "오늘 후속",
-      "nurture": "영상 시청"
+      "nurture": "영상 시청",
+      "readyToBuy": "구매 준비"
     }
   }
 }

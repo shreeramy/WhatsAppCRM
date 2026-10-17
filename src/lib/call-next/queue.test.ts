@@ -61,6 +61,22 @@ describe("Call Next queue", () => {
     ]);
   });
 
+  it("a lead ready to buy goes above everything else", () => {
+    const q = buildQueue(
+      base({
+        conversations: [conv("1"), conv("2")],
+        tags: [
+          { contact_id: "1", name: "Call Requested", added_at: ago(30) },
+          { contact_id: "2", name: "Ready to buy", added_at: ago(2) },
+        ],
+      }),
+    );
+    expect(q.map((i) => [i.contactId, i.reason, i.tier])).toEqual([
+      ["2", "readyToBuy", "now"],
+      ["1", "callRequested", "now"],
+    ]);
+  });
+
   it("shows each lead once, under its most urgent reason", () => {
     const q = buildQueue(
       base({

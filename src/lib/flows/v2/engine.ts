@@ -75,7 +75,13 @@ export type V2Action =
   | { type: "create_follow_up"; kind: "demo" | "call"; title: string }
   | { type: "notify_agent"; title: string; body?: string }
   | { type: "flag_hot" }
-  | { type: "schedule_nudge"; nodes: Partial<Record<V2Lang, string>>; delay_minutes: number }
+  | {
+      type: "schedule_nudge";
+      nodes: Partial<Record<V2Lang, string>>;
+      delay_minutes: number;
+      /** Stop scheduling once this run has had this many nudges. */
+      max_per_run?: number;
+    }
   | { type: "schedule_auto_close"; hours: number }
   | { type: "mark_fallback_replied" }
   /** If the lead taps / writes nothing for `delay_minutes`, run `actions` (assign, tag, follow-up…). */
@@ -1123,6 +1129,14 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
       return "conversation marked pending (top of queue)";
     }
     case "schedule_nudge": {
+      if (action.max_per_run) {
+        const { count } = await db
+          .from("flow_scheduled_jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("run_id", run.id)
+          .eq("kind", "nudge");
+        if ((count ?? 0) >= action.max_per_run) return `no nudge: already ${count} for this lead`;
+      }
       const lang = runLang(run);
       const node = action.nodes[lang] ?? action.nodes.en;
       if (!node) throw new Error("No nudge node for this language");

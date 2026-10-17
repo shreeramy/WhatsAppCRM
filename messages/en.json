@@ -2441,7 +2441,8 @@
       "noReply": "Didn't reply to the welcome",
       "priceSent": "Saw the price, no next step",
       "followUpToday": "Follow-up today at {at}: {title}",
-      "nurture": "Watched the video {ago} ago"
+      "nurture": "Watched the video {ago} ago",
+      "readyToBuy": "Watched the video and wants to buy, {ago} ago"
     },
     "short": {
       "followUpOverdue": "Follow-up overdue",
@@ -2452,7 +2453,8 @@
       "noReply": "No reply",
       "priceSent": "Price sent",
       "followUpToday": "Follow-up today",
-      "nurture": "Watched video"
+      "nurture": "Watched video",
+      "readyToBuy": "Ready to buy"
     }
   }
 }

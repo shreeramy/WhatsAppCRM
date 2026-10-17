@@ -2441,7 +2441,8 @@
       "noReply": "Não respondeu a boas-vindas",
       "priceSent": "Viu o preço, sem próximo passo",
       "followUpToday": "Follow-up hoje {at}: {title}",
-      "nurture": "Viu o vídeo há {ago}"
+      "nurture": "Viu o vídeo há {ago}",
+      "readyToBuy": "Viu o vídeo e quer comprar, há {ago}"
     },
     "short": {
       "followUpOverdue": "Follow-up atrasado",
@@ -2452,7 +2453,8 @@
       "noReply": "Sem resposta",
       "priceSent": "Viu preço",
       "followUpToday": "Follow-up hoje",
-      "nurture": "Viu vídeo"
+      "nurture": "Viu vídeo",
+      "readyToBuy": "Pronto para comprar"
     }
   }
 }

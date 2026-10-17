@@ -487,7 +487,8 @@
               "en": "n1",
               "hi": "h_n1"
             },
-            "delay_minutes": 120
+            "delay_minutes": 120,
+            "max_per_run": 3
           }
         ]
       }
@@ -497,22 +498,83 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "en",
-        "text": "Did you get a chance to watch the video? 🙂 Shall we set up a free 15-min live demo for you?",
+        "text": "Did you get a chance to watch the video? 🙂 If you liked it, we can set up your account today.",
         "buttons": [
           {
-            "reply_id": "v2.n1.demo",
-            "title": "Yes, book demo",
-            "next_node_key": "e5"
+            "reply_id": "v2.n1.ready",
+            "title": "Yes, I want it",
+            "next_node_key": "e_ready"
           },
           {
-            "reply_id": "v2.n1.call",
-            "title": "Call me",
-            "next_node_key": "e6"
+            "reply_id": "v2.n1.later",
+            "title": "Not watched yet",
+            "next_node_key": "e_later"
           },
           {
             "reply_id": "v2.n1.question",
             "title": "I have a question",
             "next_node_key": "e8"
+          }
+        ],
+        "title_aliases": {
+          "Yes, book demo": "e5"
+        }
+      }
+    },
+    {
+      "node_key": "e_ready",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Great choice! 🎉 {{agent_first_name}} from our team will call you within 30 minutes to set up your account and share the payment details. Please keep this number reachable 📞",
+        "text_off_hours": "Great choice! 🎉 Our team will call you tomorrow between 10–11 AM to set up your account 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Proposal Sent"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{contact_name}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "Watched the video and wants to start — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e_later",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "text": "No problem 🙂 Here it is again, it takes just 2 minutes:\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c\n\nI'll check back with you in a couple of hours.",
+        "actions": [
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n1",
+              "hi": "h_n1"
+            },
+            "delay_minutes": 120,
+            "max_per_run": 3
           }
         ]
       }
@@ -887,7 +949,8 @@
               "en": "n1",
               "hi": "h_n1"
             },
-            "delay_minutes": 120
+            "delay_minutes": 120,
+            "max_per_run": 3
           }
         ]
       }
@@ -897,22 +960,83 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "hi",
-        "text": "क्या आपने video देखा? 🙂 आपके लिए free 15-min live demo set करें?",
+        "text": "क्या आपने video देखा? 🙂 पसंद आया तो आज ही आपका account set up कर देते हैं।",
         "buttons": [
           {
-            "reply_id": "v2.h_n1.demo",
-            "title": "हाँ, demo चाहिए",
-            "next_node_key": "h5"
+            "reply_id": "v2.h_n1.ready",
+            "title": "हाँ, लेना है",
+            "next_node_key": "h_ready"
           },
           {
-            "reply_id": "v2.h_n1.call",
-            "title": "मुझे call करें",
-            "next_node_key": "h6"
+            "reply_id": "v2.h_n1.later",
+            "title": "अभी नहीं देखा",
+            "next_node_key": "h_later"
           },
           {
             "reply_id": "v2.h_n1.question",
             "title": "एक सवाल है",
             "next_node_key": "h8"
+          }
+        ],
+        "title_aliases": {
+          "हाँ, demo चाहिए": "h5"
+        }
+      }
+    },
+    {
+      "node_key": "h_ready",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "बहुत बढ़िया! 🎉 हमारी team से {{agent_first_name}} 30 मिनट के अंदर आपको call करके account set up करेंगे और payment details भेजेंगे। कृपया ये number reachable रखें 📞",
+        "text_off_hours": "बहुत बढ़िया! 🎉 हमारी team कल सुबह 10–11 बजे आपको call करके account set up करेगी 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Proposal Sent"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{contact_name}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "Watched the video and wants to start — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_later",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "text": "कोई बात नहीं 🙂 ये रहा video, सिर्फ 2 मिनट का है:\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU\n\nमैं 2 घंटे बाद फिर से याद दिला दूँगा।",
+        "actions": [
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n1",
+              "hi": "h_n1"
+            },
+            "delay_minutes": 120,
+            "max_per_run": 3
           }
         ]
       }

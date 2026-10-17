@@ -4,7 +4,8 @@
  * Pure: the API route loads the rows, this ranks them. One entry per
  * contact, under its most urgent reason:
  *
- *   now   1 asked for a call (Call Requested) — not called since
+ *   now   0.5 watched the video and wants to buy (Ready to buy) — not called since
+ *         1 asked for a call (Call Requested) — not called since
  *         2 demo starting within 45 min
  *         3 customer wrote and is waiting for a reply
  *         4 follow-up overdue (most recently due first, so a fresh
@@ -24,6 +25,7 @@
 export const CALL_NEXT_NAMES = {
   tags: {
     callRequested: "Call Requested",
+    readyToBuy: "Ready to buy",
     noReply: "No reply",
     priceSent: "Price Sent",
     nurture: "Nurture",
@@ -72,6 +74,7 @@ export interface QOutcome {
 }
 
 export type ReasonKey =
+  | "readyToBuy"
   | "followUpOverdue"
   | "callRequested"
   | "demoSoon"
@@ -219,6 +222,8 @@ export function buildQueue(input: QueueInput): QueueItem[] {
 
   for (const c of input.conversations) {
     const id = c.contact_id;
+    const rb = freshTag(id, N.readyToBuy);
+    if (rb !== null) offer(id, 0.5, "readyToBuy", new Date(rb).toISOString());
     const cr = freshTag(id, N.callRequested);
     if (cr !== null) offer(id, 1, "callRequested", new Date(cr).toISOString());
     if (
