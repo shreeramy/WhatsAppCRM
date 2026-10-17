@@ -883,18 +883,6 @@ async function processMessage(
   // SQL — see the helper for why that matters.
   await reopenClosedConversation(supabaseAdmin(), conversation)
 
-  // Phone / background push to whoever owns this chat. Never throws.
-  await pushNewMessage(accountId, conversation.id, insertedRows[0].id as string, {
-    contentType,
-    contentText,
-    contactName: contactRecord.name || contactRecord.phone,
-  })
-
-  // If this contact was a recent broadcast recipient, flag the reply
-  // so the broadcast's `replied_count` advances (via the aggregate
-  // trigger installed in migration 003).
-  await flagBroadcastReplyIfAny(accountId, contactRecord.id)
-
   // ============================================================
   // Flow runner dispatch.
   //
@@ -944,6 +932,19 @@ async function processMessage(
     messageTs: parseInt(message.timestamp) || undefined,
   })
   const flowConsumed = flowResult.consumed
+
+  // After the bot has answered (so its reply isn't delayed): push to
+  // whoever owns the chat now — the flow may just have assigned it —
+  // and flag a reply to a recent broadcast. Both never throw.
+  await pushNewMessage(accountId, conversation.id, insertedRows[0].id as string, {
+    contentType,
+    contentText,
+    contactName: contactRecord.name || contactRecord.phone,
+  })
+  // If this contact was a recent broadcast recipient, flag the reply
+  // so the broadcast's `replied_count` advances (via the aggregate
+  // trigger installed in migration 003).
+  await flagBroadcastReplyIfAny(accountId, contactRecord.id)
 
   // Fire any automations that react to this webhook event. All dispatches
   // run here (not earlier) so the contact, conversation, and inbound

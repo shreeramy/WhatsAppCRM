@@ -67,6 +67,7 @@ type Db = SupabaseClient;
 
 export type V2Action =
   | { type: "add_tag"; tag: string }
+  | { type: "remove_tag"; tag: string }
   | { type: "assign" }
   | { type: "ensure_deal" }
   | { type: "set_deal_value"; value: number; plan: string }
@@ -91,6 +92,8 @@ interface V2NodeConfig {
   next_node_key?: string;
   /** Run is complete after this step (buttons stay tappable). */
   terminal?: boolean;
+  /** send_buttons: public image URL shown as the message header. */
+  header_image_url?: string;
 }
 
 // ------------------------------------------------------------
@@ -109,6 +112,8 @@ interface Ctx {
   isTest: boolean;
   dryRun: boolean;
   now: Date;
+  /** Set when this work was started by a button tap: a newer tap cancels it. */
+  tapId?: string;
 }
 
 export interface V2DispatchInput extends DispatchInboundInput {
@@ -126,7 +131,21 @@ export interface V2FlowBundle {
   settings: V2Settings;
 }
 
+// Settings and nodes change rarely; a short cache saves two round trips on
+// every inbound message. A routing switch or reinstall applies within 20s.
+const CACHE_MS = 20_000;
+const flowsCache = new Map<string, { at: number; value: V2FlowBundle[] }>();
+const nodesCache = new Map<string, { at: number; value: Map<string, FlowNodeRow> }>();
+
 export async function loadV2Flows(db: Db, accountId: string): Promise<V2FlowBundle[]> {
+  const hit = flowsCache.get(accountId);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
+  const value = await loadV2FlowsUncached(db, accountId);
+  flowsCache.set(accountId, { at: Date.now(), value });
+  return value;
+}
+
+async function loadV2FlowsUncached(db: Db, accountId: string): Promise<V2FlowBundle[]> {
   const { data, error } = await db
     .from("flow_engine_settings")
     .select("settings, flow:flows(*)")
@@ -158,10 +177,19 @@ export async function v2OwnsAssignment(accountId: string, phone: string | null |
 }
 
 async function loadNodes(db: Db, flowId: string): Promise<Map<string, FlowNodeRow>> {
+  const hit = nodesCache.get(flowId);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
   const { data, error } = await db.from("flow_nodes").select("*").eq("flow_id", flowId);
   if (error) throw new Error(`load nodes: ${error.message}`);
-  return new Map(((data ?? []) as FlowNodeRow[]).map((n) => [n.node_key, n]));
+  const value = new Map(((data ?? []) as FlowNodeRow[]).map((n) => [n.node_key, n]));
+  nodesCache.set(flowId, { at: Date.now(), value });
+  return value;
 }
+
+// Run-history events are written in the background, in order, so the
+// customer's reply never waits on logging. flushLogs() is awaited before
+// the request ends (the webhook runs inside after(), which stays alive).
+let logChain: Promise<void> = Promise.resolve();
 
 async function logEvent(
   db: Db,
@@ -170,10 +198,28 @@ async function logEvent(
   nodeKey: string | null,
   payload: Record<string, unknown> = {},
 ): Promise<void> {
-  const { error } = await db
-    .from("flow_run_events")
-    .insert({ flow_run_id: runId, event_type: type, node_key: nodeKey, payload });
-  if (error) console.error("[flows-v2] logEvent failed:", error.message);
+  logChain = logChain.then(async () => {
+    const { error } = await db
+      .from("flow_run_events")
+      .insert({ flow_run_id: runId, event_type: type, node_key: nodeKey, payload });
+    if (error) console.error("[flows-v2] logEvent failed:", error.message);
+  });
+}
+
+export function flushLogs(): Promise<void> {
+  return logChain;
+}
+
+/** False when a newer tap from this contact arrived after the one we're handling. */
+async function stillLatestTap(ctx: Ctx): Promise<boolean> {
+  if (!ctx.tapId) return true;
+  const { data } = await ctx.db
+    .from("flow_contact_state")
+    .select("latest_tap_message_id")
+    .eq("account_id", ctx.accountId)
+    .eq("contact_id", ctx.contact.id)
+    .maybeSingle();
+  return (data as { latest_tap_message_id?: string } | null)?.latest_tap_message_id === ctx.tapId;
 }
 
 // ------------------------------------------------------------
@@ -245,6 +291,8 @@ export async function dispatchV2IfApplicable(input: V2DispatchInput): Promise<Di
     // Consumed: v2 owns this contact, so don't let the old flow or the AI
     // bot answer instead. The error is in the server log.
     return { consumed: true, outcome: "no_match" };
+  } finally {
+    await flushLogs();
   }
 }
 
@@ -258,9 +306,11 @@ async function handleInbound(ctx: Ctx, input: V2DispatchInput): Promise<Dispatch
 
   // Runs of the flow v2 replaces (or any other flow) stop here for
   // contacts v2 now handles.
-  await endOtherActiveRuns(ctx);
-
-  const [latestRun, lastAgentAt] = await Promise.all([loadLatestRun(ctx), lastAgentMessageAt(ctx)]);
+  const [, latestRun, lastAgentAt] = await Promise.all([
+    endOtherActiveRuns(ctx),
+    loadLatestRun(ctx),
+    lastAgentMessageAt(ctx),
+  ]);
   const paused = isBotPaused(lastAgentAt, ctx.now, settings.bot_pause_hours);
   const staleCutoff = settings.entry.reengage_after_days * 24 * 3600 * 1000;
   let activeRun = latestRun?.status === "active" ? latestRun : null;
@@ -297,6 +347,7 @@ async function handleInbound(ctx: Ctx, input: V2DispatchInput): Promise<Dispatch
       return { consumed: true, flow_run_id: activeRun?.id, outcome: "duplicate_inbound_ignored" };
     }
     ctx.now = new Date();
+    ctx.tapId = msg.meta_message_id;
 
     const target = resolveTap(ctx.nodes.values(), msg.reply_id, msg.reply_title);
     if (!target) {
@@ -671,6 +722,13 @@ export async function walk(ctx: Ctx, run: FlowRunRow, startKey: string): Promise
     }
     const cfg = node.config as unknown as V2NodeConfig;
 
+    // A newer tap from the lead cancels this reply (it will be answered
+    // by the run that handles the newer tap).
+    if (!(await stillLatestTap(ctx))) {
+      await logEvent(ctx.db, run.id, "node_entered", node.node_key, { suppressed: "newer_tap_arrived" });
+      return;
+    }
+
     // Same step to the same contact within the window → send nothing.
     const { data: claimed, error: claimErr } = await ctx.db.rpc("flow_claim_step", {
       p_contact_id: ctx.contact.id,
@@ -686,43 +744,41 @@ export async function walk(ctx: Ctx, run: FlowRunRow, startKey: string): Promise
     }
 
     await logEvent(ctx.db, run.id, "node_entered", node.node_key, { node_type: node.node_type });
-    if (cfg.lang && cfg.lang !== run.vars?.lang) {
-      run.vars = { ...run.vars, lang: cfg.lang };
-      await setContactLanguage(ctx, run, cfg.lang);
-    }
+    const langChanged = !!cfg.lang && cfg.lang !== run.vars?.lang;
+    if (langChanged) run.vars = { ...run.vars, lang: cfg.lang };
 
-    for (const action of cfg.actions ?? []) {
-      await runAction(ctx, run, node.node_key, action);
-    }
+    // Reply first, bookkeeping after: only an assignment the message
+    // itself names ({{agent_first_name}}) has to happen before sending.
+    const template = [cfg.text, cfg.text_off_hours].filter(Boolean).join(" ");
+    const needsAgent = /\{\{\s*agent_first_name/.test(template);
+    const actions = cfg.actions ?? [];
+    const before = actions.filter((a) => needsAgent && a.type === "assign");
+    const after = actions.filter((a) => !before.includes(a));
+    for (const action of before) await runAction(ctx, run, node.node_key, action);
 
-    if (node.node_type === "send_buttons") {
-      const ok = await sendButtons(ctx, run, node, cfg);
-      await saveRun(ctx, run, node.node_key);
-      if (ok && cfg.terminal) await finishRun(ctx, run, "completed", node.node_key);
+    let ok = true;
+    if (node.node_type === "send_buttons") ok = await sendButtons(ctx, run, node, cfg, template);
+    else if (node.node_type === "send_message") ok = await sendText(ctx, run, node, cfg);
+    else if (node.node_type !== "start" && node.node_type !== "end") {
+      await logEvent(ctx.db, run.id, "error", node.node_key, { reason: `unsupported_node_type:${node.node_type}` });
       return;
     }
-    if (node.node_type === "send_message") {
-      const ok = await sendText(ctx, run, node, cfg);
-      await saveRun(ctx, run, node.node_key);
-      if (!ok) return;
-      if (cfg.terminal) {
-        await finishRun(ctx, run, "completed", node.node_key);
-        return;
-      }
-      key = cfg.next_node_key;
-      continue;
-    }
+
+    if (langChanged) await setContactLanguage(ctx, run, cfg.lang!);
+    for (const action of after) await runAction(ctx, run, node.node_key, action);
+
     if (node.node_type === "start") {
       key = cfg.next_node_key;
       continue;
     }
-    if (node.node_type === "end") {
-      await saveRun(ctx, run, node.node_key);
+    await saveRun(ctx, run, node.node_key);
+    if (!ok) return;
+    if (node.node_type === "end" || cfg.terminal) {
       await finishRun(ctx, run, "completed", node.node_key);
       return;
     }
-    await logEvent(ctx.db, run.id, "error", node.node_key, { reason: `unsupported_node_type:${node.node_type}` });
-    return;
+    if (node.node_type === "send_buttons") return; // wait for the tap
+    key = cfg.next_node_key;
   }
 }
 
@@ -733,9 +789,16 @@ function workingHoursOpen(ctx: Ctx): boolean {
   return isWithinWorkingHours(ctx.now, ctx.settings.working_hours);
 }
 
-async function textValues(ctx: Ctx, run: FlowRunRow): Promise<Record<string, string | null>> {
+async function textValues(ctx: Ctx, run: FlowRunRow, template = "{{agent_first_name}}"): Promise<Record<string, string | null>> {
   const lang = runLang(run);
   let agentName: string | null = null;
+  const base = {
+    slot: (run.vars?.slot_long as string | undefined) ?? null,
+    contact_name: ctx.contact.name ?? ctx.contact.phone,
+    plan: (run.vars?.plan as string | undefined) ?? null,
+  };
+  // Two lookups only when the text actually names the agent.
+  if (!/\{\{\s*agent_first_name/.test(template)) return { ...base, agent_first_name: null };
   const { data: conv } = await ctx.db
     .from("conversations")
     .select("assigned_agent_id")
@@ -758,7 +821,7 @@ async function sendText(ctx: Ctx, run: FlowRunRow, node: FlowNodeRow, cfg: V2Nod
   const open = workingHoursOpen(ctx);
   const template = !open && cfg.text_off_hours ? cfg.text_off_hours : cfg.text ?? "";
   try {
-    const text = fill(template, await textValues(ctx, run));
+    const text = fill(template, await textValues(ctx, run, template));
     const { whatsapp_message_id } = await engineSendText({
       accountId: ctx.accountId,
       userId: ctx.userId,
@@ -783,9 +846,15 @@ async function sendText(ctx: Ctx, run: FlowRunRow, node: FlowNodeRow, cfg: V2Nod
   }
 }
 
-async function sendButtons(ctx: Ctx, run: FlowRunRow, node: FlowNodeRow, cfg: V2NodeConfig): Promise<boolean> {
+async function sendButtons(
+  ctx: Ctx,
+  run: FlowRunRow,
+  node: FlowNodeRow,
+  cfg: V2NodeConfig,
+  template: string,
+): Promise<boolean> {
   try {
-    const values = await textValues(ctx, run);
+    const values = await textValues(ctx, run, template + (cfg.buttons ?? []).map((b) => b.title).join(" "));
     let buttons = (cfg.buttons ?? []).map((b) => ({ id: b.reply_id, title: fill(b.title, values) }));
     if (cfg.dynamic_slots) {
       const slots = computeDemoSlots(ctx.now, ctx.settings.working_hours, cfg.dynamic_slots, runLang(run));
@@ -798,6 +867,7 @@ async function sendButtons(ctx: Ctx, run: FlowRunRow, node: FlowNodeRow, cfg: V2
       contactId: ctx.contact.id,
       bodyText: fill(cfg.text ?? "", values),
       buttons,
+      headerImageUrl: cfg.header_image_url,
       dryRun: ctx.dryRun,
     });
     await logEvent(ctx.db, run.id, "message_sent", node.node_key, {
@@ -973,6 +1043,19 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
         context: { conversation_id: ctx.conversationId, vars: run.vars },
       });
       return r.added ? `tag "${action.tag}" added` : `tag "${action.tag}" already set`;
+    }
+    case "remove_tag": {
+      const { data: tag } = await db.from("tags").select("id").eq("account_id", ctx.accountId).ilike("name", action.tag).limit(1);
+      const tagId = ((tag ?? []) as Array<{ id: string }>)[0]?.id;
+      if (!tagId) return `tag "${action.tag}" doesn't exist`;
+      const { data: removed, error } = await db
+        .from("contact_tags")
+        .delete()
+        .eq("contact_id", ctx.contact.id)
+        .eq("tag_id", tagId)
+        .select("id");
+      if (error) throw new Error(`remove tag: ${error.message}`);
+      return removed?.length ? `tag "${action.tag}" removed` : `tag "${action.tag}" not set`;
     }
     case "assign":
       return `assigned to ${await ensureAgent(ctx)}`;
@@ -1160,12 +1243,21 @@ interface JobRow {
   created_at: string;
 }
 
-export async function processDueJobs(limit = 25): Promise<Array<{ id: string; status: string; result: string }>> {
+/**
+ * Run due jobs one at a time until ~40s have passed (the route allows 60s),
+ * so a big batch at 10:30 is spread over several ticks instead of being
+ * cut off mid-way. Jobs left 'running' by a cut-off tick are taken back
+ * after 10 minutes (migration 060).
+ */
+export async function processDueJobs(budgetMs = 40_000): Promise<Array<{ id: string; status: string; result: string }>> {
   const db = supabaseAdmin();
-  const { data, error } = await db.rpc("flow_claim_due_jobs", { p_limit: limit });
-  if (error) throw new Error(`claim jobs: ${error.message}`);
+  const started = Date.now();
   const out: Array<{ id: string; status: string; result: string }> = [];
-  for (const job of (data ?? []) as JobRow[]) {
+  while (Date.now() - started < budgetMs) {
+    const { data, error } = await db.rpc("flow_claim_due_jobs", { p_limit: 1 });
+    if (error) throw new Error(`claim jobs: ${error.message}`);
+    const job = ((data ?? []) as JobRow[])[0];
+    if (!job) break;
     let status = "done";
     let result = "";
     try {
@@ -1182,6 +1274,7 @@ export async function processDueJobs(limit = 25): Promise<Array<{ id: string; st
         result,
       });
     }
+    await flushLogs();
     out.push({ id: job.id, status, result });
   }
   return out;

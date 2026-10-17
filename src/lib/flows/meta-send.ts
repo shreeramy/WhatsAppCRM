@@ -307,6 +307,8 @@ interface SendInteractiveButtonsEngineArgs {
   buttons: InteractiveButton[]
   headerText?: string
   footerText?: string
+  /** Public image URL shown as the header (instead of headerText). */
+  headerImageUrl?: string
   dryRun?: boolean
 }
 
@@ -396,6 +398,7 @@ async function sendInteractiveViaMeta(
         bodyText: input.bodyText,
         buttons: input.buttons,
         headerText: input.headerText,
+        headerImageUrl: input.headerImageUrl,
         footerText: input.footerText,
       })
       return r.messageId
@@ -473,6 +476,7 @@ async function sendInteractiveViaMeta(
     sender_type: 'bot',
     content_type: 'interactive',
     content_text: input.bodyText,
+    media_url: input.kind === 'buttons' ? input.headerImageUrl ?? null : null,
     interactive_payload: interactivePayload,
     message_id: waMessageId,
     status: 'sent',
