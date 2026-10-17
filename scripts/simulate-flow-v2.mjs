@@ -337,6 +337,8 @@ const scenarios = [
     check("24h auto-close scheduled", jobs.some((j) => j.kind === "auto_close"), jobs.map((j) => `${j.kind} @ ${j.due_at}`).join("; "));
     await tap(p, "v2.e2.dsa", "Oops, I am a DSA");
     await waitSent(p, 3);
+    await sleep(3000); // tag bookkeeping runs right after the reply
+    check("'Oops, I am a DSA' removes Lost: Not-DSA", !(await tagsOf(p)).includes("Lost: Not-DSA"), (await tagsOf(p)).join(", "));
     await sleep(11000); // past the 10s same-step window
     await tap(p, "v2.e1.code", "Want DSA code"); // the OLD welcome button again
     const s = await waitSent(p, 4);
@@ -375,13 +377,15 @@ const scenarios = [
     const q = P(9);
     await text(q, EN_PREFILL);
     await waitSent(q, 1);
+    // A second, different tap while the first reply is still pending
+    // cancels it (debounce is 1s, so this gap is 0.5s).
     await tap(q, "v2.e1.code", "Want DSA code");
-    await sleep(1500);
+    await sleep(500);
     await tap(q, "v2.e1.dsa", "I run a DSA business");
     await waitSent(q, 2);
     await sleep(15000);
     const sq = await sent(q);
-    check("'Want DSA code' then 'I run a DSA business' within 2s → only the last one answered", sq.join(",") === "e1,e3", sq.join(" → "));
+    check("'Want DSA code' then 'I run a DSA business' 0.5s later → only the last one answered", sq.join(",") === "e1,e3", sq.join(" → "));
   }),
 
   scenario(7, "Form submissions", async () => {
