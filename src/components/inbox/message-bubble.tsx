@@ -208,7 +208,18 @@ function MessageContent({
       //    migration 035 backfilled the column): show the body text plainly —
       //    it is our own message, NOT a customer tap.
       if (message.interactive_payload) {
-        return <InteractivePreview payload={message.interactive_payload} />;
+        // A header image (e.g. the bot's welcome banner) is stored on
+        // media_url; show it above the buttons like WhatsApp does.
+        return message.media_url ? (
+          <div>
+            <MediaImageBubble message={message} onOpen={openMedia} t={t} />
+            <div className="mt-1">
+              <InteractivePreview payload={message.interactive_payload} />
+            </div>
+          </div>
+        ) : (
+          <InteractivePreview payload={message.interactive_payload} />
+        );
       }
       if (message.sender_type === "customer") {
         return (
