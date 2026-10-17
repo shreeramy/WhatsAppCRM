@@ -53,7 +53,7 @@
       "language_field": null
     },
     "dedupe_window_seconds": 10,
-    "tap_debounce_seconds": 4,
+    "tap_debounce_seconds": 1,
     "bot_pause_hours": 72,
     "fallback_reply_cooldown_hours": 24,
     "text_intents": [
@@ -170,6 +170,7 @@
         "title_aliases": {
           "Want to become DSA": "e2"
         },
+        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
         "actions": [
           {
             "type": "schedule_no_reply",
@@ -241,6 +242,10 @@
           }
         ],
         "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost: Not-DSA"
+          },
           {
             "type": "add_tag",
             "tag": "Contacted"
@@ -565,6 +570,7 @@
           "DSA बनना है": "h2",
           "बस price जानना है": "h3"
         },
+        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
         "actions": [
           {
             "type": "schedule_no_reply",
@@ -636,6 +642,10 @@
           }
         ],
         "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost: Not-DSA"
+          },
           {
             "type": "add_tag",
             "tag": "Contacted"
