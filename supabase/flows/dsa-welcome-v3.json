@@ -1333,6 +1333,10 @@
           {
             "type": "add_tag",
             "tag": "Webinar: Not interested"
+          },
+          {
+            "type": "remove_tag",
+            "tag": "Webinar Registered"
           }
         ]
       }
@@ -2374,6 +2378,10 @@
           {
             "type": "add_tag",
             "tag": "Webinar: Not interested"
+          },
+          {
+            "type": "remove_tag",
+            "tag": "Webinar Registered"
           }
         ]
       }

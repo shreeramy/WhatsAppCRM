@@ -270,7 +270,7 @@ for L in ("en", "hi"):
     N(wno, "send_message", lang=L, terminal=True, reachable_via="title_aliases",
       text=t("No problem 🙏 You can message us anytime if you'd like to see DSA Management.",
              "कोई बात नहीं 🙏 DSA Management देखना हो तो कभी भी message करें।"),
-      actions=[A(type="add_tag", tag="Webinar: Not interested")])
+      actions=[A(type="add_tag", tag="Webinar: Not interested"), A(type="remove_tag", tag="Webinar Registered")])
 
 PRICE_WORDS = ["price", "pricing", "cost", "costing", "charges", "charge", "kitna", "kitne", "rate", "fees", "fee", "पैसे", "कीमत", "चार्ज", "कितना"]
 settings = {
