@@ -210,7 +210,7 @@
       }
     },
     "nudges": {
-      "max_per_lead": 2,
+      "max_per_lead": 10,
       "quiet_start": "21:00",
       "quiet_end": "10:00",
       "shift_to": "10:30",
@@ -270,8 +270,61 @@
         "h_n1": {
           "name": "dsa_nudge_video_hi",
           "language": "hi"
+        },
+        "n_welcome2": {
+          "name": "dsa_nudge2_welcome",
+          "language": "en"
+        },
+        "h_nw2": {
+          "name": "dsa_nudge2_welcome_hi",
+          "language": "hi"
+        },
+        "n_team2": {
+          "name": "dsa_nudge2_team",
+          "language": "en"
+        },
+        "h_nt2": {
+          "name": "dsa_nudge2_team_hi",
+          "language": "hi"
+        },
+        "n_plan2": {
+          "name": "dsa_nudge2_plan",
+          "language": "en"
+        },
+        "h_np2": {
+          "name": "dsa_nudge2_plan_hi",
+          "language": "hi"
+        },
+        "n_slot2": {
+          "name": "dsa_nudge2_slot",
+          "language": "en"
+        },
+        "h_ns2": {
+          "name": "dsa_nudge2_slot_hi",
+          "language": "hi"
+        },
+        "n1b": {
+          "name": "dsa_nudge2_video",
+          "language": "en"
+        },
+        "h_n1b": {
+          "name": "dsa_nudge2_video_hi",
+          "language": "hi"
         }
-      }
+      },
+      "followups": {
+        "n_welcome": "n_welcome2",
+        "h_nw": "h_nw2",
+        "n_team": "n_team2",
+        "h_nt": "h_nt2",
+        "n_plan": "n_plan2",
+        "h_np": "h_np2",
+        "n_slot": "n_slot2",
+        "h_ns": "h_ns2",
+        "n1": "n1b",
+        "h_n1": "h_n1b"
+      },
+      "followup_after_hours": 24
     },
     "reminder_templates": {
       "en": {
@@ -1293,6 +1346,121 @@
             "reply_id": "v3.n_slot.slots",
             "title": "Pick another time",
             "next_node_key": "e5"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_welcome2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "reachable_via": "settings.nudges.followups",
+        "text": "Still keeping loan files in notebooks or Excel? 📒 DSA Management reminds you of every follow-up, so no file slips away. Are you a DSA / loan agent?",
+        "buttons": [
+          {
+            "reply_id": "v3.n_welcome2.dsa",
+            "title": "Yes, I'm a DSA",
+            "next_node_key": "e3"
+          },
+          {
+            "reply_id": "v3.n_welcome2.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v3.n_welcome2.lang",
+            "title": "हिंदी में बताएं",
+            "next_node_key": "h1"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_team2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "reachable_via": "settings.nudges.followups",
+        "text": "One last question 🙂 Do you handle files alone or with a team? Plans start at ₹600/month.",
+        "buttons": [
+          {
+            "reply_id": "v3.n_team2.solo",
+            "title": "Just me",
+            "next_node_key": "e4a"
+          },
+          {
+            "reply_id": "v3.n_team2.team",
+            "title": "I have a team",
+            "next_node_key": "e4b"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_plan2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "reachable_via": "settings.nudges.followups",
+        "text": "DSAs using DSA Management track every file from login to disbursal on their phone 📱 See it live in a free 15-min demo?",
+        "buttons": [
+          {
+            "reply_id": "v3.n_plan2.demo",
+            "title": "Book free demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v3.n_plan2.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_slot2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "reachable_via": "settings.nudges.followups",
+        "text": "Your free demo is still open 🙂 Pick a time that suits you, or we can just give you a quick call.",
+        "buttons": [
+          {
+            "reply_id": "v3.n_slot2.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v3.n_slot2.slots",
+            "title": "Pick another time",
+            "next_node_key": "e5"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n1b",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "reachable_via": "settings.nudges.followups",
+        "text": "Quick check 🙂 Would DSA Management help you close more files? Tell us what you think.",
+        "buttons": [
+          {
+            "reply_id": "v3.n1b.yes",
+            "title": "Yes, I want this",
+            "next_node_key": "ready_route"
+          },
+          {
+            "reply_id": "v3.n1b.q",
+            "title": "I have a question",
+            "next_node_key": "e_q"
+          },
+          {
+            "reply_id": "v3.n1b.no",
+            "title": "Not for me",
+            "next_node_key": "e_not"
           }
         ]
       }
@@ -2338,6 +2506,121 @@
             "reply_id": "v3.h_ns.slots",
             "title": "दूसरा time चुनें",
             "next_node_key": "h5"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_nw2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "reachable_via": "settings.nudges.followups",
+        "text": "अभी भी loan files diary या Excel में संभाल रहे हैं? 📒 DSA Management हर follow-up याद दिलाता है, कोई file नहीं छूटेगी। क्या आप DSA / loan agent हैं?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_nw2.dsa",
+            "title": "हाँ, मैं DSA हूँ",
+            "next_node_key": "h3"
+          },
+          {
+            "reply_id": "v3.h_nw2.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v3.h_nw2.lang",
+            "title": "English please",
+            "next_node_key": "e1"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_nt2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "reachable_via": "settings.nudges.followups",
+        "text": "बस एक आखिरी सवाल 🙂 files अकेले संभालते हैं या team के साथ? Plans ₹600/महीना से शुरू।",
+        "buttons": [
+          {
+            "reply_id": "v3.h_nt2.solo",
+            "title": "सिर्फ मैं",
+            "next_node_key": "h4a"
+          },
+          {
+            "reply_id": "v3.h_nt2.team",
+            "title": "मेरी team है",
+            "next_node_key": "h4b"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_np2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "reachable_via": "settings.nudges.followups",
+        "text": "DSA Management से DSAs हर file login से disbursal तक mobile पर track करते हैं 📱 Free 15-min demo में live देखें?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_np2.demo",
+            "title": "Free demo book करें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v3.h_np2.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_ns2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "reachable_via": "settings.nudges.followups",
+        "text": "आपका free demo अभी भी available है 🙂 अपनी सुविधा का time चुनें, या हम आपको एक छोटी call कर लेते हैं।",
+        "buttons": [
+          {
+            "reply_id": "v3.h_ns2.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v3.h_ns2.slots",
+            "title": "दूसरा time चुनें",
+            "next_node_key": "h5"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_n1b",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "reachable_via": "settings.nudges.followups",
+        "text": "बस पूछना था 🙂 क्या DSA Management से आपकी ज़्यादा files close होंगी? अपनी राय बताइए।",
+        "buttons": [
+          {
+            "reply_id": "v3.h_n1b.yes",
+            "title": "हाँ, लेना है",
+            "next_node_key": "h_ready_route"
+          },
+          {
+            "reply_id": "v3.h_n1b.q",
+            "title": "एक सवाल है",
+            "next_node_key": "h_q"
+          },
+          {
+            "reply_id": "v3.h_n1b.no",
+            "title": "मेरे लिए नहीं",
+            "next_node_key": "h_not"
           }
         ]
       }

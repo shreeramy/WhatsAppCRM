@@ -260,6 +260,34 @@ for L in ("en", "hi"):
       text=t("Any time works for you? We can simply call you 📞", "कोई time सही नहीं लग रहा? हम सीधे call कर लेते हैं 📞"),
       buttons=[btn(f"v3.{ns}", "call", t("Call me", "मुझे call करें"), call), btn(f"v3.{ns}", "slots", t("Pick another time", "दूसरा time चुनें"), slots)])
 
+    # Second nudge per step, 24h after the first (different wording; sent as a template)
+    nw2, nt2, np2, ns2, n1b = k("n_welcome2","h_nw2"), k("n_team2","h_nt2"), k("n_plan2","h_np2"), k("n_slot2","h_ns2"), k("n1b","h_n1b")
+    R2 = "settings.nudges.followups"
+    N(nw2, "send_buttons", lang=L, reachable_via=R2,
+      text=t("Still keeping loan files in notebooks or Excel? 📒 DSA Management reminds you of every follow-up, so no file slips away. Are you a DSA / loan agent?",
+             "अभी भी loan files diary या Excel में संभाल रहे हैं? 📒 DSA Management हर follow-up याद दिलाता है, कोई file नहीं छूटेगी। क्या आप DSA / loan agent हैं?"),
+      buttons=[btn(f"v3.{nw2}", "dsa", t("Yes, I'm a DSA", "हाँ, मैं DSA हूँ"), team),
+               btn(f"v3.{nw2}", "call", t("Call me", "मुझे call करें"), call),
+               btn(f"v3.{nw2}", "lang", t("हिंदी में बताएं", "English please"), other_lang_welcome)])
+    N(nt2, "send_buttons", lang=L, reachable_via=R2,
+      text=t(f"One last question 🙂 Do you handle files alone or with a team? Plans start at ₹{PRICE_SOLO}/month.",
+             f"बस एक आखिरी सवाल 🙂 files अकेले संभालते हैं या team के साथ? Plans ₹{PRICE_SOLO}/महीना से शुरू।"),
+      buttons=[btn(f"v3.{nt2}", "solo", t("Just me", "सिर्फ मैं"), plan_a), btn(f"v3.{nt2}", "team", t("I have a team", "मेरी team है"), plan_b)])
+    N(np2, "send_buttons", lang=L, reachable_via=R2,
+      text=t("DSAs using DSA Management track every file from login to disbursal on their phone 📱 See it live in a free 15-min demo?",
+             "DSA Management से DSAs हर file login से disbursal तक mobile पर track करते हैं 📱 Free 15-min demo में live देखें?"),
+      buttons=[btn(f"v3.{np2}", "demo", t("Book free demo", "Free demo book करें"), slots), btn(f"v3.{np2}", "call", t("Call me", "मुझे call करें"), call)])
+    N(ns2, "send_buttons", lang=L, reachable_via=R2,
+      text=t("Your free demo is still open 🙂 Pick a time that suits you, or we can just give you a quick call.",
+             "आपका free demo अभी भी available है 🙂 अपनी सुविधा का time चुनें, या हम आपको एक छोटी call कर लेते हैं।"),
+      buttons=[btn(f"v3.{ns2}", "call", t("Call me", "मुझे call करें"), call), btn(f"v3.{ns2}", "slots", t("Pick another time", "दूसरा time चुनें"), slots)])
+    N(n1b, "send_buttons", lang=L, reachable_via=R2,
+      text=t("Quick check 🙂 Would DSA Management help you close more files? Tell us what you think.",
+             "बस पूछना था 🙂 क्या DSA Management से आपकी ज़्यादा files close होंगी? अपनी राय बताइए।"),
+      buttons=[btn(f"v3.{n1b}", "yes", t("Yes, I want this", "हाँ, लेना है"), rr),
+               btn(f"v3.{n1b}", "q", t("I have a question", "एक सवाल है"), q),
+               btn(f"v3.{n1b}", "no", t("Not for me", "मेरे लिए नहीं"), notn)])
+
     # Webinar invite replies (template quick-reply buttons, matched by title)
     wreg, wno = k("web_reg_en", "web_reg_hi"), k("web_no_en", "web_no_hi")
     N(wreg, "send_message", lang=L, terminal=True, reachable_via="title_aliases",
@@ -310,7 +338,7 @@ settings = {
     "slot_capacity": 2,
     "booking_lock": {"nodes": ["e1", "h1", "e2", "h2", "e3", "h3", "e4a", "e4b", "h4a", "h4b"], "redirect": {"en": "booked_en", "hi": "h_booked"}},
     "nudges": {
-        "max_per_lead": 2,
+        "max_per_lead": 10,
         "quiet_start": "21:00", "quiet_end": "10:00", "shift_to": "10:30",
         "final_after_hours": 24,
         "final_actions": [
@@ -324,7 +352,15 @@ settings = {
             "n_plan": {"name": "dsa_nudge_plan", "language": "en"}, "h_np": {"name": "dsa_nudge_plan_hi", "language": "hi"},
             "n_slot": {"name": "dsa_nudge_slot", "language": "en"}, "h_ns": {"name": "dsa_nudge_slot_hi", "language": "hi"},
             "n1": {"name": "dsa_nudge_video", "language": "en"}, "h_n1": {"name": "dsa_nudge_video_hi", "language": "hi"},
+            "n_welcome2": {"name": "dsa_nudge2_welcome", "language": "en"}, "h_nw2": {"name": "dsa_nudge2_welcome_hi", "language": "hi"},
+            "n_team2": {"name": "dsa_nudge2_team", "language": "en"}, "h_nt2": {"name": "dsa_nudge2_team_hi", "language": "hi"},
+            "n_plan2": {"name": "dsa_nudge2_plan", "language": "en"}, "h_np2": {"name": "dsa_nudge2_plan_hi", "language": "hi"},
+            "n_slot2": {"name": "dsa_nudge2_slot", "language": "en"}, "h_ns2": {"name": "dsa_nudge2_slot_hi", "language": "hi"},
+            "n1b": {"name": "dsa_nudge2_video", "language": "en"}, "h_n1b": {"name": "dsa_nudge2_video_hi", "language": "hi"},
         },
+        "followups": {"n_welcome": "n_welcome2", "h_nw": "h_nw2", "n_team": "n_team2", "h_nt": "h_nt2",
+                      "n_plan": "n_plan2", "h_np": "h_np2", "n_slot": "n_slot2", "h_ns": "h_ns2", "n1": "n1b", "h_n1": "h_n1b"},
+        "followup_after_hours": 24,
     },
     "reminder_templates": {"en": {"name": "dsa_demo_reminder", "language": "en"}, "hi": {"name": "dsa_demo_reminder_hi", "language": "hi"}},
     "nudge_template": None,
@@ -369,6 +405,7 @@ for k, v in nodes.items():
             for banned in ("30 minutes", "30 मिनट के अंदर", "10 am–7 pm", "10–11 am", "10–11 बजे"):
                 assert banned not in low, (k, banned)
 for tpl_node in settings["nudges"]["templates"]: assert tpl_node in keys, tpl_node
+for a_, b_ in settings["nudges"]["followups"].items(): assert a_ in keys and b_ in keys and b_ in settings["nudges"]["templates"], (a_, b_)
 for n in list(settings["entry_nodes"].values()) + list(settings["fallback_nodes"].values()) + list(settings["entry_fallback_nodes"].values()) + list(settings["booking_lock"]["redirect"].values()) + settings["booking_lock"]["nodes"]:
     assert n in keys, n
 json.dump(flow, open(os.path.join(HERE, "dsa-welcome-v3.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)

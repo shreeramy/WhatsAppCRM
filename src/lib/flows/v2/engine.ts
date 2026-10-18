@@ -1775,11 +1775,39 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
     result = `sent ${job.node_key}`;
   }
 
+  // A step's first nudge: schedule its follow-up nudge (different wording).
+  const caps0 = bundle.settings.nudges;
+  const followNode = job.kind === "nudge" && meta.capped && caps0?.followups ? caps0.followups[job.node_key ?? ""] : undefined;
+  if (followNode && caps0) {
+    const testMinutes = ctx.isTest ? bundle.settings.test_overrides?.final_after_minutes : undefined;
+    const raw = new Date(ctx.now.getTime() + (testMinutes !== undefined ? testMinutes * 60000 : (caps0.followup_after_hours ?? 24) * 3600 * 1000));
+    const due = ctx.isTest && bundle.settings.test_overrides?.ignore_quiet_hours
+      ? raw
+      : shiftOutOfQuietHours(raw, bundle.settings.working_hours.timezone, caps0.quiet_start, caps0.quiet_end, caps0.shift_to);
+    const { error } = await db.from("flow_scheduled_jobs").insert({
+      account_id: ctx.accountId,
+      flow_id: ctx.flow.id,
+      run_id: run.id,
+      contact_id: c.id,
+      conversation_id: ctx.conversationId,
+      kind: "nudge",
+      node_key: followNode,
+      actions: { capped: true },
+      cancel_on: ["customer", "agent"],
+      due_at: due.toISOString(),
+    });
+    if (error) {
+      await logEvent(db, run.id, "error", job.node_key, { reason: "action_failed", action: "schedule_followup_nudge", detail: error.message });
+    } else {
+      result += `; follow-up nudge ${followNode} at ${due.toISOString()} if still silent`;
+    }
+  }
+
   // The last allowed nudge: hand the lead to the agent if they stay silent.
-  if (job.kind === "nudge" && meta.capped && bundle.settings.nudges) {
+  if (job.kind === "nudge" && meta.capped && bundle.settings.nudges && !followNode) {
     const caps = bundle.settings.nudges;
     const sentNow = (await nudgesSent(ctx)) + 1; // this job is marked done after we return
-    if (sentNow >= caps.max_per_lead) {
+    if (caps.followups || sentNow >= caps.max_per_lead) {
       const testMinutes = ctx.isTest ? bundle.settings.test_overrides?.final_after_minutes : undefined;
       const due = new Date(ctx.now.getTime() + (testMinutes !== undefined ? testMinutes * 60000 : caps.final_after_hours * 3600 * 1000));
       const { error } = await db.from("flow_scheduled_jobs").insert({

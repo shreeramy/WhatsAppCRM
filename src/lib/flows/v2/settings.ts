@@ -128,6 +128,13 @@ export interface V2Settings {
     final_actions: unknown[];
     /** Nudge node → approved template used when the 24h window has closed. */
     templates?: Record<string, { name: string; language: string }>;
+    /**
+     * Second nudge per step: first-nudge node → follow-up node, sent
+     * `followup_after_hours` later if the lead is still silent. The final
+     * hand-over then follows the follow-up instead of the lead-wide cap.
+     */
+    followups?: Record<string, string>;
+    followup_after_hours?: number;
   };
   /** Max bookings per demo slot (list-mode slot pickers). */
   slot_capacity?: number;
