@@ -117,6 +117,32 @@ describe.skipIf(!enabled)("v2 engine — database concurrency", () => {
     expect((await rec("wamid.B", 1001)).data).toBe("wamid.C");
   });
 
+  it("slots: 3 leads booking one slot at once → 2 booked, 1 full; re-booking moves the booking", async () => {
+    const start = new Date(Date.now() + 3 * 86400000).toISOString();
+    const end = new Date(Date.parse(start) + 30 * 60000).toISOString();
+    const book = (contactId: string, s = start, e = end) =>
+      db.rpc("flow_book_slot", {
+        p_account_id: accountId,
+        p_flow_id: flowId,
+        p_contact_id: contactId,
+        p_conversation_id: null,
+        p_start: s,
+        p_end: e,
+        p_capacity: 2,
+      });
+    const results = await Promise.all([book(contactIds[2]), book(contactIds[3]), book(contactIds[4])]);
+    const statuses = results.map((r) => (r.data as { status: string }).status).sort();
+    expect(statuses).toEqual(["booked", "booked", "full"]);
+    // The same lead picks a different slot: their booking moves.
+    const winner = contactIds[[2, 3, 4].find((i, k) => (results[k].data as { status: string }).status === "booked")!];
+    const later = new Date(Date.parse(start) + 3600000).toISOString();
+    const moved = await book(winner, later, new Date(Date.parse(later) + 30 * 60000).toISOString());
+    expect(moved.data).toEqual({ status: "booked", previous_start: expect.any(String) });
+    const { data: active } = await db.from("flow_slot_bookings").select("slot_start").eq("contact_id", winner).eq("status", "active");
+    expect(active).toHaveLength(1);
+    expect(new Date(active![0].slot_start).toISOString()).toBe(later);
+  });
+
   it.skipIf(pool.length !== 2)("round-robin: 6 concurrent chats alternate across the pool, none double-assigned", async () => {
     const results = await Promise.all(
       convIds.map((id) =>

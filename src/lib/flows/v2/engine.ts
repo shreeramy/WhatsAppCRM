@@ -22,6 +22,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "../admin-client";
 import {
   engineSendInteractiveButtons,
+  engineSendInteractiveList,
   engineSendText,
 } from "../meta-send";
 import { engineSendTemplate } from "@/lib/automations/meta-send";
@@ -54,10 +55,19 @@ import {
 import {
   isTestContact,
   phoneInList,
-  v2AppliesTo,
+  pickBundle,
   type V2Lang,
   type V2Settings,
 } from "./settings";
+import {
+  agentNameFor,
+  canSendNudge,
+  computeListSlots,
+  demoReminderDue,
+  shiftOutOfQuietHours,
+  tagMatches,
+  type ListSlotConfig,
+} from "./v3";
 
 type Db = SupabaseClient;
 
@@ -70,7 +80,7 @@ export type V2Action =
   | { type: "remove_tag"; tag: string }
   | { type: "assign" }
   | { type: "ensure_deal" }
-  | { type: "set_deal_value"; value: number; plan: string }
+  | { type: "set_deal_value"; value: number; plan: string; label?: string }
   | { type: "move_deal_stage"; stage: string }
   | { type: "create_follow_up"; kind: "demo" | "call"; title: string }
   | { type: "notify_agent"; title: string; body?: string }
@@ -81,7 +91,20 @@ export type V2Action =
       delay_minutes: number;
       /** Stop scheduling once this run has had this many nudges. */
       max_per_run?: number;
+      /** Counts toward settings.nudges (lead-wide cap, quiet hours, final hand-over). */
+      capped?: boolean;
     }
+  | {
+      /** Demo-day reminder for the booked slot (settings: at / early cutoff). */
+      type: "schedule_reminder";
+      nodes: Partial<Record<V2Lang, string>>;
+      at: string;
+      early_cutoff: string;
+      early_before_hours: number;
+    }
+  /** Cancel every pending scheduled message for this lead and end the run. */
+  | { type: "stop_automation" }
+  | { type: "close_conversation" }
   | { type: "schedule_auto_close"; hours: number }
   | { type: "mark_fallback_replied" }
   /** If the lead taps / writes nothing for `delay_minutes`, run `actions` (assign, tag, follow-up…). */
@@ -93,14 +116,33 @@ interface V2NodeConfig {
   /** send_message: used instead of `text` outside working hours. */
   text_off_hours?: string;
   buttons?: Array<{ reply_id: string; title: string; next_node_key: string }>;
-  dynamic_slots?: SlotConfig & { next_node_key: string };
+  dynamic_slots?: (SlotConfig & { next_node_key: string; mode?: undefined }) | ListSlotPicker;
   actions?: V2Action[];
   next_node_key?: string;
   /** Run is complete after this step (buttons stay tappable). */
   terminal?: boolean;
   /** send_buttons: public image URL shown as the message header. */
   header_image_url?: string;
+  /** Send as a WhatsApp list instead of reply buttons (> 3 options). */
+  list?: {
+    button_label: string;
+    section_title?: string;
+    rows: Array<{ reply_id: string; title: string; description?: string; next_node_key: string }>;
+  };
+  /** start: jump by a run var, e.g. { var: "plan", map: { individual: "r_solo" }, default: "e3r" }. */
+  route_by_var?: { var: string; map: Record<string, string>; default: string };
+  /** Same-step dedupe per booked slot (a new slot = a new confirmation). */
+  dedupe_by?: "slot";
 }
+
+type ListSlotPicker = ListSlotConfig & {
+  mode: "list";
+  next_node_key: string;
+  full_node_key: string;
+  button_label: string;
+  section_title?: string;
+  extra_rows?: Array<{ reply_id: string; title: string; next_node_key: string }>;
+};
 
 // ------------------------------------------------------------
 // Context
@@ -177,9 +219,8 @@ async function loadV2FlowsUncached(db: Db, accountId: string): Promise<V2FlowBun
  */
 export async function v2OwnsAssignment(accountId: string, phone: string | null | undefined): Promise<boolean> {
   const bundles = await loadV2Flows(supabaseAdmin(), accountId);
-  return bundles.some(
-    (b) => b.flow.status === "active" && v2AppliesTo(b.settings, phone) && !b.settings.respect_inbox_auto_assign,
-  );
+  const b = pickBundle(bundles, phone);
+  return !!b && !b.settings.respect_inbox_auto_assign;
 }
 
 async function loadNodes(db: Db, flowId: string): Promise<Map<string, FlowNodeRow>> {
@@ -248,7 +289,7 @@ export async function dispatchV2IfApplicable(input: V2DispatchInput): Promise<Di
     .maybeSingle();
   const phone = (contact as { phone?: string | null } | null)?.phone ?? null;
 
-  const bundle = bundles.find((b) => b.flow.status === "active" && v2AppliesTo(b.settings, phone));
+  const bundle = pickBundle(bundles, phone);
   if (!bundle) {
     // v2 doesn't handle this contact. If they still have an ACTIVE run on
     // a v2 flow (routing was switched back), end it so the original
@@ -312,11 +353,17 @@ async function handleInbound(ctx: Ctx, input: V2DispatchInput): Promise<Dispatch
 
   // Runs of the flow v2 replaces (or any other flow) stop here for
   // contacts v2 now handles.
-  const [, latestRun, lastAgentAt] = await Promise.all([
+  const [, latestRun, lastAgentAt, finishedElsewhere] = await Promise.all([
     endOtherActiveRuns(ctx),
     loadLatestRun(ctx),
     lastAgentMessageAt(ctx),
+    lastFinishedInHistoryFlows(ctx),
   ]);
+  const lastFinished = (run: FlowRunRow | null): Date | null => {
+    const own = finishedAt(run);
+    if (!finishedElsewhere) return own;
+    return !own || finishedElsewhere > own ? finishedElsewhere : own;
+  };
   const paused = isBotPaused(lastAgentAt, ctx.now, settings.bot_pause_hours);
   const staleCutoff = settings.entry.reengage_after_days * 24 * 3600 * 1000;
   let activeRun = latestRun?.status === "active" ? latestRun : null;
@@ -358,9 +405,9 @@ async function handleInbound(ctx: Ctx, input: V2DispatchInput): Promise<Dispatch
     const target = resolveTap(ctx.nodes.values(), msg.reply_id, msg.reply_title);
     if (!target) {
       // Not one of ours — handle like typed text.
-      return handleText(ctx, input, msg.reply_title || msg.reply_id, activeRun, latestRun, paused, lastAgentAt);
+      return handleText(ctx, input, msg.reply_title || msg.reply_id, activeRun, latestRun, paused, lastAgentAt, lastFinished(latestRun));
     }
-    if (paused) {
+    if (paused && !settings.taps_bypass_pause) {
       if (activeRun ?? latestRun) {
         await logEvent(db, (activeRun ?? latestRun)!.id, "reply_received", null, tapPayload(msg, { ignored: "bot_paused_agent_active" }));
       }
@@ -375,11 +422,33 @@ async function handleInbound(ctx: Ctx, input: V2DispatchInput): Promise<Dispatch
       run = await startRun(ctx, { trigger: "tap", lang, reason: "tap_without_run" });
       if (!run) return { consumed: true, outcome: "duplicate_inbound_ignored" };
     }
-    await logEvent(db, run.id, "reply_received", run.current_node_key, tapPayload(msg, { via: target.kind === "node" ? target.via : "slot" }));
+    await logEvent(db, run.id, "reply_received", run.current_node_key, tapPayload(msg, { via: target.kind === "node" ? target.via : "slot", paused: paused || undefined }));
+
+    // A demo is already booked: older welcome / team-size / exit buttons
+    // don't restart those steps.
+    let nextKey = target.node_key;
+    if (target.kind === "node" && settings.booking_lock?.nodes.includes(target.node_key)) {
+      const booking = await activeBooking(ctx);
+      if (booking && Date.parse(booking.slot_start) > ctx.now.getTime()) {
+        run.vars = { ...run.vars, slot_long: run.vars?.slot_long ?? booking.slot_start };
+        nextKey = settings.booking_lock.redirect[runLang(run)] ?? nextKey;
+        await logEvent(db, run.id, "node_entered", target.node_key, { redirected: nextKey, reason: "demo_already_booked" });
+      }
+    }
+
     if (target.kind === "slot") {
+      const picker = ctx.nodes.get(decodeSlotNode(msg.reply_id))?.config as unknown as V2NodeConfig | undefined;
+      const list = picker?.dynamic_slots?.mode === "list" ? (picker.dynamic_slots as ListSlotPicker) : null;
+      if (list) {
+        const booked = await bookSlot(ctx, run, target.start, target.end);
+        if (booked === "full") {
+          await walk(ctx, run, list.full_node_key);
+          return { consumed: true, flow_run_id: run.id, outcome: "advanced" };
+        }
+      }
       run.vars = { ...run.vars, slot_start: target.start, slot_end: target.end, slot_long: target.long };
     }
-    await walk(ctx, run, target.node_key);
+    await walk(ctx, run, nextKey);
     return { consumed: true, flow_run_id: run.id, outcome: "advanced" };
   }
 
@@ -409,7 +478,7 @@ async function handleInbound(ctx: Ctx, input: V2DispatchInput): Promise<Dispatch
         isFirstInbound: input.isFirstInboundMessage,
         lastPriorMessageAt: null,
         lastAgentMessageAt: lastAgentAt,
-        lastFinishedRunAt: finishedAt(latestRun),
+        lastFinishedRunAt: lastFinished(latestRun),
         hasActiveRun: false,
         now: ctx.now,
       },
@@ -425,7 +494,7 @@ async function handleInbound(ctx: Ctx, input: V2DispatchInput): Promise<Dispatch
   }
 
   // ---------------- Typed text ----------------
-  return handleText(ctx, input, msg.kind === "text" ? msg.text : "", activeRun, latestRun, paused, lastAgentAt);
+  return handleText(ctx, input, msg.kind === "text" ? msg.text : "", activeRun, latestRun, paused, lastAgentAt, lastFinished(latestRun));
 }
 
 async function handleText(
@@ -436,6 +505,7 @@ async function handleText(
   latestRun: FlowRunRow | null,
   paused: boolean,
   lastAgentAt: Date | null,
+  lastFinishedAt: Date | null = finishedAt(latestRun),
 ): Promise<DispatchInboundResult> {
   const { db, settings } = ctx;
   const metaId = input.message.meta_message_id;
@@ -452,7 +522,9 @@ async function handleText(
     }
     const entryKeys = Object.values(settings.entry_nodes);
     const sinceStart = (ctx.now.getTime() - Date.parse(activeRun.started_at)) / 1000;
+    const graceApplies = !settings.opening_grace_after_form_only || activeRun.vars?.trigger === "form";
     if (
+      graceApplies &&
       activeRun.current_node_key &&
       entryKeys.includes(activeRun.current_node_key) &&
       sinceStart < settings.entry.opening_grace_seconds
@@ -468,6 +540,18 @@ async function handleText(
       await walk(ctx, activeRun, intent);
       return { consumed: true, flow_run_id: activeRun.id, outcome: "advanced" };
     }
+    // Text at the welcome step: answer it, then show the welcome once more.
+    if (
+      settings.entry_fallback_nodes &&
+      activeRun.current_node_key &&
+      entryKeys.includes(activeRun.current_node_key) &&
+      !activeRun.vars?.entry_reshown
+    ) {
+      activeRun.vars = { ...activeRun.vars, entry_reshown: true };
+      await logEvent(db, activeRun.id, "fallback_fired", activeRun.current_node_key, { action: "entry_fallback", meta_message_id: metaId });
+      await walk(ctx, activeRun, settings.entry_fallback_nodes[lang]);
+      return { consumed: true, flow_run_id: activeRun.id, outcome: "fallback_fired" };
+    }
     return fallback(ctx, activeRun, "free_text", metaId);
   }
 
@@ -478,7 +562,7 @@ async function handleText(
       isFirstInbound: input.isFirstInboundMessage,
       lastPriorMessageAt: await lastPriorMessageAt(ctx, metaId),
       lastAgentMessageAt: lastAgentAt,
-      lastFinishedRunAt: finishedAt(latestRun),
+      lastFinishedRunAt: lastFinishedAt,
       hasActiveRun: false,
       now: ctx.now,
     },
@@ -593,6 +677,89 @@ async function loadLatestRun(ctx: Ctx): Promise<FlowRunRow | null> {
     .order("started_at", { ascending: false })
     .limit(1);
   return ((data ?? []) as FlowRunRow[])[0] ?? null;
+}
+
+/** Newest finished run of the flows listed in settings.history_flow_ids (e.g. v2 for v3). */
+async function lastFinishedInHistoryFlows(ctx: Ctx): Promise<Date | null> {
+  const ids = ctx.settings.history_flow_ids ?? [];
+  if (!ids.length) return null;
+  const { data } = await ctx.db
+    .from("flow_runs")
+    .select("ended_at, vars")
+    .in("flow_id", ids)
+    .eq("contact_id", ctx.contact.id)
+    .neq("status", "active")
+    .not("ended_at", "is", null)
+    .order("ended_at", { ascending: false })
+    .limit(5);
+  const row = ((data ?? []) as Array<{ ended_at: string; vars: Record<string, unknown> | null }>).find(
+    (r) => r.vars?.trigger !== "fallback",
+  );
+  return row ? new Date(row.ended_at) : null;
+}
+
+function decodeSlotNode(replyId: string): string {
+  return replyId.split("|")[1] ?? "";
+}
+
+async function activeBooking(ctx: Ctx): Promise<{ slot_start: string; slot_end: string } | null> {
+  const { data } = await ctx.db
+    .from("flow_slot_bookings")
+    .select("slot_start, slot_end")
+    .eq("flow_id", ctx.flow.id)
+    .eq("contact_id", ctx.contact.id)
+    .eq("status", "active")
+    .maybeSingle();
+  return (data as { slot_start: string; slot_end: string } | null) ?? null;
+}
+
+/**
+ * Book (or move) this lead's demo slot. A full slot returns "full". When a
+ * booking moves, the old slot's meeting follow-up and demo-day reminder
+ * are cancelled.
+ */
+async function bookSlot(ctx: Ctx, run: FlowRunRow, start: string, end: string): Promise<"booked" | "same" | "full"> {
+  const { data, error } = await ctx.db.rpc("flow_book_slot", {
+    p_account_id: ctx.accountId,
+    p_flow_id: ctx.flow.id,
+    p_contact_id: ctx.contact.id,
+    p_conversation_id: ctx.conversationId,
+    p_start: start,
+    p_end: end,
+    p_capacity: ctx.settings.slot_capacity ?? 2,
+  });
+  if (error) {
+    await logEvent(ctx.db, run.id, "error", run.current_node_key, { reason: "action_failed", action: "book_slot", detail: error.message });
+    return "booked"; // don't block the confirmation on a booking-table error
+  }
+  const res = data as { status: "booked" | "same" | "full"; previous_start: string | null };
+  await logEvent(ctx.db, run.id, "node_entered", run.current_node_key, { action: "book_slot", result: res.status, slot: start, previous: res.previous_start });
+  if (res.status === "booked" && res.previous_start) {
+    const prevFollowUpDue = new Date(Date.parse(res.previous_start) - 15 * 60000).toISOString();
+    const [{ error: fuErr }, { error: jobErr }] = await Promise.all([
+      ctx.db
+        .from("follow_ups")
+        .delete()
+        .eq("contact_id", ctx.contact.id)
+        .eq("type", "meeting")
+        .is("completed_at", null)
+        .eq("due_at", prevFollowUpDue),
+      ctx.db
+        .from("flow_scheduled_jobs")
+        .update({ status: "cancelled", result: "demo moved to another slot", processed_at: new Date().toISOString() })
+        .eq("contact_id", ctx.contact.id)
+        .eq("kind", "reminder")
+        .eq("status", "pending"),
+    ]);
+    if (fuErr || jobErr) {
+      await logEvent(ctx.db, run.id, "error", run.current_node_key, {
+        reason: "action_failed",
+        action: "cancel_previous_booking",
+        detail: fuErr?.message ?? jobErr?.message,
+      });
+    }
+  }
+  return res.status;
 }
 
 async function lastAgentMessageAt(ctx: Ctx): Promise<Date | null> {
@@ -735,11 +902,21 @@ export async function walk(ctx: Ctx, run: FlowRunRow, startKey: string): Promise
       return;
     }
 
+    // Router step: jump by a run var (no message, no dedupe).
+    if (node.node_type === "start" && cfg.route_by_var) {
+      const v = run.vars?.[cfg.route_by_var.var];
+      key = (typeof v === "string" && cfg.route_by_var.map[v]) || cfg.route_by_var.default;
+      await logEvent(ctx.db, run.id, "node_entered", node.node_key, { routed_to: key });
+      continue;
+    }
+
     // Same step to the same contact within the window → send nothing.
+    const claimKey =
+      cfg.dedupe_by === "slot" && run.vars?.slot_start ? `${node.node_key}|${run.vars.slot_start}` : node.node_key;
     const { data: claimed, error: claimErr } = await ctx.db.rpc("flow_claim_step", {
       p_contact_id: ctx.contact.id,
       p_flow_id: ctx.flow.id,
-      p_node_key: node.node_key,
+      p_node_key: claimKey,
       p_window_seconds: ctx.settings.dedupe_window_seconds,
     });
     if (claimErr) {
@@ -756,7 +933,7 @@ export async function walk(ctx: Ctx, run: FlowRunRow, startKey: string): Promise
     // Reply first, bookkeeping after: only an assignment the message
     // itself names ({{agent_first_name}}) has to happen before sending.
     const template = [cfg.text, cfg.text_off_hours].filter(Boolean).join(" ");
-    const needsAgent = /\{\{\s*agent_first_name/.test(template);
+    const needsAgent = /\{\{\s*agent_(first_name|intro)/.test(template);
     const actions = cfg.actions ?? [];
     const before = actions.filter((a) => needsAgent && a.type === "assign");
     const after = actions.filter((a) => !before.includes(a));
@@ -798,13 +975,19 @@ function workingHoursOpen(ctx: Ctx): boolean {
 async function textValues(ctx: Ctx, run: FlowRunRow, template = "{{agent_first_name}}"): Promise<Record<string, string | null>> {
   const lang = runLang(run);
   let agentName: string | null = null;
+  const slotLong = (run.vars?.slot_long as string | undefined) ?? null;
   const base = {
-    slot: (run.vars?.slot_long as string | undefined) ?? null,
+    slot: slotLong,
+    /** "11:00–11:30 AM" — the time part of the slot label. */
+    slot_time: slotLong ? (slotLong.split(", ").pop() ?? slotLong) : null,
     contact_name: ctx.contact.name ?? ctx.contact.phone,
     plan: (run.vars?.plan as string | undefined) ?? null,
+    plan_label: (run.vars?.plan_label as string | undefined) ?? null,
   };
   // Two lookups only when the text actually names the agent.
-  if (!/\{\{\s*agent_first_name/.test(template)) return { ...base, agent_first_name: null };
+  if (!/\{\{\s*agent_(first_name|intro)/.test(template)) {
+    return { ...base, agent_first_name: null, agent_intro: null, agent_intro_lc: null };
+  }
   const { data: conv } = await ctx.db
     .from("conversations")
     .select("assigned_agent_id")
@@ -813,13 +996,24 @@ async function textValues(ctx: Ctx, run: FlowRunRow, template = "{{agent_first_n
   const agentId = (conv as { assigned_agent_id?: string | null } | null)?.assigned_agent_id;
   if (agentId) {
     const { data: prof } = await ctx.db.from("profiles").select("full_name").eq("user_id", agentId).maybeSingle();
-    agentName = firstName((prof as { full_name?: string | null } | null)?.full_name);
+    const fullName = (prof as { full_name?: string | null } | null)?.full_name;
+    // Name the assignee only if they're in the round-robin pool (when set);
+    // a chat parked with someone else reads "our team".
+    agentName = ctx.settings.agent_name_pool_only
+      ? agentNameFor(agentId, fullName, ctx.settings.agent_pool, true)
+      : firstName(fullName);
   }
+  const intro = ctx.settings.agent_intro?.[lang];
   return {
+    ...base,
     agent_first_name: agentName ?? ctx.settings.fallback_agent_name[lang],
-    slot: (run.vars?.slot_long as string | undefined) ?? null,
-    contact_name: ctx.contact.name ?? ctx.contact.phone,
-    plan: (run.vars?.plan as string | undefined) ?? null,
+    agent_intro: intro ? (agentName ? fill(intro.named, { name: agentName }) : intro.none) : agentName,
+    // Mid-sentence form: "...and our team will confirm".
+    agent_intro_lc: intro
+      ? agentName
+        ? fill(intro.named, { name: agentName })
+        : intro.none.charAt(0).toLowerCase() + intro.none.slice(1)
+      : agentName,
   };
 }
 
@@ -861,9 +1055,47 @@ async function sendButtons(
 ): Promise<boolean> {
   try {
     const values = await textValues(ctx, run, template + (cfg.buttons ?? []).map((b) => b.title).join(" "));
+    // List messages: a fixed list, or the 30-minute slot picker.
+    const listSlots = cfg.dynamic_slots?.mode === "list" ? (cfg.dynamic_slots as ListSlotPicker) : null;
+    if (cfg.list || listSlots) {
+      let rows: Array<{ id: string; title: string; description?: string }>;
+      let buttonLabel: string;
+      let sectionTitle: string | undefined;
+      if (listSlots) {
+        const slots = await freeListSlots(ctx, run, listSlots);
+        rows = [
+          ...slots.map((sl) => ({ id: encodeSlotReplyId(node.node_key, { ...sl }), title: sl.label })),
+          ...(listSlots.extra_rows ?? []).map((r) => ({ id: r.reply_id, title: fill(r.title, values) })),
+        ];
+        buttonLabel = listSlots.button_label;
+        sectionTitle = listSlots.section_title;
+        run.vars = { ...run.vars, slots_offered: slots.length };
+      } else {
+        rows = cfg.list!.rows.map((r) => ({ id: r.reply_id, title: fill(r.title, values), description: r.description }));
+        buttonLabel = cfg.list!.button_label;
+        sectionTitle = cfg.list!.section_title;
+      }
+      const { whatsapp_message_id } = await engineSendInteractiveList({
+        accountId: ctx.accountId,
+        userId: ctx.userId,
+        conversationId: ctx.conversationId,
+        contactId: ctx.contact.id,
+        bodyText: fill(cfg.text ?? "", values),
+        buttonLabel,
+        sections: [{ title: sectionTitle, rows }],
+        dryRun: ctx.dryRun,
+      });
+      await logEvent(ctx.db, run.id, "message_sent", node.node_key, {
+        node_type: "send_list",
+        whatsapp_message_id,
+        rows: rows.map((r) => r.title),
+        dry_run: ctx.dryRun || undefined,
+      });
+      return true;
+    }
     let buttons = (cfg.buttons ?? []).map((b) => ({ id: b.reply_id, title: fill(b.title, values) }));
     if (cfg.dynamic_slots) {
-      const slots = computeDemoSlots(ctx.now, ctx.settings.working_hours, cfg.dynamic_slots, runLang(run));
+      const slots = computeDemoSlots(ctx.now, ctx.settings.working_hours, cfg.dynamic_slots as SlotConfig, runLang(run));
       buttons = slots.map((s) => ({ id: encodeSlotReplyId(node.node_key, s), title: s.label }));
     }
     const { whatsapp_message_id } = await engineSendInteractiveButtons({
@@ -890,6 +1122,39 @@ async function sendButtons(
     });
     return false;
   }
+}
+
+/** Step nudges already delivered to this lead (any run). */
+async function nudgesSent(ctx: Ctx): Promise<number> {
+  const { count } = await ctx.db
+    .from("flow_scheduled_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("contact_id", ctx.contact.id)
+    .eq("kind", "nudge")
+    .eq("status", "done")
+    .filter("actions->>capped", "eq", "true");
+  return count ?? 0;
+}
+
+/** Slots with room left, from the booking table (capacity per slot). */
+async function freeListSlots(ctx: Ctx, run: FlowRunRow, cfg: ListSlotPicker) {
+  const horizon = new Date(ctx.now.getTime() + 14 * 24 * 3600 * 1000).toISOString();
+  const { data, error } = await ctx.db
+    .from("flow_slot_bookings")
+    .select("slot_start")
+    .eq("flow_id", ctx.flow.id)
+    .eq("status", "active")
+    .gte("slot_start", ctx.now.toISOString())
+    .lte("slot_start", horizon);
+  if (error) {
+    await logEvent(ctx.db, run.id, "error", run.current_node_key, { reason: "action_failed", action: "slot_counts", detail: error.message });
+  }
+  const booked: Record<string, number> = {};
+  for (const r of (data ?? []) as Array<{ slot_start: string }>) {
+    const iso = new Date(r.slot_start).toISOString();
+    booked[iso] = (booked[iso] ?? 0) + 1;
+  }
+  return computeListSlots(ctx.now, ctx.settings.working_hours, cfg, runLang(run), booked, ctx.settings.slot_capacity ?? 2);
 }
 
 // ------------------------------------------------------------
@@ -1051,17 +1316,70 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
       return r.added ? `tag "${action.tag}" added` : `tag "${action.tag}" already set`;
     }
     case "remove_tag": {
-      const { data: tag } = await db.from("tags").select("id").eq("account_id", ctx.accountId).ilike("name", action.tag).limit(1);
-      const tagId = ((tag ?? []) as Array<{ id: string }>)[0]?.id;
-      if (!tagId) return `tag "${action.tag}" doesn't exist`;
+      // "Lost:*" removes every Lost: tag the contact has.
+      const { data: tags } = await db.from("tags").select("id, name").eq("account_id", ctx.accountId);
+      const ids = ((tags ?? []) as Array<{ id: string; name: string }>)
+        .filter((t) => tagMatches(action.tag, t.name))
+        .map((t) => t.id);
+      if (!ids.length) return `tag "${action.tag}" doesn't exist`;
       const { data: removed, error } = await db
         .from("contact_tags")
         .delete()
         .eq("contact_id", ctx.contact.id)
-        .eq("tag_id", tagId)
+        .in("tag_id", ids)
         .select("id");
       if (error) throw new Error(`remove tag: ${error.message}`);
-      return removed?.length ? `tag "${action.tag}" removed` : `tag "${action.tag}" not set`;
+      return removed?.length ? `removed ${removed.length} tag(s) matching "${action.tag}"` : `no tag matching "${action.tag}"`;
+    }
+    case "stop_automation": {
+      const { data: cancelled, error } = await db
+        .from("flow_scheduled_jobs")
+        .update({ status: "cancelled", result: "automation stopped", processed_at: new Date().toISOString() })
+        .eq("contact_id", ctx.contact.id)
+        .eq("status", "pending")
+        .select("id");
+      if (error) throw new Error(`stop automation: ${error.message}`);
+      run.vars = { ...run.vars, automation_stopped: true };
+      return `cancelled ${cancelled?.length ?? 0} scheduled message(s)`;
+    }
+    case "close_conversation": {
+      const { error } = await db.from("conversations").update({ status: "closed" }).eq("id", ctx.conversationId);
+      if (error) throw new Error(`close conversation: ${error.message}`);
+      return "conversation closed";
+    }
+    case "schedule_reminder": {
+      const start = run.vars?.slot_start as string | undefined;
+      if (!start) throw new Error("No demo slot booked");
+      const lang = runLang(run);
+      const node = action.nodes[lang] ?? action.nodes.en;
+      if (!node) throw new Error("No reminder node for this language");
+      const testAfter = ctx.isTest ? settings.test_overrides?.reminder_after_minutes : undefined;
+      const due =
+        testAfter !== undefined
+          ? new Date(ctx.now.getTime() + testAfter * 60000)
+          : demoReminderDue(new Date(start), ctx.now, settings.working_hours.timezone, action.at, action.early_cutoff, action.early_before_hours);
+      if (!due) return "no reminder: the demo is too soon";
+      // A moved demo replaces its reminder.
+      await db
+        .from("flow_scheduled_jobs")
+        .update({ status: "cancelled", result: "replaced by a newer reminder", processed_at: new Date().toISOString() })
+        .eq("contact_id", ctx.contact.id)
+        .eq("kind", "reminder")
+        .eq("status", "pending");
+      const { error } = await db.from("flow_scheduled_jobs").insert({
+        account_id: ctx.accountId,
+        flow_id: ctx.flow.id,
+        run_id: run.id,
+        contact_id: ctx.contact.id,
+        conversation_id: ctx.conversationId,
+        kind: "reminder",
+        node_key: node,
+        actions: { slot_start: start, slot_long: run.vars?.slot_long ?? null },
+        cancel_on: [],
+        due_at: due.toISOString(),
+      });
+      if (error) throw new Error(`schedule reminder: ${error.message}`);
+      return `demo reminder at ${due.toISOString()}`;
     }
     case "assign":
       return `assigned to ${await ensureAgent(ctx)}`;
@@ -1073,7 +1391,7 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
       const d = await ensureDeal(ctx, run);
       const { error } = await db.from("deals").update({ value: action.value }).eq("id", d.id);
       if (error) throw new Error(`set deal value: ${error.message}`);
-      run.vars = { ...run.vars, plan: action.plan };
+      run.vars = { ...run.vars, plan: action.plan, ...(action.label ? { plan_label: action.label } : {}) };
       return `deal ${d.id} value ${action.value}`;
     }
     case "move_deal_stage": {
@@ -1096,7 +1414,9 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
         due = callFollowUpDue(ctx.now, settings.working_hours, workingHoursOpen(ctx));
         type = "call";
       }
-      const planLabel = run.vars?.plan === "team" ? "Team" : run.vars?.plan === "individual" ? "Individual" : "";
+      const planLabel =
+        (run.vars?.plan_label as string | undefined) ??
+        (run.vars?.plan === "team" ? "Team" : run.vars?.plan === "individual" ? "Individual" : "");
       const title = fill(action.title, { ...(await textValues(ctx, run)), plan_label: planLabel })
         .replace(/\s+–\s*$/, "")
         .trim();
@@ -1129,6 +1449,12 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
       return "conversation marked pending (top of queue)";
     }
     case "schedule_nudge": {
+      const caps = settings.nudges;
+      if (action.capped && caps) {
+        if (run.vars?.automation_stopped) return "no nudge: automation stopped for this lead";
+        const sent = await nudgesSent(ctx);
+        if (!canSendNudge(sent, caps.max_per_lead)) return `no nudge: already ${sent} sent to this lead`;
+      }
       if (action.max_per_run) {
         const { count } = await db
           .from("flow_scheduled_jobs")
@@ -1143,7 +1469,16 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
       const delay =
         (ctx.isTest ? settings.test_overrides?.nudge_delay_minutes : undefined) ?? action.delay_minutes;
       const ignoreHours = ctx.isTest && settings.test_overrides?.working_hours_mode === "open";
-      const due = nudgeDue(ctx.now, settings.working_hours, delay, "10:30", ignoreHours);
+      let due: Date;
+      if (action.capped && settings.nudges) {
+        // Step nudges: only quiet hours apply (21:00–10:00 → 10:30).
+        const raw = new Date(ctx.now.getTime() + delay * 60000);
+        due = ctx.isTest && settings.test_overrides?.ignore_quiet_hours
+          ? raw
+          : shiftOutOfQuietHours(raw, settings.working_hours.timezone, settings.nudges.quiet_start, settings.nudges.quiet_end, settings.nudges.shift_to);
+      } else {
+        due = nudgeDue(ctx.now, settings.working_hours, delay, "10:30", ignoreHours);
+      }
       const { error } = await db.from("flow_scheduled_jobs").insert({
         account_id: ctx.accountId,
         flow_id: ctx.flow.id,
@@ -1152,6 +1487,7 @@ async function executeAction(ctx: Ctx, run: FlowRunRow, action: V2Action): Promi
         conversation_id: ctx.conversationId,
         kind: "nudge",
         node_key: node,
+        actions: action.capped ? { capped: true } : null,
         cancel_on: ["customer", "agent"],
         due_at: due.toISOString(),
       });
@@ -1249,9 +1585,10 @@ interface JobRow {
   run_id: string | null;
   contact_id: string | null;
   conversation_id: string | null;
-  kind: "nudge" | "auto_close" | "no_reply";
+  kind: "nudge" | "auto_close" | "no_reply" | "reminder";
   node_key: string | null;
-  actions: V2Action[] | null;
+  /** no_reply: actions to run; nudge: { capped }; reminder: { slot_start, slot_long }. */
+  actions: V2Action[] | Record<string, unknown> | null;
   cancel_on: string[];
   due_at: string;
   created_at: string;
@@ -1314,14 +1651,17 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
     return { status: "done", result: "conversation closed (no reply in time)" };
   }
 
-  // Nudge / no-reply: need the flow, contact and run.
+  // Nudge / no-reply / reminder: need the flow, contact and run.
   const bundles = await loadV2Flows(db, job.account_id);
   const bundle = bundles.find((b) => b.flow.id === job.flow_id);
   if (!bundle) return { status: "skipped", result: "flow no longer on v2" };
   const { data: contact } = await db.from("contacts").select("id, phone, name").eq("id", job.contact_id).maybeSingle();
   const c = contact as { id: string; phone: string | null; name: string | null } | null;
   if (!c) return { status: "skipped", result: "contact deleted" };
-  if (!v2AppliesTo(bundle.settings, c.phone)) return { status: "skipped", result: "v2 no longer routes this contact" };
+  // Only the flow that handles this lead now may message them.
+  if (pickBundle(bundles, c.phone)?.flow.id !== bundle.flow.id) {
+    return { status: "skipped", result: "another flow handles this contact now" };
+  }
   const { data: runRow } = await db.from("flow_runs").select("*").eq("id", job.run_id).maybeSingle();
   if (!runRow) return { status: "skipped", result: "run deleted" };
   const run = runRow as FlowRunRow;
@@ -1339,6 +1679,7 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
     dryRun: phoneInList(c.phone, bundle.settings.dry_run_phones),
     now: new Date(),
   };
+  // Bot pause: unprompted messages (nudges, reminders, hand-overs) wait for the human.
   if (isBotPaused(await lastAgentMessageAt(ctx), ctx.now, bundle.settings.bot_pause_hours)) {
     return { status: "cancelled", result: "agent active on the chat" };
   }
@@ -1354,13 +1695,33 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
       .eq("status", "done")
       .gt("processed_at", new Date(Date.now() - 24 * 3600 * 1000).toISOString());
     if ((handed ?? 0) > 0) return { status: "skipped", result: "already handed to an agent in the last 24h" };
-    // The lead never answered the welcome: hand them to an agent to call.
     // Every action is logged (failures as error events) by runAction.
-    for (const action of job.actions ?? []) {
+    const actions = (job.actions ?? []) as V2Action[];
+    for (const action of actions) {
       await runAction(ctx, run, job.node_key ?? "no_reply", action);
     }
     await ctx.db.from("flow_runs").update({ vars: run.vars }).eq("id", run.id);
-    return { status: "done", result: `no reply — ran ${(job.actions ?? []).map((a) => a.type).join(", ")}` };
+    if (run.vars?.automation_stopped && run.status === "active") await finishRun(ctx, run, "completed", "automation_stopped");
+    return { status: "done", result: `no reply — ran ${actions.map((a) => a.type).join(", ")}` };
+  }
+
+  const meta = (job.actions ?? {}) as unknown as { capped?: boolean; slot_start?: string; slot_long?: string };
+
+  if (job.kind === "reminder") {
+    // Only for the booking that's still active (a moved demo has its own reminder).
+    const booking = await activeBooking(ctx);
+    if (!booking || new Date(booking.slot_start).getTime() !== new Date(meta.slot_start ?? 0).getTime()) {
+      return { status: "skipped", result: "demo was moved or cancelled" };
+    }
+    run.vars = { ...run.vars, slot_start: meta.slot_start, slot_long: meta.slot_long ?? run.vars?.slot_long };
+  }
+
+  if (job.kind === "nudge" && meta.capped && bundle.settings.nudges) {
+    if (run.vars?.automation_stopped) return { status: "skipped", result: "automation stopped for this lead" };
+    const sent = await nudgesSent(ctx);
+    if (!canSendNudge(sent, bundle.settings.nudges.max_per_lead)) {
+      return { status: "skipped", result: `already ${sent} nudge(s) sent to this lead` };
+    }
   }
 
   // WhatsApp's 24h customer-service window.
@@ -1374,23 +1735,64 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
   const lastCustomer = ((lastIn ?? []) as Array<{ created_at: string }>)[0];
   const windowOpen = !!lastCustomer && ctx.now.getTime() - Date.parse(lastCustomer.created_at) < 24 * 3600 * 1000;
 
+  let result: string;
   if (!windowOpen) {
-    const tpl = bundle.settings.nudge_template;
-    if (!tpl?.name) return { status: "skipped", result: "24h window closed and no approved nudge template set" };
-    if (ctx.dryRun) return { status: "done", result: `would send template ${tpl.name} (dry run)` };
-    await engineSendTemplate({
-      accountId: ctx.accountId,
-      userId: ctx.userId,
-      conversationId: ctx.conversationId,
-      contactId: c.id,
-      templateName: tpl.name,
-      language: tpl.language,
-    });
-    return { status: "done", result: `template ${tpl.name} sent (window closed)` };
+    const lang = runLang(run);
+    const tpl =
+      job.kind === "reminder"
+        ? bundle.settings.reminder_templates?.[lang]
+        : (bundle.settings.nudges?.templates?.[job.node_key ?? ""] ?? bundle.settings.nudge_template ?? undefined);
+    if (!tpl?.name) return { status: "skipped", result: "24h window closed and no approved template set" };
+    const params =
+      job.kind === "reminder"
+        ? [c.name || "there", String(meta.slot_long ?? run.vars?.slot_long ?? "")]
+        : [c.name || "there"];
+    if (ctx.dryRun) {
+      result = `template ${tpl.name} (dry run)`;
+    } else {
+      await engineSendTemplate({
+        accountId: ctx.accountId,
+        userId: ctx.userId,
+        conversationId: ctx.conversationId,
+        contactId: c.id,
+        templateName: tpl.name,
+        language: tpl.language,
+        params,
+      });
+      result = `template ${tpl.name} sent (window closed)`;
+    }
+  } else {
+    const active = await reopenRun(ctx, run);
+    if (!active) return { status: "skipped", result: "another run is active" };
+    await walk(ctx, active, job.node_key!);
+    result = `sent ${job.node_key}`;
   }
 
-  const active = await reopenRun(ctx, run);
-  if (!active) return { status: "skipped", result: "another run is active" };
-  await walk(ctx, active, job.node_key!);
-  return { status: "done", result: `sent ${job.node_key}` };
+  // The last allowed nudge: hand the lead to the agent if they stay silent.
+  if (job.kind === "nudge" && meta.capped && bundle.settings.nudges) {
+    const caps = bundle.settings.nudges;
+    const sentNow = (await nudgesSent(ctx)) + 1; // this job is marked done after we return
+    if (sentNow >= caps.max_per_lead) {
+      const testMinutes = ctx.isTest ? bundle.settings.test_overrides?.final_after_minutes : undefined;
+      const due = new Date(ctx.now.getTime() + (testMinutes !== undefined ? testMinutes * 60000 : caps.final_after_hours * 3600 * 1000));
+      const { error } = await db.from("flow_scheduled_jobs").insert({
+        account_id: ctx.accountId,
+        flow_id: ctx.flow.id,
+        run_id: run.id,
+        contact_id: c.id,
+        conversation_id: ctx.conversationId,
+        kind: "no_reply",
+        node_key: job.node_key,
+        actions: caps.final_actions,
+        cancel_on: ["customer", "agent"],
+        due_at: due.toISOString(),
+      });
+      if (error) {
+        await logEvent(db, run.id, "error", job.node_key, { reason: "action_failed", action: "schedule_final_follow_up", detail: error.message });
+      } else {
+        result += `; last nudge — agent follow-up at ${due.toISOString()} if still silent`;
+      }
+    }
+  }
+  return { status: "done", result };
 }

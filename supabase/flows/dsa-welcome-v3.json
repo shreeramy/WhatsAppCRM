@@ -1,0 +1,2302 @@
+{
+  "name": "DSA Welcome v3",
+  "description": "v3: image welcome, assign on first message, step nudges (max 2), 30-min slot list with capacity, post-video buy path, lost reasons.",
+  "settings": {
+    "engine": "v2",
+    "routing": "test",
+    "test_phones": [],
+    "dry_run_phones": [],
+    "replaces_flow_id": "fcca58b4-6445-492d-ae6a-5cd1d3261192",
+    "history_flow_ids": [
+      "fcca58b4-6445-492d-ae6a-5cd1d3261192"
+    ],
+    "entry_nodes": {
+      "en": "e1",
+      "hi": "h1"
+    },
+    "fallback_nodes": {
+      "en": "e8",
+      "hi": "h8"
+    },
+    "entry_fallback_nodes": {
+      "en": "e8w",
+      "hi": "h8w"
+    },
+    "working_hours": {
+      "timezone": "Asia/Kolkata",
+      "days": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "start": "10:00",
+      "end": "19:00"
+    },
+    "agent_pool": [],
+    "skip_offline": false,
+    "agent_name_pool_only": true,
+    "fallback_agent_name": {
+      "en": "Our team",
+      "hi": "हमारी team"
+    },
+    "agent_intro": {
+      "en": {
+        "named": "{{name}} from our team",
+        "none": "Our team"
+      },
+      "hi": {
+        "named": "हमारी team से {{name}}",
+        "none": "हमारी team"
+      }
+    },
+    "taps_bypass_pause": true,
+    "opening_grace_after_form_only": true,
+    "entry": {
+      "reengage_after_days": 30,
+      "skip_if_agent_active_hours": 72,
+      "skip_if_run_finished_days": 30,
+      "opening_grace_seconds": 120
+    },
+    "language": {
+      "hindi_prefill": [
+        "नमस्ते! क्या मुझे इस बारे में और पता चल सकता है?"
+      ],
+      "contact_field": "flow_language"
+    },
+    "form": {
+      "field_map": {
+        "screen_0__0": "name"
+      },
+      "language_field": null
+    },
+    "dedupe_window_seconds": 10,
+    "tap_debounce_seconds": 1,
+    "bot_pause_hours": 72,
+    "fallback_reply_cooldown_hours": 24,
+    "text_intents": [
+      {
+        "keywords": [
+          "price",
+          "pricing",
+          "cost",
+          "costing",
+          "charges",
+          "charge",
+          "kitna",
+          "kitne",
+          "rate",
+          "fees",
+          "fee",
+          "पैसे",
+          "कीमत",
+          "चार्ज",
+          "कितना"
+        ],
+        "at_nodes": [
+          "e1",
+          "h1",
+          "n_welcome",
+          "h_nw"
+        ],
+        "target": {
+          "en": "price_en",
+          "hi": "price_hi"
+        }
+      },
+      {
+        "keywords": [
+          "team",
+          "5 log",
+          "log hai",
+          "staff",
+          "मेरी team",
+          "टीम"
+        ],
+        "at_nodes": [
+          "e3",
+          "h3",
+          "n_team",
+          "h_nt"
+        ],
+        "target": {
+          "en": "e4b",
+          "hi": "h4b"
+        }
+      },
+      {
+        "keywords": [
+          "akela",
+          "akele",
+          "single",
+          "just me",
+          "only me",
+          "main hi",
+          "सिर्फ मैं",
+          "अकेला"
+        ],
+        "at_nodes": [
+          "e3",
+          "h3",
+          "n_team",
+          "h_nt"
+        ],
+        "target": {
+          "en": "e4a",
+          "hi": "h4a"
+        }
+      },
+      {
+        "keywords": [
+          "price",
+          "pricing",
+          "cost",
+          "costing",
+          "charges",
+          "charge",
+          "kitna",
+          "kitne",
+          "rate",
+          "fees",
+          "fee",
+          "पैसे",
+          "कीमत",
+          "चार्ज",
+          "कितना"
+        ],
+        "target": {
+          "en": "e3",
+          "hi": "h3"
+        },
+        "by_var": {
+          "var": "plan",
+          "map": {
+            "individual": {
+              "en": "e4a",
+              "hi": "h4a"
+            },
+            "team": {
+              "en": "e4b",
+              "hi": "h4b"
+            }
+          }
+        }
+      }
+    ],
+    "deal": {
+      "pipeline": "Sales Pipeline",
+      "new_stage": "New Lead",
+      "currency": "INR"
+    },
+    "slot_capacity": 2,
+    "booking_lock": {
+      "nodes": [
+        "e1",
+        "h1",
+        "e2",
+        "h2",
+        "e3",
+        "h3",
+        "e4a",
+        "e4b",
+        "h4a",
+        "h4b"
+      ],
+      "redirect": {
+        "en": "booked_en",
+        "hi": "h_booked"
+      }
+    },
+    "nudges": {
+      "max_per_lead": 2,
+      "quiet_start": "21:00",
+      "quiet_end": "10:00",
+      "shift_to": "10:30",
+      "final_after_hours": 24,
+      "final_actions": [
+        {
+          "type": "create_follow_up",
+          "kind": "call",
+          "title": "No reply after 2 nudges – call {{contact_name}}"
+        },
+        {
+          "type": "notify_agent",
+          "title": "📵 No reply after 2 nudges: {{contact_name}}",
+          "body": "Please call"
+        },
+        {
+          "type": "stop_automation"
+        }
+      ],
+      "templates": {
+        "n_welcome": {
+          "name": "dsa_nudge_welcome",
+          "language": "en"
+        },
+        "h_nw": {
+          "name": "dsa_nudge_welcome_hi",
+          "language": "hi"
+        },
+        "n_team": {
+          "name": "dsa_nudge_team",
+          "language": "en"
+        },
+        "h_nt": {
+          "name": "dsa_nudge_team_hi",
+          "language": "hi"
+        },
+        "n_plan": {
+          "name": "dsa_nudge_plan",
+          "language": "en"
+        },
+        "h_np": {
+          "name": "dsa_nudge_plan_hi",
+          "language": "hi"
+        },
+        "n_slot": {
+          "name": "dsa_nudge_slot",
+          "language": "en"
+        },
+        "h_ns": {
+          "name": "dsa_nudge_slot_hi",
+          "language": "hi"
+        },
+        "n1": {
+          "name": "dsa_nudge_video",
+          "language": "en"
+        },
+        "h_n1": {
+          "name": "dsa_nudge_video_hi",
+          "language": "hi"
+        }
+      }
+    },
+    "reminder_templates": {
+      "en": {
+        "name": "dsa_demo_reminder",
+        "language": "en"
+      },
+      "hi": {
+        "name": "dsa_demo_reminder_hi",
+        "language": "hi"
+      }
+    },
+    "nudge_template": null,
+    "test_overrides": {
+      "working_hours_mode": "auto"
+    }
+  },
+  "nodes": [
+    {
+      "node_key": "start",
+      "node_type": "start",
+      "config": {
+        "next_node_key": "e1"
+      }
+    },
+    {
+      "node_key": "e1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
+        "text": "Namaste 🙏\n\nHow many loan files slipped away last month just because a follow-up was missed? 📂\n\nDSA Management keeps every file, follow-up and commission in one place, on your phone. 📱 Your bank DSA code stays 100% yours. This is only software to manage your work.\n\nOne quick question 👇 Are you already working as a DSA / loan agent?",
+        "buttons": [
+          {
+            "reply_id": "v2.e1.dsa",
+            "title": "Yes, I'm a DSA",
+            "next_node_key": "e3"
+          },
+          {
+            "reply_id": "v2.e1.code",
+            "title": "No, need DSA code",
+            "next_node_key": "e2"
+          },
+          {
+            "reply_id": "v2.e1.hindi",
+            "title": "हिंदी में बताएं",
+            "next_node_key": "h1"
+          }
+        ],
+        "title_aliases": {
+          "I run a DSA business": "e3",
+          "Want DSA code": "e2",
+          "Want to become DSA": "e2"
+        },
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_welcome",
+              "hi": "h_nw"
+            },
+            "delay_minutes": 45,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "price_en",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "reachable_via": "settings.text_intents",
+        "text": "Plans start at ₹600/month for individuals and ₹1,397/month for teams.",
+        "next_node_key": "e3"
+      }
+    },
+    {
+      "node_key": "e8w",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "text": "Thanks! {{agent_intro}} will get back to you shortly. Meanwhile, here's a 2-min video that answers most questions 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "Reply as soon as you can"
+          },
+          {
+            "type": "mark_fallback_replied"
+          }
+        ],
+        "next_node_key": "e1",
+        "reachable_via": "settings.entry_fallback_nodes"
+      }
+    },
+    {
+      "node_key": "e8",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Thanks! {{agent_intro}} will get back to you shortly. Meanwhile, here's a 2-min video that answers most questions 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "Reply as soon as you can"
+          },
+          {
+            "type": "mark_fallback_replied"
+          }
+        ],
+        "reachable_via": "settings.fallback_nodes"
+      }
+    },
+    {
+      "node_key": "e2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Thanks for reaching out! 🙏 We're a software company. We don't provide DSA codes or bank tie-ups. Our CRM is for people who already work as DSAs/loan agents. If you start your DSA work later, we'd love to help you manage it. All the best!",
+        "buttons": [
+          {
+            "reply_id": "v2.e2.dsa",
+            "title": "Oops, I am a DSA",
+            "next_node_key": "e3"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Not-DSA"
+          },
+          {
+            "type": "schedule_auto_close",
+            "hours": 24
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e3",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Great! How many people work on loan files in your setup?",
+        "buttons": [
+          {
+            "reply_id": "v2.e3.solo",
+            "title": "Just me",
+            "next_node_key": "e4a"
+          },
+          {
+            "reply_id": "v2.e3.team",
+            "title": "I have a team",
+            "next_node_key": "e4b"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost: Not-DSA"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Contacted"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_team",
+              "hi": "h_nt"
+            },
+            "delay_minutes": 60,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e4a",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Perfect, the Individual Plan fits you:\n\n💰 ₹600/month\n✅ Track every loan file & its status\n✅ Follow-up reminders, so no file slips away\n✅ Commission tracking\n\nWant to see it live in a free 15-min demo?",
+        "buttons": [
+          {
+            "reply_id": "v2.e4a.demo",
+            "title": "Book free demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v2.e4a.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v2.e4a.video",
+            "title": "Watch video first",
+            "next_node_key": "e7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 600,
+            "plan": "individual"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_plan",
+              "hi": "h_np"
+            },
+            "delay_minutes": 120,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e4b",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "For teams, we have the Team Plan:\n\n💰 ₹1,397/month 🔥 or ₹14,400/year (save ₹2,364, about 2 months free)\n\n✅ Everything in Individual\n✅ Assign files to team members\n✅ See every member's pipeline & follow-ups\n✅ Team performance reports\n\nWant to see it live in a free 15-min demo?",
+        "buttons": [
+          {
+            "reply_id": "v2.e4b.demo",
+            "title": "Book free demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v2.e4b.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v2.e4b.video",
+            "title": "Watch video first",
+            "next_node_key": "e7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 1397,
+            "plan": "team"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_plan",
+              "hi": "h_np"
+            },
+            "delay_minutes": 120,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e5",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Pick a time for your free 15-min demo 👇",
+        "dynamic_slots": {
+          "mode": "list",
+          "times": [
+            "11:00",
+            "12:30",
+            "15:00",
+            "17:30"
+          ],
+          "slot_minutes": 30,
+          "days": 2,
+          "max_rows": 6,
+          "min_lead_minutes": 60,
+          "words": {
+            "en": {
+              "days": [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun"
+              ]
+            },
+            "hi": {
+              "days": [
+                "सोम",
+                "मंगल",
+                "बुध",
+                "गुरु",
+                "शुक्र",
+                "शनि",
+                "रवि"
+              ]
+            }
+          },
+          "next_node_key": "e5_done",
+          "full_node_key": "e5_full",
+          "button_label": "See times",
+          "section_title": "Free slots",
+          "extra_rows": [
+            {
+              "reply_id": "v3.e5.call",
+              "title": "Call me instead",
+              "next_node_key": "e6"
+            },
+            {
+              "reply_id": "v3.e5.other",
+              "title": "Other time",
+              "next_node_key": "e_other"
+            }
+          ]
+        },
+        "title_aliases": {
+          "Yes, book demo": "e5"
+        },
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_slot",
+              "hi": "h_ns"
+            },
+            "delay_minutes": 30,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e5_full",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "text": "That time just filled up 🙈 Please pick another 👇",
+        "next_node_key": "e5"
+      }
+    },
+    {
+      "node_key": "e5_done",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "dedupe_by": "slot",
+        "text": "Done ✅ Your demo is booked for {{slot}}. {{agent_intro}} will send the Google Meet link 10 min before. 🙂\n\nBefore the demo, watch this 2-min video so we can focus on your questions 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Demo Booked"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Demo Booked"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "demo",
+            "title": "Demo – {{slot}} – {{plan_label}}"
+          },
+          {
+            "type": "notify_agent",
+            "title": "📅 Demo booked: {{contact_name}}",
+            "body": "{{slot}}"
+          },
+          {
+            "type": "schedule_reminder",
+            "nodes": {
+              "en": "rem_en",
+              "hi": "rem_hi"
+            },
+            "at": "10:00",
+            "early_cutoff": "12:00",
+            "early_before_hours": 2
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e_other",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Sure, tell us a time that suits you and {{agent_intro_lc}} will confirm 🙂",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Agree a demo time – {{contact_name}}"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🕒 Wants another demo time: {{contact_name}}",
+            "body": "Ask which time suits them"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "booked_en",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "reachable_via": "settings.booking_lock",
+        "text": "Your demo is already booked for {{slot}} ✅ Need to change anything?",
+        "buttons": [
+          {
+            "reply_id": "v3.booked_en.change",
+            "title": "Change time",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v3.booked_en.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "rem_en",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "reachable_via": "schedule_reminder",
+        "text": "Your demo is today at {{slot_time}} 🙂 {{agent_intro}} will send the Google Meet link 10 min before. If you haven't yet, watch this 2-min video first 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c"
+      }
+    },
+    {
+      "node_key": "e6",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Sure! {{agent_intro}} will call you shortly 📞 Meanwhile, watch this 2-min video so the call is quick and useful 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "text_off_hours": "Sure! {{agent_intro}} will call you tomorrow 📞 Meanwhile, watch this 2-min video so the call is quick and useful 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Call Requested"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Call back – {{contact_name}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Call requested: {{contact_name}}",
+            "body": "Call as soon as you can"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e7",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "text": "Here's a 2-min video showing exactly how DSAs use it 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Nurture"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n1",
+              "hi": "h_n1"
+            },
+            "delay_minutes": 120,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Did you get a chance to watch the video? 🙂 What would you like to do next?",
+        "buttons": [
+          {
+            "reply_id": "v3.n1.yes",
+            "title": "Yes, I want this",
+            "next_node_key": "ready_route"
+          },
+          {
+            "reply_id": "v3.n1.q",
+            "title": "I have a question",
+            "next_node_key": "e_q"
+          },
+          {
+            "reply_id": "v3.n1.no",
+            "title": "Not for me",
+            "next_node_key": "e_not"
+          }
+        ],
+        "title_aliases": {
+          "Yes, I want it": "ready_route",
+          "Not watched yet": "e7",
+          "Yes, book demo": "e5"
+        }
+      }
+    },
+    {
+      "node_key": "ready_route",
+      "node_type": "start",
+      "config": {
+        "lang": "en",
+        "route_by_var": {
+          "var": "plan",
+          "map": {
+            "individual": "r_solo",
+            "team": "r_team"
+          },
+          "default": "e3r"
+        }
+      }
+    },
+    {
+      "node_key": "e3r",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Great! How many people work on loan files in your setup?",
+        "buttons": [
+          {
+            "reply_id": "v3.e3r.solo",
+            "title": "Just me",
+            "next_node_key": "r_solo"
+          },
+          {
+            "reply_id": "v3.e3r.team",
+            "title": "I have a team",
+            "next_node_key": "r_team"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "r_solo",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Great choice! 🎉 Your plan: Individual – ₹600/month.",
+        "buttons": [
+          {
+            "reply_id": "v3.r_solo.ok",
+            "title": "Confirm ₹600/month",
+            "next_node_key": "pay_solo"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "r_team",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Great choice! 🎉 Which plan would you like?",
+        "buttons": [
+          {
+            "reply_id": "v3.r_team.m",
+            "title": "₹1,397/month",
+            "next_node_key": "pay_team_m"
+          },
+          {
+            "reply_id": "v3.r_team.y",
+            "title": "₹14,400/year",
+            "next_node_key": "pay_team_y"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "pay_solo",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Here's how to get started 👇\n1️⃣ Fill the registration form: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Complete payment: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} will call you shortly to help set up your account 📞",
+        "text_off_hours": "Here's how to get started 👇\n1️⃣ Fill the registration form: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Complete payment: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} will call you tomorrow to help set up your account 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "set_deal_value",
+            "value": 600,
+            "plan": "individual",
+            "label": "Individual ₹600/month"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Payment Pending"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{plan_label}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "{{plan_label}} — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "pay_team_m",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Here's how to get started 👇\n1️⃣ Fill the registration form: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Complete payment: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} will call you shortly to help set up your account 📞",
+        "text_off_hours": "Here's how to get started 👇\n1️⃣ Fill the registration form: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Complete payment: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} will call you tomorrow to help set up your account 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "set_deal_value",
+            "value": 1397,
+            "plan": "team",
+            "label": "Team ₹1,397/month"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Payment Pending"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{plan_label}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "{{plan_label}} — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "pay_team_y",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Here's how to get started 👇\n1️⃣ Fill the registration form: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Complete payment: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} will call you shortly to help set up your account 📞",
+        "text_off_hours": "Here's how to get started 👇\n1️⃣ Fill the registration form: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Complete payment: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} will call you tomorrow to help set up your account 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "set_deal_value",
+            "value": 14400,
+            "plan": "team",
+            "label": "Team ₹14,400/year"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Payment Pending"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{plan_label}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "{{plan_label}} — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e_q",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Sure! Type your question here and {{agent_intro_lc}} will get back to you shortly.",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "They want to ask something after the video"
+          },
+          {
+            "type": "flag_hot"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "e_not",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "No problem 🙏 Could you tell us why? It helps us improve.",
+        "list": {
+          "button_label": "Choose a reason",
+          "rows": [
+            {
+              "reply_id": "v3.e_not.price",
+              "title": "Too expensive",
+              "next_node_key": "lost_price"
+            },
+            {
+              "reply_id": "v3.e_not.crm",
+              "title": "Using Excel / other CRM",
+              "next_node_key": "lost_crm"
+            },
+            {
+              "reply_id": "v3.e_not.dsa",
+              "title": "Not a DSA yet",
+              "next_node_key": "e2"
+            },
+            {
+              "reply_id": "v3.e_not.explore",
+              "title": "Just exploring",
+              "next_node_key": "lost_explore"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node_key": "lost_price",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Understood. The yearly plan saves ₹2,364 (about 2 months free), and it works out to about ₹20/day. Want a quick call to see if it's worth it for you?",
+        "buttons": [
+          {
+            "reply_id": "v3.lost_price.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v3.lost_price.no",
+            "title": "No thanks",
+            "next_node_key": "no_thanks"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Price"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "lost_crm",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Many DSAs start with Excel. The difference is automatic follow-up reminders and commission tracking. Want a 15-min demo to compare?",
+        "buttons": [
+          {
+            "reply_id": "v3.lost_crm.demo",
+            "title": "Book free demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v3.lost_crm.no",
+            "title": "No thanks",
+            "next_node_key": "no_thanks"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Already-CRM"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "lost_explore",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "No problem! We'll check back in a few weeks. Save this number 🙂",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: No-need"
+          },
+          {
+            "type": "stop_automation"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "no_thanks",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "text": "Thanks for your time 🙏 You can message us anytime.",
+        "actions": [
+          {
+            "type": "stop_automation"
+          },
+          {
+            "type": "close_conversation"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_welcome",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Just one tap 🙂 Are you working as a DSA / loan agent?",
+        "buttons": [
+          {
+            "reply_id": "v3.n_welcome.dsa",
+            "title": "Yes, I'm a DSA",
+            "next_node_key": "e3"
+          },
+          {
+            "reply_id": "v3.n_welcome.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v3.n_welcome.lang",
+            "title": "हिंदी में बताएं",
+            "next_node_key": "h1"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_team",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Solo or with a team? I'll share the right plan for you.",
+        "buttons": [
+          {
+            "reply_id": "v3.n_team.solo",
+            "title": "Just me",
+            "next_node_key": "e4a"
+          },
+          {
+            "reply_id": "v3.n_team.team",
+            "title": "I have a team",
+            "next_node_key": "e4b"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_plan",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Would you like a quick 15-min demo? Pick a time 👇",
+        "buttons": [
+          {
+            "reply_id": "v3.n_plan.demo",
+            "title": "Book free demo",
+            "next_node_key": "e5"
+          },
+          {
+            "reply_id": "v3.n_plan.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "n_slot",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "en",
+        "text": "Any time works for you? We can simply call you 📞",
+        "buttons": [
+          {
+            "reply_id": "v3.n_slot.call",
+            "title": "Call me",
+            "next_node_key": "e6"
+          },
+          {
+            "reply_id": "v3.n_slot.slots",
+            "title": "Pick another time",
+            "next_node_key": "e5"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
+        "text": "नमस्ते 🙏\n\nपिछले महीने कितनी loan files सिर्फ इसलिए हाथ से निकल गईं क्योंकि follow-up छूट गया? 📂\n\nDSA Management में हर file, follow-up और commission एक जगह, आपके mobile पर। 📱 आपका bank DSA code 100% आपका ही रहेगा। ये सिर्फ आपका काम संभालने का software है।\n\nबस एक सवाल 👇 क्या आप अभी DSA / loan agent का काम करते हैं?",
+        "buttons": [
+          {
+            "reply_id": "v2.h1.dsa",
+            "title": "हाँ, मैं DSA हूँ",
+            "next_node_key": "h3"
+          },
+          {
+            "reply_id": "v2.h1.code",
+            "title": "नहीं, code चाहिए",
+            "next_node_key": "h2"
+          },
+          {
+            "reply_id": "v2.h1.english",
+            "title": "English please",
+            "next_node_key": "e1"
+          }
+        ],
+        "title_aliases": {
+          "मेरा DSA business है": "h3",
+          "DSA code चाहिए": "h2",
+          "DSA बनना है": "h2",
+          "बस price जानना है": "h3"
+        },
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_welcome",
+              "hi": "h_nw"
+            },
+            "delay_minutes": 45,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "price_hi",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "reachable_via": "settings.text_intents",
+        "text": "Plans ₹600/महीना (individual) और ₹1,397/महीना (team) से शुरू होते हैं।",
+        "next_node_key": "h3"
+      }
+    },
+    {
+      "node_key": "h8w",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "text": "धन्यवाद! {{agent_intro}} जल्द ही आपसे संपर्क करेंगे। तब तक ये 2-min video देखिए, इसमें ज़्यादातर सवालों के जवाब हैं 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "Reply as soon as you can"
+          },
+          {
+            "type": "mark_fallback_replied"
+          }
+        ],
+        "next_node_key": "h1",
+        "reachable_via": "settings.entry_fallback_nodes"
+      }
+    },
+    {
+      "node_key": "h8",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "धन्यवाद! {{agent_intro}} जल्द ही आपसे संपर्क करेंगे। तब तक ये 2-min video देखिए, इसमें ज़्यादातर सवालों के जवाब हैं 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "Reply as soon as you can"
+          },
+          {
+            "type": "mark_fallback_replied"
+          }
+        ],
+        "reachable_via": "settings.fallback_nodes"
+      }
+    },
+    {
+      "node_key": "h2",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "संपर्क करने के लिए धन्यवाद 🙏 हम एक software company हैं। हम DSA code या bank tie-up नहीं देते। हमारा CRM उनके लिए है जो पहले से DSA/loan agent का काम करते हैं। जब आप DSA काम शुरू करें, हम आपकी मदद ज़रूर करेंगे। All the best!",
+        "buttons": [
+          {
+            "reply_id": "v2.h2.dsa",
+            "title": "मैं DSA हूँ",
+            "next_node_key": "h3"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Not-DSA"
+          },
+          {
+            "type": "schedule_auto_close",
+            "hours": 24
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h3",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "बढ़िया! आपके यहाँ कितने लोग loan files पर काम करते हैं?",
+        "buttons": [
+          {
+            "reply_id": "v2.h3.solo",
+            "title": "सिर्फ मैं",
+            "next_node_key": "h4a"
+          },
+          {
+            "reply_id": "v2.h3.team",
+            "title": "मेरी team है",
+            "next_node_key": "h4b"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost: Not-DSA"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Contacted"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_team",
+              "hi": "h_nt"
+            },
+            "delay_minutes": 60,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h4a",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "आपके लिए Individual Plan सही रहेगा:\n\n💰 ₹600/महीना\n✅ हर loan file और उसका status track करें\n✅ Follow-up reminders, कोई file नहीं छूटेगी\n✅ Commission tracking\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?",
+        "buttons": [
+          {
+            "reply_id": "v2.h4a.demo",
+            "title": "Free demo book करें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v2.h4a.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v2.h4a.video",
+            "title": "पहले video देखूँगा",
+            "next_node_key": "h7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 600,
+            "plan": "individual"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_plan",
+              "hi": "h_np"
+            },
+            "delay_minutes": 120,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h4b",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "Team के लिए हमारा Team Plan:\n\n💰 ₹1,397/महीना 🔥 या ₹14,400/साल (₹2,364 की बचत, लगभग 2 महीने free)\n\n✅ Individual plan के सारे features\n✅ Team members को files assign करें\n✅ हर member की pipeline और follow-ups देखें\n✅ Team performance reports\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?",
+        "buttons": [
+          {
+            "reply_id": "v2.h4b.demo",
+            "title": "Free demo book करें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v2.h4b.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v2.h4b.video",
+            "title": "पहले video देखूँगा",
+            "next_node_key": "h7"
+          }
+        ],
+        "actions": [
+          {
+            "type": "set_deal_value",
+            "value": 1397,
+            "plan": "team"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Price Sent"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_plan",
+              "hi": "h_np"
+            },
+            "delay_minutes": 120,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h5",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "अपने free 15-min demo के लिए time चुनें 👇",
+        "dynamic_slots": {
+          "mode": "list",
+          "times": [
+            "11:00",
+            "12:30",
+            "15:00",
+            "17:30"
+          ],
+          "slot_minutes": 30,
+          "days": 2,
+          "max_rows": 6,
+          "min_lead_minutes": 60,
+          "words": {
+            "en": {
+              "days": [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun"
+              ]
+            },
+            "hi": {
+              "days": [
+                "सोम",
+                "मंगल",
+                "बुध",
+                "गुरु",
+                "शुक्र",
+                "शनि",
+                "रवि"
+              ]
+            }
+          },
+          "next_node_key": "h5_done",
+          "full_node_key": "h5_full",
+          "button_label": "Time देखें",
+          "section_title": "खाली slots",
+          "extra_rows": [
+            {
+              "reply_id": "v3.h5.call",
+              "title": "Call कर लीजिए",
+              "next_node_key": "h6"
+            },
+            {
+              "reply_id": "v3.h5.other",
+              "title": "कोई और time",
+              "next_node_key": "h_other"
+            }
+          ]
+        },
+        "title_aliases": {
+          "हाँ, demo चाहिए": "h5"
+        },
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n_slot",
+              "hi": "h_ns"
+            },
+            "delay_minutes": 30,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h5_full",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "text": "ये time अभी भर गया 🙈 कृपया दूसरा चुनें 👇",
+        "next_node_key": "h5"
+      }
+    },
+    {
+      "node_key": "h5_done",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "dedupe_by": "slot",
+        "text": "Done ✅ आपका demo {{slot}} के लिए book हो गया है। {{agent_intro}} 10 मिनट पहले Google Meet link भेजेंगे। 🙂\n\nDemo से पहले ये 2-min video देख लीजिए, ताकि demo में आपके सवालों पर बात हो सके 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Demo Booked"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Demo Booked"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "demo",
+            "title": "Demo – {{slot}} – {{plan_label}}"
+          },
+          {
+            "type": "notify_agent",
+            "title": "📅 Demo booked: {{contact_name}}",
+            "body": "{{slot}}"
+          },
+          {
+            "type": "schedule_reminder",
+            "nodes": {
+              "en": "rem_en",
+              "hi": "rem_hi"
+            },
+            "at": "10:00",
+            "early_cutoff": "12:00",
+            "early_before_hours": 2
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_other",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "ज़रूर, अपना सुविधाजनक time बताइए, {{agent_intro}} confirm कर देंगे 🙂",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Agree a demo time – {{contact_name}}"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🕒 Wants another demo time: {{contact_name}}",
+            "body": "Ask which time suits them"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_booked",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "reachable_via": "settings.booking_lock",
+        "text": "आपका demo {{slot}} के लिए पहले से book है ✅ कुछ बदलना है?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_booked.change",
+            "title": "Time बदलें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v3.h_booked.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "rem_hi",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "reachable_via": "schedule_reminder",
+        "text": "आपका demo आज {{slot_time}} है 🙂 {{agent_intro}} 10 मिनट पहले Google Meet link भेजेंगे। अगर अभी तक नहीं देखा, तो पहले ये 2-min video देख लीजिए 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU"
+      }
+    },
+    {
+      "node_key": "h6",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "ज़रूर! {{agent_intro}} जल्द ही आपको call करेंगे 📞 तब तक ये 2-min video देख लीजिए, ताकि call जल्दी और काम की हो 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "text_off_hours": "ज़रूर! {{agent_intro}} कल आपको call करेंगे 📞 तब तक ये 2-min video देख लीजिए, ताकि call जल्दी और काम की हो 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Call Requested"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Call back – {{contact_name}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Call requested: {{contact_name}}",
+            "body": "Call as soon as you can"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h7",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "text": "ये 2-min video देखिए कि DSAs इसे कैसे use करते हैं 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Nurture"
+          },
+          {
+            "type": "schedule_nudge",
+            "nodes": {
+              "en": "n1",
+              "hi": "h_n1"
+            },
+            "delay_minutes": 120,
+            "capped": true
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_n1",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "क्या आपने video देखा? 🙂 आगे क्या करना चाहेंगे?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_n1.yes",
+            "title": "हाँ, लेना है",
+            "next_node_key": "h_ready_route"
+          },
+          {
+            "reply_id": "v3.h_n1.q",
+            "title": "एक सवाल है",
+            "next_node_key": "h_q"
+          },
+          {
+            "reply_id": "v3.h_n1.no",
+            "title": "मेरे लिए नहीं",
+            "next_node_key": "h_not"
+          }
+        ],
+        "title_aliases": {
+          "अभी नहीं देखा": "h7",
+          "हाँ, demo चाहिए": "h5"
+        }
+      }
+    },
+    {
+      "node_key": "h_ready_route",
+      "node_type": "start",
+      "config": {
+        "lang": "hi",
+        "route_by_var": {
+          "var": "plan",
+          "map": {
+            "individual": "h_r_solo",
+            "team": "h_r_team"
+          },
+          "default": "h3r"
+        }
+      }
+    },
+    {
+      "node_key": "h3r",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "बढ़िया! आपके यहाँ कितने लोग loan files पर काम करते हैं?",
+        "buttons": [
+          {
+            "reply_id": "v3.h3r.solo",
+            "title": "सिर्फ मैं",
+            "next_node_key": "h_r_solo"
+          },
+          {
+            "reply_id": "v3.h3r.team",
+            "title": "मेरी team है",
+            "next_node_key": "h_r_team"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_r_solo",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "बढ़िया! 🎉 आपका plan: Individual – ₹600/महीना।",
+        "buttons": [
+          {
+            "reply_id": "v3.h_r_solo.ok",
+            "title": "Confirm ₹600/महीना",
+            "next_node_key": "h_pay_solo"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_r_team",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "बढ़िया! 🎉 कौन सा plan लेना चाहेंगे?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_r_team.m",
+            "title": "₹1,397/महीना",
+            "next_node_key": "h_pay_team_m"
+          },
+          {
+            "reply_id": "v3.h_r_team.y",
+            "title": "₹14,400/साल",
+            "next_node_key": "h_pay_team_y"
+          }
+        ],
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_pay_solo",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "शुरू करने के लिए 👇\n1️⃣ Registration form भरें: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Payment करें: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} जल्द ही account set up करने में मदद के लिए call करेंगे 📞",
+        "text_off_hours": "शुरू करने के लिए 👇\n1️⃣ Registration form भरें: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Payment करें: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} कल account set up करने में मदद के लिए call करेंगे 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "set_deal_value",
+            "value": 600,
+            "plan": "individual",
+            "label": "Individual ₹600/month"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Payment Pending"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{plan_label}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "{{plan_label}} — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_pay_team_m",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "शुरू करने के लिए 👇\n1️⃣ Registration form भरें: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Payment करें: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} जल्द ही account set up करने में मदद के लिए call करेंगे 📞",
+        "text_off_hours": "शुरू करने के लिए 👇\n1️⃣ Registration form भरें: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Payment करें: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} कल account set up करने में मदद के लिए call करेंगे 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "set_deal_value",
+            "value": 1397,
+            "plan": "team",
+            "label": "Team ₹1,397/month"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Payment Pending"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{plan_label}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "{{plan_label}} — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_pay_team_y",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "शुरू करने के लिए 👇\n1️⃣ Registration form भरें: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Payment करें: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} जल्द ही account set up करने में मदद के लिए call करेंगे 📞",
+        "text_off_hours": "शुरू करने के लिए 👇\n1️⃣ Registration form भरें: https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform\n2️⃣ Payment करें: https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform\n\n{{agent_intro}} कल account set up करने में मदद के लिए call करेंगे 📞",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "set_deal_value",
+            "value": 14400,
+            "plan": "team",
+            "label": "Team ₹14,400/year"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "move_deal_stage",
+            "stage": "Payment Pending"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Onboarding call – {{plan_label}}"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Ready to buy: {{contact_name}}",
+            "body": "{{plan_label}} — call to onboard"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_q",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "ज़रूर! अपना सवाल यहाँ लिखिए, {{agent_intro}} जल्द ही जवाब देंगे।",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Question"
+          },
+          {
+            "type": "notify_agent",
+            "title": "❓ Question from {{contact_name}}",
+            "body": "They want to ask something after the video"
+          },
+          {
+            "type": "flag_hot"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_not",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "कोई बात नहीं 🙏 क्या आप बता सकते हैं क्यों? इससे हमें बेहतर होने में मदद मिलती है।",
+        "list": {
+          "button_label": "कारण चुनें",
+          "rows": [
+            {
+              "reply_id": "v3.h_not.price",
+              "title": "बहुत महंगा है",
+              "next_node_key": "h_lost_price"
+            },
+            {
+              "reply_id": "v3.h_not.crm",
+              "title": "Excel/दूसरा CRM है",
+              "next_node_key": "h_lost_crm"
+            },
+            {
+              "reply_id": "v3.h_not.dsa",
+              "title": "अभी DSA नहीं हूँ",
+              "next_node_key": "h2"
+            },
+            {
+              "reply_id": "v3.h_not.explore",
+              "title": "बस देख रहा हूँ",
+              "next_node_key": "h_lost_explore"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node_key": "h_lost_price",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "समझ गए। Yearly plan में ₹2,364 की बचत है (लगभग 2 महीने free), यानी करीब ₹20/दिन। क्या एक छोटी call करें, देख लें कि ये आपके काम का है या नहीं?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_lost_price.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v3.h_lost_price.no",
+            "title": "नहीं, धन्यवाद",
+            "next_node_key": "h_no_thanks"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Price"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_lost_crm",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "बहुत से DSAs Excel से शुरू करते हैं। फर्क है automatic follow-up reminders और commission tracking का। Compare करने के लिए 15-min demo देखें?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_lost_crm.demo",
+            "title": "Free demo book करें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v3.h_lost_crm.no",
+            "title": "नहीं, धन्यवाद",
+            "next_node_key": "h_no_thanks"
+          }
+        ],
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: Already-CRM"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_lost_explore",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "कोई बात नहीं! कुछ हफ्तों में हम फिर बात करेंगे। ये number save कर लीजिए 🙂",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Lost: No-need"
+          },
+          {
+            "type": "stop_automation"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_no_thanks",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "text": "आपके समय के लिए धन्यवाद 🙏 आप कभी भी message कर सकते हैं।",
+        "actions": [
+          {
+            "type": "stop_automation"
+          },
+          {
+            "type": "close_conversation"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_nw",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "बस एक tap 🙂 क्या आप DSA / loan agent का काम करते हैं?",
+        "buttons": [
+          {
+            "reply_id": "v3.h_nw.dsa",
+            "title": "हाँ, मैं DSA हूँ",
+            "next_node_key": "h3"
+          },
+          {
+            "reply_id": "v3.h_nw.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v3.h_nw.lang",
+            "title": "English please",
+            "next_node_key": "e1"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_nt",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "अकेले काम करते हैं या team के साथ? मैं आपके लिए सही plan बताऊँगा।",
+        "buttons": [
+          {
+            "reply_id": "v3.h_nt.solo",
+            "title": "सिर्फ मैं",
+            "next_node_key": "h4a"
+          },
+          {
+            "reply_id": "v3.h_nt.team",
+            "title": "मेरी team है",
+            "next_node_key": "h4b"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_np",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "क्या आप 15-min का छोटा demo देखना चाहेंगे? Time चुनें 👇",
+        "buttons": [
+          {
+            "reply_id": "v3.h_np.demo",
+            "title": "Free demo book करें",
+            "next_node_key": "h5"
+          },
+          {
+            "reply_id": "v3.h_np.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "h_ns",
+      "node_type": "send_buttons",
+      "config": {
+        "lang": "hi",
+        "text": "कोई time सही नहीं लग रहा? हम सीधे call कर लेते हैं 📞",
+        "buttons": [
+          {
+            "reply_id": "v3.h_ns.call",
+            "title": "मुझे call करें",
+            "next_node_key": "h6"
+          },
+          {
+            "reply_id": "v3.h_ns.slots",
+            "title": "दूसरा time चुनें",
+            "next_node_key": "h5"
+          }
+        ]
+      }
+    }
+  ]
+}

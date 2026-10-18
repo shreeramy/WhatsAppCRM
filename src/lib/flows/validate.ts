@@ -60,17 +60,37 @@ function v2Extras(config: Record<string, unknown>): {
   terminal: boolean;
   dynamicNext: string | null;
   nudgeTargets: string[];
+  hasList: boolean;
+  isRouter: boolean;
+  otherTargets: string[];
+  settingsRoot: boolean;
 } {
   const actions = Array.isArray(config.actions) ? (config.actions as Array<Record<string, unknown>>) : [];
-  const dyn = config.dynamic_slots as { next_node_key?: string } | undefined;
+  const dyn = config.dynamic_slots as
+    | { next_node_key?: string; full_node_key?: string; extra_rows?: Array<{ next_node_key?: string }> }
+    | undefined;
   const nudgeTargets = actions
-    .filter((a) => a.type === "schedule_nudge")
+    .filter((a) => a.type === "schedule_nudge" || a.type === "schedule_reminder")
     .flatMap((a) => Object.values((a.nodes as Record<string, string> | undefined) ?? {}));
+  const list = config.list as { rows?: Array<{ next_node_key?: string }> } | undefined;
+  const route = config.route_by_var as { map?: Record<string, string>; default?: string } | undefined;
+  const otherTargets = [
+    ...(list?.rows ?? []).map((r) => r.next_node_key),
+    ...(dyn?.extra_rows ?? []).map((r) => r.next_node_key),
+    dyn?.full_node_key,
+    ...Object.values(route?.map ?? {}),
+    route?.default,
+  ].filter((k): k is string => !!k);
   return {
     isV2: "lang" in config || "actions" in config || !!dyn || "terminal" in config,
     terminal: config.terminal === true,
     dynamicNext: dyn?.next_node_key ?? null,
     nudgeTargets,
+    hasList: !!list?.rows?.length,
+    isRouter: !!route,
+    otherTargets,
+    /** Reached from settings (fallback, booking lock, intents, scheduler) rather than an edge. */
+    settingsRoot: typeof config.reachable_via === "string",
   };
 }
 
@@ -217,6 +237,8 @@ function validateNode(
   switch (node.node_type) {
     case "start": {
       const cfg = node.config as { next_node_key?: string };
+      // A v2 router step jumps by a run var instead of next_node_key.
+      if (v2Extras(node.config).isRouter) break;
       if (!cfg.next_node_key) {
         issues.push({
           severity: "error",
@@ -358,8 +380,8 @@ function validateNode(
           message: `Slot picker points to non-existent node "${v2b.dynamicNext}".`,
         });
       }
-      // v2 slot pickers build their buttons at send time.
-      if (btns.length < 1 && v2b.dynamicNext === null) {
+      // v2 slot pickers build their buttons at send time; list steps use rows.
+      if (btns.length < 1 && v2b.dynamicNext === null && !v2b.hasList) {
         issues.push({
           severity: "error",
           scope: "node",
@@ -770,7 +792,10 @@ export function reachableFromEntry(
   for (const n of nodes) byKey.set(n.node_key, n);
 
   const visited = new Set<string>();
-  const queue: string[] = [entryKey];
+  const queue: string[] = [
+    entryKey,
+    ...nodes.filter((n) => v2Extras(n.config).settingsRoot).map((n) => n.node_key),
+  ];
   while (queue.length > 0) {
     const key = queue.shift() as string;
     if (visited.has(key)) continue;
@@ -778,7 +803,7 @@ export function reachableFromEntry(
     const node = byKey.get(key);
     if (!node) continue;
     const v2 = v2Extras(node.config);
-    const extra = [...(v2.dynamicNext ? [v2.dynamicNext] : []), ...v2.nudgeTargets];
+    const extra = [...(v2.dynamicNext ? [v2.dynamicNext] : []), ...v2.nudgeTargets, ...v2.otherTargets];
     for (const next of [...outgoingEdges(node), ...extra]) {
       if (!visited.has(next)) queue.push(next);
     }

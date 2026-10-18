@@ -188,10 +188,30 @@ export interface OutgoingSlot {
 export function v2ExtraSlots(node: BuilderNode): Array<OutgoingSlot & { target: string }> {
   const cfg = node.config as Record<string, unknown>;
   const out: Array<OutgoingSlot & { target: string }> = [];
-  const dyn = cfg.dynamic_slots as { next_node_key?: string } | undefined;
+  type Row = { reply_id?: string; title?: string; next_node_key?: string };
+  const dyn = cfg.dynamic_slots as { next_node_key?: string; full_node_key?: string; extra_rows?: Row[] } | undefined;
   if (dyn?.next_node_key) out.push({ id: "slot", label: "Slot picked", target: dyn.next_node_key });
+  if (dyn?.full_node_key) out.push({ id: "slot_full", label: "Slot full", target: dyn.full_node_key });
+  const list = cfg.list as { rows?: Row[] } | undefined;
+  for (const r of [...(list?.rows ?? []), ...(dyn?.extra_rows ?? [])]) {
+    if (r.reply_id && r.next_node_key) out.push({ id: `row:${r.reply_id}`, label: r.title ?? r.reply_id, target: r.next_node_key });
+  }
+  const route = cfg.route_by_var as { var?: string; map?: Record<string, string>; default?: string } | undefined;
+  if (route) {
+    for (const [value, target] of Object.entries(route.map ?? {})) {
+      out.push({ id: `route:${value}`, label: `${route.var} = ${value}`, target });
+    }
+    if (route.default) out.push({ id: "route:default", label: "otherwise", target: route.default });
+  }
   const actions = Array.isArray(cfg.actions) ? (cfg.actions as Array<Record<string, unknown>>) : [];
   for (const a of actions) {
+    if (a.type === "schedule_reminder") {
+      const nodes = (a.nodes as Record<string, string> | undefined) ?? {};
+      const lang = typeof cfg.lang === "string" ? cfg.lang : "en";
+      const target = nodes[lang] ?? Object.values(nodes)[0];
+      if (target) out.push({ id: "reminder", label: "Demo-day reminder", target });
+      continue;
+    }
     if (a.type !== "schedule_nudge") continue;
     const nodes = (a.nodes as Record<string, string> | undefined) ?? {};
     const lang = typeof cfg.lang === "string" ? cfg.lang : "en";

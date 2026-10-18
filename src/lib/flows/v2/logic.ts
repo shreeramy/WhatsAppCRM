@@ -291,6 +291,17 @@ export type TapTarget =
  * then by visible title (lets taps on buttons from the old flow's
  * messages, e.g. "Book free demo", land on the matching v2 step).
  */
+/** Every tappable option of a step: reply buttons, list rows, slot-list extra rows. */
+function optionsOf(n: V2NodeLike): Array<{ reply_id: string; title: string; next_node_key: string }> {
+  type Opt = { reply_id: string; title: string; next_node_key: string };
+  const c = n.config as {
+    buttons?: Opt[];
+    list?: { rows?: Opt[] };
+    dynamic_slots?: { extra_rows?: Opt[] };
+  };
+  return [...(c.buttons ?? []), ...(c.list?.rows ?? []), ...(c.dynamic_slots?.extra_rows ?? [])];
+}
+
 export function resolveTap(
   nodes: Iterable<V2NodeLike>,
   replyId: string,
@@ -298,7 +309,7 @@ export function resolveTap(
 ): TapTarget | null {
   const list = [...nodes];
   for (const n of list) {
-    const buttons = (n.config.buttons as Array<{ reply_id: string; next_node_key: string }> | undefined) ?? [];
+    const buttons = optionsOf(n);
     const hit = buttons.find((b) => b.reply_id === replyId);
     if (hit) return { kind: "node", node_key: hit.next_node_key, via: "reply_id" };
   }
@@ -311,7 +322,7 @@ export function resolveTap(
   const t = title ? cleanTitle(title) : "";
   if (t) {
     for (const n of list) {
-      const buttons = (n.config.buttons as Array<{ title: string; next_node_key: string }> | undefined) ?? [];
+      const buttons = optionsOf(n);
       const aliases = (n.config.title_aliases as Record<string, string> | undefined) ?? {};
       const hit = buttons.find((b) => cleanTitle(b.title) === t);
       if (hit) return { kind: "node", node_key: hit.next_node_key, via: "title" };

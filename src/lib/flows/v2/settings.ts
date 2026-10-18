@@ -100,13 +100,79 @@ export interface V2Settings {
   /** Approved template used for nudges when the 24h window has closed. */
   nudge_template?: { name: string; language: string } | null;
 
+  // ---- Optional behaviours (v3). Absent = the original v2 behaviour. ----
+
+  /** Lead's button taps are answered even while the bot is paused for an agent. */
+  taps_bypass_pause?: boolean;
+  /** Only ignore text right after the welcome when the run started from a form. */
+  opening_grace_after_form_only?: boolean;
+  /**
+   * Free text at the welcome step (no intent matched): this node replies
+   * (fallback + video) and then shows the welcome again — once per run.
+   */
+  entry_fallback_nodes?: Record<V2Lang, string>;
+  /** {{agent_first_name}} / {{agent_intro}} only name an agent from agent_pool. */
+  agent_name_pool_only?: boolean;
+  /** {{agent_intro}}: "{{name}} from our team" when named, else the "none" text. */
+  agent_intro?: Record<V2Lang, { named: string; none: string }>;
+  /** Step nudges: cap, quiet hours, out-of-window templates, final hand-over. */
+  nudges?: {
+    max_per_lead: number;
+    /** "HH:MM" local; no automated nudge between quiet_start and quiet_end. */
+    quiet_start: string;
+    quiet_end: string;
+    /** Local time a nudge that fell in quiet hours is moved to. */
+    shift_to: string;
+    /** After the last allowed nudge, run final_actions if still silent this long. */
+    final_after_hours: number;
+    final_actions: unknown[];
+    /** Nudge node → approved template used when the 24h window has closed. */
+    templates?: Record<string, { name: string; language: string }>;
+  };
+  /** Max bookings per demo slot (list-mode slot pickers). */
+  slot_capacity?: number;
+  /** Taps on these steps while a future demo is booked go to `redirect` instead. */
+  booking_lock?: { nodes: string[]; redirect: Record<V2Lang, string> };
+  /** Demo-day reminder template per language (when the 24h window has closed). */
+  reminder_templates?: Record<V2Lang, { name: string; language: string }>;
+  /** Also count finished runs of these flows when deciding whether to restart. */
+  history_flow_ids?: string[];
+
   /** Only applied to contacts on the test allow-list. */
   test_overrides?: {
     nudge_delay_minutes?: number;
     no_reply_delay_minutes?: number;
+    /** Final hand-over after the last nudge, in minutes (instead of hours). */
+    final_after_minutes?: number;
+    /** Demo-day reminder this many minutes after booking (instead of the real time). */
+    reminder_after_minutes?: number;
+    /** Skip quiet-hours shifting (so timers can be tested at any hour). */
+    ignore_quiet_hours?: boolean;
     /** "open" / "closed" forces working hours for test contacts. */
     working_hours_mode?: "auto" | "open" | "closed";
   };
+}
+
+export interface V2Bundle {
+  flow: { id: string; status: string; created_at: string };
+  settings: V2Settings;
+}
+
+/**
+ * Which v2 flow handles this phone: a flow in test mode that lists the
+ * number wins (so changes can be tried on test numbers while another
+ * flow is live); otherwise the newest live flow. Switching a newer flow
+ * to live therefore takes over from the older one, and switching it back
+ * to test hands traffic back — that is the rollback.
+ */
+export function pickBundle<T extends V2Bundle>(bundles: T[], phone: string | null | undefined): T | null {
+  const active = bundles.filter((b) => b.flow.status === "active");
+  const test = active.find((b) => b.settings.routing === "test" && phoneInList(phone, b.settings.test_phones));
+  if (test) return test;
+  const live = active
+    .filter((b) => b.settings.routing === "live")
+    .sort((a, b) => Date.parse(b.flow.created_at) - Date.parse(a.flow.created_at));
+  return live[0] ?? null;
 }
 
 /** Last 10 digits — compares Indian numbers regardless of +91 / 0 / spaces. */

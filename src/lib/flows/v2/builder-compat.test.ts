@@ -31,3 +31,24 @@ describe("DSA Welcome v2 in the flow builder", () => {
     }
   });
 });
+
+describe("DSA Welcome v3 in the flow builder", () => {
+  const v3 = JSON.parse(readFileSync("supabase/flows/dsa-welcome-v3.json", "utf8")) as typeof def;
+  it("validates clean", () => {
+    const issues = validateFlowForActivation(
+      { name: v3.name, trigger_type: "manual", trigger_config: {}, entry_node_id: "start" },
+      v3.nodes,
+    );
+    expect(issues).toEqual([]);
+  });
+  it("every canvas edge hangs off a handle its card renders", () => {
+    const nodes = v3.nodes.map((n) => ({ ...n, position_x: 0, position_y: 0 })) as unknown as BuilderNode[];
+    const edges = deriveCanvasEdges(nodes);
+    expect(edges).toContainEqual(expect.objectContaining({ source: "e_not", target: "lost_price" }));
+    expect(edges).toContainEqual(expect.objectContaining({ source: "ready_route", target: "r_solo" }));
+    for (const e of edges) {
+      const src = nodes.find((n) => n.node_key === e.source)!;
+      expect(outgoingSlots(src).map((s) => s.id)).toContain(e.sourceHandle);
+    }
+  });
+});
