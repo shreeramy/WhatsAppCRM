@@ -257,7 +257,7 @@ const scenarios = [
     check("tap answered during the bot pause", s.at(-1) === "e3", s.join(" → "));
   }),
 
-  S(6, "Nudges: welcome nudge, 2nd at the next step, no 3rd → agent follow-up (timers shortened)", async () => {
+  S(6, "Nudges: 1st nudge, 2nd (new wording) if still silent, then agent follow-up; a reply stops them (timers shortened)", async () => {
     const p = P(12);
     await text(p, EN_FIRST);
     await waitSent(p, 1);
@@ -265,22 +265,28 @@ const scenarios = [
     await tick();
     const s1 = await waitSent(p, 2, "welcome nudge");
     check("1st nudge at the welcome", s1.at(-1) === "n_welcome", s1.join(" → "));
-    await tap(p, "v3.n_welcome.dsa", "Yes, I'm a DSA");
-    await waitSent(p, 3);
     await sleep(65000);
     await tick();
-    const s2 = await waitSent(p, 4, "team-size nudge");
-    check("2nd nudge at the team-size step", s2.at(-1) === "n_team", s2.join(" → "));
+    const s2 = await waitSent(p, 3, "2nd welcome nudge");
+    check("2nd nudge at the welcome, different wording", s2.at(-1) === "n_welcome2", s2.join(" → "));
     await sleep(65000);
     await tick();
     await sleep(3000);
     const fu = await followUps(p);
     check("agent follow-up 'No reply after 2 nudges'", fu.some((f) => f.title.startsWith("No reply after 2 nudges")), fu.map((f) => f.title).join("; "));
-    await tap(p, "v3.n_team.solo", "Just me");
-    await waitSent(p, 5);
+    check("no 3rd nudge", (await jobs(p, "nudge")).filter((j) => j.status === "pending").length === 0, (await jobs(p, "nudge")).map((j) => `${j.node_key}:${j.status}`).join(", "));
+    // A lead who answers after the 1st nudge gets no 2nd one at that step.
+    const q = P(30);
+    await text(q, EN_FIRST);
+    await waitSent(q, 1);
+    await sleep(65000);
+    await tick();
+    await waitSent(q, 2, "welcome nudge (b)");
+    await tap(q, "v3.n_welcome.dsa", "Yes, I'm a DSA");
+    await waitSent(q, 3);
     await sleep(3000);
-    const pending = (await jobs(p, "nudge")).filter((j) => j.status === "pending");
-    check("no 3rd nudge scheduled", pending.length === 0, (await jobs(p, "nudge")).map((j) => `${j.node_key}:${j.status}`).join(", "));
+    const jq = await jobs(q, "nudge");
+    check("reply cancels the 2nd nudge", jq.some((j) => j.node_key === "n_welcome2" && j.status === "cancelled") && !jq.some((j) => j.node_key === "n_welcome2" && j.status === "done"), jq.map((j) => `${j.node_key}:${j.status}`).join(", "));
   }),
 
   S(7, "Nudge cancelled when the lead types or an agent messages (quiet hours: unit-tested)", async () => {

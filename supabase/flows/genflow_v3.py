@@ -362,7 +362,7 @@ settings = {
                       "n_plan": "n_plan2", "h_np": "h_np2", "n_slot": "n_slot2", "h_ns": "h_ns2", "n1": "n1b", "h_n1": "h_n1b"},
         "followup_after_hours": 24,
     },
-    "reminder_templates": {"en": {"name": "dsa_demo_reminder", "language": "en"}, "hi": {"name": "dsa_demo_reminder_hi", "language": "hi"}},
+    "reminder_templates": {"en": {"name": "dsa_demo_reminder", "language": "en"}, "hi": {"name": "dsa_demo_reminder_hindi", "language": "hi"}},
     "nudge_template": None,
     "test_overrides": {"working_hours_mode": "auto"},
 }
