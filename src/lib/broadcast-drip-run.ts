@@ -187,6 +187,12 @@ async function tickOne(db: SupabaseClient, b: DripBroadcast, now: Date): Promise
       result.sent++
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
+      // Meta's rate / messaging-limit errors: leave this lead pending and
+      // stop for this tick, so they're retried instead of lost.
+      if (/131048|131056|130429|131049|rate limit|limit reached/i.test(message)) {
+        result.note = `Meta limit: ${message.slice(0, 120)}`
+        break
+      }
       // Meta took it; only our inbox copy failed — don't send it twice.
       const reachedMeta = message.startsWith('sent to Meta')
       await db
