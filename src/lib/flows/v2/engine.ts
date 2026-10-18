@@ -887,6 +887,7 @@ async function saveRun(ctx: Ctx, run: FlowRunRow, nodeKey: string): Promise<void
 
 export async function walk(ctx: Ctx, run: FlowRunRow, startKey: string): Promise<void> {
   let key: string | undefined = startKey;
+  let prevKey: string | undefined;
   for (let guard = 0; key && guard < 20; guard++) {
     const node = ctx.nodes.get(key);
     if (!node) {
@@ -911,8 +912,14 @@ export async function walk(ctx: Ctx, run: FlowRunRow, startKey: string): Promise
     }
 
     // Same step to the same contact within the window → send nothing.
-    const claimKey =
+    // The dedupe guards against the same inbound event twice. A step chained
+    // after another one (welcome re-shown after the fallback, slot list
+    // after "slot full") is keyed by where it came from, so an intended
+    // repeat inside the window still goes out.
+    const baseKey =
       cfg.dedupe_by === "slot" && run.vars?.slot_start ? `${node.node_key}|${run.vars.slot_start}` : node.node_key;
+    const claimKey = prevKey ? `${prevKey}>${baseKey}` : baseKey;
+    prevKey = node.node_key;
     const { data: claimed, error: claimErr } = await ctx.db.rpc("flow_claim_step", {
       p_contact_id: ctx.contact.id,
       p_flow_id: ctx.flow.id,
