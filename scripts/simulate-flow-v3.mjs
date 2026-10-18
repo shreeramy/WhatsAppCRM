@@ -284,6 +284,9 @@ const scenarios = [
     await waitSent(q, 2, "welcome nudge (b)");
     await tap(q, "v3.n_welcome.dsa", "Yes, I'm a DSA");
     await waitSent(q, 3);
+    await sleep(65000); // the 2nd nudge falls due and is cancelled then
+    await tick();
+    await tick();
     await sleep(3000);
     const jq = await jobs(q, "nudge");
     check("reply cancels the 2nd nudge", jq.some((j) => j.node_key === "n_welcome2" && j.status === "cancelled") && !jq.some((j) => j.node_key === "n_welcome2" && j.status === "done"), jq.map((j) => `${j.node_key}:${j.status}`).join(", "));
