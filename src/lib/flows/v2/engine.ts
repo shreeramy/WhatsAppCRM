@@ -1745,7 +1745,7 @@ async function processJob(db: Db, job: JobRow): Promise<{ status: string; result
     if (!tpl?.name) return { status: "skipped", result: "24h window closed and no approved template set" };
     const params =
       job.kind === "reminder"
-        ? [c.name || "there", String(meta.slot_long ?? run.vars?.slot_long ?? "")]
+        ? [c.name || "there", String(meta.slot_long ?? run.vars?.slot_long ?? "").split(", ").pop() ?? ""]
         : [c.name || "there"];
     if (ctx.dryRun) {
       result = `template ${tpl.name} (dry run)`;
