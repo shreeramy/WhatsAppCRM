@@ -14,6 +14,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # ---- business config -------------------------------------------------------
 V2_FLOW_ID = "fcca58b4-6445-492d-ae6a-5cd1d3261192"      # rolled back to / history
 HEADER_IMG = "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png"
+WEBINAR_WHEN_EN = "Thursday, 22 Oct at 9:00 AM"
+WEBINAR_WHEN_HI = "गुरुवार, 22 अक्टूबर, सुबह 9:00 बजे"
 VIDEO_EN = "https://youtu.be/1JD25RJFkOU"
 VIDEO_HI = "https://youtu.be/-4AXco_mN8c"
 REG_FORM = "https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform"
@@ -257,6 +259,18 @@ for L in ("en", "hi"):
     N(ns, "send_buttons", lang=L,
       text=t("Any time works for you? We can simply call you 📞", "कोई time सही नहीं लग रहा? हम सीधे call कर लेते हैं 📞"),
       buttons=[btn(f"v3.{ns}", "call", t("Call me", "मुझे call करें"), call), btn(f"v3.{ns}", "slots", t("Pick another time", "दूसरा time चुनें"), slots)])
+
+    # Webinar invite replies (template quick-reply buttons, matched by title)
+    wreg, wno = k("web_reg_en", "web_reg_hi"), k("web_no_en", "web_no_hi")
+    N(wreg, "send_message", lang=L, terminal=True, reachable_via="title_aliases",
+      title_aliases=t({"Register now": wreg, "Not interested": wno}, {"Register करें": wreg, "Interested नहीं": wno}),
+      text=t(f"You're registered ✅ See you on {WEBINAR_WHEN_EN}.\n\nWe'll send the joining link before the session.",
+             f"आपका registration हो गया ✅ {WEBINAR_WHEN_HI} मिलते हैं।\n\nJoining link session से पहले भेज देंगे।"),
+      actions=[A(type="add_tag", tag="Webinar Registered"), A(type="remove_tag", tag="Webinar: Not interested")])
+    N(wno, "send_message", lang=L, terminal=True, reachable_via="title_aliases",
+      text=t("No problem 🙏 You can message us anytime if you'd like to see DSA Management.",
+             "कोई बात नहीं 🙏 DSA Management देखना हो तो कभी भी message करें।"),
+      actions=[A(type="add_tag", tag="Webinar: Not interested")])
 
 PRICE_WORDS = ["price", "pricing", "cost", "costing", "charges", "charge", "kitna", "kitne", "rate", "fees", "fee", "पैसे", "कीमत", "चार्ज", "कितना"]
 settings = {

@@ -1298,6 +1298,46 @@
       }
     },
     {
+      "node_key": "web_reg_en",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "reachable_via": "title_aliases",
+        "title_aliases": {
+          "Register now": "web_reg_en",
+          "Not interested": "web_no_en"
+        },
+        "text": "You're registered ✅ See you on Thursday, 22 Oct at 9:00 AM.\n\nWe'll send the joining link before the session.",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Webinar Registered"
+          },
+          {
+            "type": "remove_tag",
+            "tag": "Webinar: Not interested"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "web_no_en",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "reachable_via": "title_aliases",
+        "text": "No problem 🙏 You can message us anytime if you'd like to see DSA Management.",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Webinar: Not interested"
+          }
+        ]
+      }
+    },
+    {
       "node_key": "h1",
       "node_type": "send_buttons",
       "config": {
@@ -2294,6 +2334,46 @@
             "reply_id": "v3.h_ns.slots",
             "title": "दूसरा time चुनें",
             "next_node_key": "h5"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "web_reg_hi",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "reachable_via": "title_aliases",
+        "title_aliases": {
+          "Register करें": "web_reg_hi",
+          "Interested नहीं": "web_no_hi"
+        },
+        "text": "आपका registration हो गया ✅ गुरुवार, 22 अक्टूबर, सुबह 9:00 बजे मिलते हैं।\n\nJoining link session से पहले भेज देंगे।",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Webinar Registered"
+          },
+          {
+            "type": "remove_tag",
+            "tag": "Webinar: Not interested"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "web_no_hi",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "reachable_via": "title_aliases",
+        "text": "कोई बात नहीं 🙏 DSA Management देखना हो तो कभी भी message करें।",
+        "actions": [
+          {
+            "type": "add_tag",
+            "tag": "Webinar: Not interested"
           }
         ]
       }

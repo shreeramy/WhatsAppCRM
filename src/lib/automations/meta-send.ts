@@ -49,6 +49,8 @@ interface SendTemplateArgs {
   templateName: string
   language?: string
   params?: string[]
+  /** Link for a template's image/video header (the header is sent only when set). */
+  headerMediaUrl?: string
 }
 
 export async function engineSendText(args: SendTextArgs): Promise<{ whatsapp_message_id: string }> {
@@ -175,6 +177,9 @@ async function sendViaMeta(input: SendInput): Promise<{ whatsapp_message_id: str
         templateName: input.templateName,
         language: input.language,
         params: input.params,
+        ...(input.headerMediaUrl && templateRow
+          ? { template: templateRow, messageParams: { body: input.params, headerMediaUrl: input.headerMediaUrl } }
+          : {}),
       })
       return r.messageId
     }
