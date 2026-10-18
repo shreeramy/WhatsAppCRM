@@ -83,12 +83,14 @@ async function materialize(db: SupabaseClient, b: DripBroadcast): Promise<number
 
   const excludedStages = (cfg.audience.exclude_stages ?? []).map((s) => s.toLowerCase())
   const rows = contacts
+    .filter((c) => !cfg.audience.contact_ids || cfg.audience.contact_ids.includes(c.id))
     .filter((c) => !c.blocked_at && !(c.name ?? '').startsWith('[TEST]'))
     .filter((c) => !cfg.audience.tag || tagExcluded(tagsOf.get(c.id) ?? [], [cfg.audience.tag]))
     .filter((c) => !tagExcluded(tagsOf.get(c.id) ?? [], cfg.audience.exclude_tags))
     .filter((c) => !(stageOf.get(c.id) ?? []).some((s) => excludedStages.includes(s.toLowerCase())))
     .map((c) => {
-      const lang = langOf.get(c.id) === 'hi' && cfg.templates.hi ? 'hi' : 'en'
+      const own = cfg.audience.force_lang ?? langOf.get(c.id)
+      const lang = own === 'hi' && cfg.templates.hi ? 'hi' : 'en'
       const tpl = templateFor(cfg, lang)
       return {
         broadcast_id: b.id,

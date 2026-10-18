@@ -26,6 +26,10 @@ export interface DripConfig {
   /** Body params; tokens: {first_name} and any literal text. */
   params: string[]
   audience: {
+    /** Only these contacts (e.g. a test send). */
+    contact_ids?: string[]
+    /** Send everyone this language's template instead of their own. */
+    force_lang?: string
     /** Only contacts with this tag (resolved when the broadcast starts). */
     tag?: string
     /** Skip contacts with any of these tags; a trailing * matches a prefix. */
