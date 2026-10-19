@@ -230,6 +230,16 @@ async function sendViaMeta(input: SendInput): Promise<{ whatsapp_message_id: str
       : templateContentText(templateRow, input.params ?? [])
   const template_name = input.kind === 'template' ? input.templateName : null
 
+  // Templates also keep their header image and buttons, so the inbox
+  // shows what the customer actually got.
+  const templateButtons =
+    input.kind === 'template'
+      ? (templateRow?.buttons ?? []).map((b) => ({ id: b.text, title: b.text }))
+      : []
+  const media_url =
+    input.kind === 'template'
+      ? (input.headerMediaUrl ?? (templateRow?.header_type === 'image' ? templateRow?.header_media_url : null) ?? null)
+      : null
   const { error: msgErr } = await db.from('messages').insert({
     conversation_id: input.conversationId,
     sender_type: 'bot',
@@ -238,6 +248,10 @@ async function sendViaMeta(input: SendInput): Promise<{ whatsapp_message_id: str
     template_name,
     message_id: waMessageId,
     status: 'sent',
+    ...(media_url ? { media_url } : {}),
+    ...(templateButtons.length
+      ? { interactive_payload: { kind: 'buttons', body: content_text ?? '', buttons: templateButtons } }
+      : {}),
   })
   if (msgErr) {
     // Meta already has the message; record the DB error but don't pretend

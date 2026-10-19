@@ -175,6 +175,10 @@ function MessageContent({
             <LayoutTemplate className="h-3 w-3" />
             {t("template")}
           </span>
+          {message.media_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={message.media_url} alt="" className="mt-1 max-h-60 w-full rounded-md object-cover" />
+          )}
           {message.content_text ? (
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">
               {message.content_text}
@@ -185,6 +189,21 @@ function MessageContent({
                 {message.template_name}
               </p>
             )
+          )}
+          {message.interactive_payload?.kind === "buttons" && (
+            <div className="mt-2 flex flex-col gap-1">
+              {message.interactive_payload.buttons.map((b) => (
+                <span
+                  key={b.id}
+                  className={cn(
+                    "rounded-md border px-2 py-1 text-center text-xs font-medium",
+                    isAgent ? "border-primary-foreground/30" : "border-primary/30 text-primary",
+                  )}
+                >
+                  {b.title}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       );
