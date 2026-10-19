@@ -146,13 +146,18 @@ export async function planBroadcastResume(
 ): Promise<ResumePlan> {
   const { data: broadcast, error: bcError } = await db
     .from('broadcasts')
-    .select('id, template_name, template_language')
+    .select('id, template_name, template_language, drip')
     .eq('id', broadcastId)
     .eq('account_id', accountId)
     .maybeSingle();
 
   if (bcError || !broadcast) {
     throw new BroadcastError('not_found', 'Broadcast not found', 404);
+  }
+  // A paced (drip) broadcast sends its own pending recipients over time;
+  // resuming would blast them all at once with one template.
+  if (broadcast.drip && scope === 'pending') {
+    throw new BroadcastError('drip_in_progress', 'This broadcast is sending slowly on a schedule; pending recipients go out automatically.', 409);
   }
 
   const statuses = scopeStatuses(scope);

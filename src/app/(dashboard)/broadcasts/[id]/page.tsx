@@ -325,7 +325,9 @@ export default function BroadcastDetailPage() {
   // A campaign whose tab went away sits in 'sending' with recipients
   // still pending and nothing left to move them. Name that state rather
   // than leaving a permanently pulsing "sending" badge.
-  const isStalled = broadcast.status === 'sending' && pendingCount > 0;
+  // Drip broadcasts send their pending recipients on a schedule.
+  const isDrip = !!broadcast.drip;
+  const isStalled = !isDrip && broadcast.status === 'sending' && pendingCount > 0;
 
   const funnelSteps: FunnelStep[] = [
     { label: t('stats.sent'), value: broadcast.sent_count, color: 'bg-primary' },
@@ -412,7 +414,7 @@ export default function BroadcastDetailPage() {
 
       {/* Resume / retry (issue #472). Only rendered when there is
           actually something outstanding. */}
-      {(pendingCount > 0 || retryableCount > 0) && (
+      {((!isDrip && pendingCount > 0) || retryableCount > 0) && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
           <div className="text-sm">
             <p className="font-medium text-foreground">
@@ -425,7 +427,7 @@ export default function BroadcastDetailPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {pendingCount > 0 && (
+            {!isDrip && pendingCount > 0 && (
               <Button
                 size="sm"
                 onClick={() => handleResume('pending')}

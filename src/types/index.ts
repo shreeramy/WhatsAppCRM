@@ -451,6 +451,8 @@ export interface Broadcast {
   template_name: string;
   template_language: string;
   template_variables?: Record<string, unknown>;
+  /** Set on paced broadcasts (migration 063); sent by /api/broadcasts/drip. */
+  drip?: Record<string, unknown> | null;
   audience_filter?: Record<string, unknown>;
   scheduled_at?: string;
   status: BroadcastStatus;
