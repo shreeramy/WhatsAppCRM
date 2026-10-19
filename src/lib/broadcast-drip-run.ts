@@ -81,10 +81,26 @@ async function materialize(db: SupabaseClient, b: DripBroadcast): Promise<number
   const langOf = new Map<string, string>()
   for (const r of runs) if (r.vars?.lang) langOf.set(r.contact_id, r.vars.lang)
 
+  // Contacts who wrote to us since the cut-off (e.g. already answered an earlier send).
+  const replied = new Set<string>()
+  if (cfg.audience.exclude_replied_since) {
+    const msgs = await fetchAll<{ conversation: { contact_id: string; account_id: string } | null }>((f, t) =>
+      db
+        .from('messages')
+        .select('conversation:conversations!inner(contact_id, account_id)')
+        .eq('conversation.account_id', b.account_id)
+        .eq('sender_type', 'customer')
+        .gt('created_at', cfg.audience.exclude_replied_since!)
+        .range(f, t),
+    )
+    for (const m of msgs) if (m.conversation) replied.add(m.conversation.contact_id)
+  }
+
   const excludedStages = (cfg.audience.exclude_stages ?? []).map((s) => s.toLowerCase())
   const rows = contacts
     .filter((c) => !cfg.audience.contact_ids || cfg.audience.contact_ids.includes(c.id))
     .filter((c) => !c.blocked_at && !(c.name ?? '').startsWith('[TEST]'))
+    .filter((c) => !replied.has(c.id))
     .filter((c) => !cfg.audience.tag || tagExcluded(tagsOf.get(c.id) ?? [], [cfg.audience.tag]))
     .filter((c) => !tagExcluded(tagsOf.get(c.id) ?? [], cfg.audience.exclude_tags))
     .filter((c) => !(stageOf.get(c.id) ?? []).some((s) => excludedStages.includes(s.toLowerCase())))

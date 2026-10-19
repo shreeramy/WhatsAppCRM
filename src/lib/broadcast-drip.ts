@@ -34,6 +34,8 @@ export interface DripConfig {
     tag?: string
     /** Skip contacts with any of these tags; a trailing * matches a prefix. */
     exclude_tags?: string[]
+    /** Skip contacts who sent us any message after this time (ISO). */
+    exclude_replied_since?: string
     /** Skip contacts whose deal is in one of these stages. */
     exclude_stages?: string[]
   }
