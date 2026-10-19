@@ -1490,6 +1490,49 @@
       }
     },
     {
+      "node_key": "web_buy_en",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "reachable_via": "title_aliases",
+        "title_aliases": {
+          "I want it": "web_buy_en"
+        },
+        "text": "Great choice! 🎉 Our team will call you shortly to set up your account at the webinar price.",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Webinar Offer"
+          },
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Webinar offer – call {{contact_name}} now"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Wants the webinar offer: {{contact_name}}",
+            "body": "Call now and send the payment link"
+          }
+        ]
+      }
+    },
+    {
       "node_key": "web_no_en",
       "node_type": "send_message",
       "config": {
@@ -2645,6 +2688,49 @@
           {
             "type": "remove_tag",
             "tag": "Webinar: Not interested"
+          }
+        ]
+      }
+    },
+    {
+      "node_key": "web_buy_hi",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "reachable_via": "title_aliases",
+        "title_aliases": {
+          "मुझे लेना है": "web_buy_hi"
+        },
+        "text": "बहुत बढ़िया! 🎉 हमारी team जल्द ही आपको call करके webinar price पर आपका account set up करेगी।",
+        "actions": [
+          {
+            "type": "assign"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Ready to Buy"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Webinar Offer"
+          },
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Webinar offer – call {{contact_name}} now"
+          },
+          {
+            "type": "flag_hot"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🔥 Wants the webinar offer: {{contact_name}}",
+            "body": "Call now and send the payment link"
           }
         ]
       }

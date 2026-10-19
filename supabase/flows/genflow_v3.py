@@ -295,6 +295,14 @@ for L in ("en", "hi"):
       text=t(f"You're registered ✅ See you on {WEBINAR_WHEN_EN}.\n\nWe'll send the joining link before the session.",
              f"आपका registration हो गया ✅ {WEBINAR_WHEN_HI} मिलते हैं।\n\nJoining link session से पहले भेज देंगे।"),
       actions=[A(type="add_tag", tag="Webinar Registered"), A(type="remove_tag", tag="Webinar: Not interested")])
+    wbuy = k("web_buy_en", "web_buy_hi")
+    N(wbuy, "send_message", lang=L, terminal=True, reachable_via="title_aliases",
+      title_aliases=t({"I want it": wbuy}, {"मुझे लेना है": wbuy}),
+      text=t("Great choice! 🎉 Our team will call you shortly to set up your account at the webinar price.",
+             "बहुत बढ़िया! 🎉 हमारी team जल्द ही आपको call करके webinar price पर आपका account set up करेगी।"),
+      actions=[A(type="assign"), A(type="add_tag", tag="Ready to Buy"), A(type="add_tag", tag="Webinar Offer"), UNLOST,
+               A(type="create_follow_up", kind="call", title="Webinar offer – call {{contact_name}} now"),
+               A(type="flag_hot"), A(type="notify_agent", title="🔥 Wants the webinar offer: {{contact_name}}", body="Call now and send the payment link")])
     N(wno, "send_message", lang=L, terminal=True, reachable_via="title_aliases",
       text=t("No problem 🙏 You can message us anytime if you'd like to see DSA Management.",
              "कोई बात नहीं 🙏 DSA Management देखना हो तो कभी भी message करें।"),
