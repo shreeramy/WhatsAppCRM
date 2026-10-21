@@ -175,10 +175,13 @@ function MessageContent({
             <LayoutTemplate className="h-3 w-3" />
             {t("template")}
           </span>
-          {message.media_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={message.media_url} alt="" className="mt-1 max-h-60 w-full rounded-md object-cover" />
-          )}
+          {message.media_url &&
+            (/\.(mp4|3gp|mov)(\?|$)/i.test(message.media_url) ? (
+              <video src={message.media_url} controls preload="metadata" className="mt-1 max-h-60 w-full rounded-md" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={message.media_url} alt="" className="mt-1 max-h-60 w-full rounded-md object-cover" />
+            ))}
           {message.content_text ? (
             <p className="mt-1 whitespace-pre-wrap break-words text-sm">
               {message.content_text}
