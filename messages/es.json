@@ -1418,7 +1418,12 @@
         "off": "Flujo apagado",
         "test": "Modo de prueba activado",
         "live": "El flujo está en vivo para todos"
-      }
+      },
+      "agentPool": "Quién recibe los nuevos leads",
+      "agentPoolHelp": "Los nuevos leads se reparten por turnos entre las personas marcadas. Los chats ya asignados se quedan con su agente.",
+      "saveAgentPool": "Guardar equipo",
+      "agentPoolSaved": "Asignación de leads actualizada",
+      "agentPoolEmpty": "Elige al menos un miembro del equipo"
     }
   },
   "Settings": {

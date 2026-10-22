@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Radio } from "lucide-react";
+import { Loader2, Radio, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ export function V2RoutingCard({ flowId }: { flowId: string }) {
   const [isV2, setIsV2] = useState(false);
   const [routing, setRouting] = useState<Routing>("off");
   const [phones, setPhones] = useState("");
+  const [members, setMembers] = useState<Array<{ id: string; name: string; role: string }>>([]);
+  const [pool, setPool] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -30,6 +32,8 @@ export function V2RoutingCard({ flowId }: { flowId: string }) {
         v2?: boolean;
         routing?: Routing;
         test_phones?: string[];
+        agent_pool?: string[];
+        members?: Array<{ id: string; name: string; role: string }>;
       };
       if (cancelled) return;
       setIsV2(!!body.v2);
@@ -60,6 +64,28 @@ export function V2RoutingCard({ flowId }: { flowId: string }) {
       if (!res.ok) throw new Error(body.error ?? t("saveFailed"));
       setRouting(next);
       toast.success(t(`saved.${next}`));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("saveFailed"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const savePool = async () => {
+    if (!pool.length) {
+      toast.error(t("agentPoolEmpty"));
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/flows/${flowId}/routing`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_pool: pool }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(body.error ?? t("saveFailed"));
+      toast.success(t("agentPoolSaved"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("saveFailed"));
     } finally {
@@ -104,6 +130,34 @@ export function V2RoutingCard({ flowId }: { flowId: string }) {
       <Button type="button" size="sm" variant="outline" className="mt-2" disabled={saving} onClick={() => void save(routing)}>
         {t("savePhones")}
       </Button>
+
+      <div className="mt-5 border-t border-border pt-4">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">{t("agentPool")}</h3>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">{t("agentPoolHelp")}</p>
+        <div className="mt-2 flex flex-col gap-1.5">
+          {members.map((m) => (
+            <label key={m.id} className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={pool.includes(m.id)}
+                disabled={saving}
+                onChange={(e) =>
+                  setPool((p) => (e.target.checked ? [...p, m.id] : p.filter((x) => x !== m.id)))
+                }
+              />
+              <span>{m.name}</span>
+              <span className="text-xs text-muted-foreground">· {m.role}</span>
+            </label>
+          ))}
+        </div>
+        <Button type="button" size="sm" variant="outline" className="mt-2" disabled={saving} onClick={() => void savePool()}>
+          {t("saveAgentPool")}
+        </Button>
+      </div>
     </div>
   );
 }

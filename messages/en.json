@@ -1418,7 +1418,12 @@
         "off": "Flow switched off",
         "test": "Test mode on",
         "live": "Flow is live for everyone"
-      }
+      },
+      "agentPool": "Who gets new leads",
+      "agentPoolHelp": "New leads are shared turn by turn between the people ticked here. Chats already assigned stay with their agent.",
+      "saveAgentPool": "Save team",
+      "agentPoolSaved": "Lead assignment updated",
+      "agentPoolEmpty": "Pick at least one team member"
     }
   },
   "Settings": {
