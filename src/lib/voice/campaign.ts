@@ -193,6 +193,8 @@ export async function processVoiceCampaigns(baseUrl: string, now = new Date()) {
     .from('voice_campaigns')
     .select('*')
     .or(`and(status.eq.scheduled,scheduled_at.lte.${now.toISOString()}),status.eq.calling`)
+    // Earlier campaigns first, so a big later one never starves their retries.
+    .order('scheduled_at')
   const results = []
   for (const c of (data ?? []) as VoiceCampaign[]) results.push(await tickOne(db, c, baseUrl, now, deadline))
   return results
