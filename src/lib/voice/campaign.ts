@@ -65,10 +65,19 @@ async function materialize(db: SupabaseClient, c: VoiceCampaign): Promise<number
       .ilike('tags.name', c.tag)
     ids = (data ?? []).map((r) => r.contact_id as string)
   }
-  const { data: contacts } = ids.length
-    ? await db.from('contacts').select('id, phone, blocked_at').eq('account_id', c.account_id).in('id', ids)
-    : { data: [] as Array<{ id: string; phone: string | null; blocked_at: string | null }> }
-  const rows = (contacts ?? [])
+  // In chunks: hundreds of ids in one .in() overflow the request URL and
+  // the query fails silently (that left a 667-contact campaign with no calls).
+  const contacts: Array<{ id: string; phone: string | null; blocked_at: string | null }> = []
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await db
+      .from('contacts')
+      .select('id, phone, blocked_at')
+      .eq('account_id', c.account_id)
+      .in('id', ids.slice(i, i + 100))
+    if (error) throw new Error(`load contacts: ${error.message}`)
+    contacts.push(...(data ?? []))
+  }
+  const rows = contacts
     .filter((x) => x.phone && !x.blocked_at)
     .map((x) => ({ campaign_id: c.id, contact_id: x.id, phone: x.phone!.replace(/\D/g, ''), attempt: 1 }))
   if (rows.length) {
