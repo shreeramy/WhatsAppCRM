@@ -38,6 +38,8 @@ export function V2RoutingCard({ flowId }: { flowId: string }) {
       if (cancelled) return;
       setIsV2(!!body.v2);
       setRouting(body.routing ?? "off");
+      setPool(body.agent_pool ?? []);
+      setMembers(body.members ?? []);
       setPhones((body.test_phones ?? []).join("\n"));
       setLoaded(true);
     })();
