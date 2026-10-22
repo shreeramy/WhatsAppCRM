@@ -26,7 +26,8 @@ async function main() {
   const { data: failed } = await db
     .from("call_recordings")
     .select("id, storage_path, file_name, mime_type")
-    .eq("transcript_status", "failed")
+    // --never-started: recordings that were never transcribed (status null).
+    .filter("transcript_status", argv.includes("--never-started") ? "is" : "eq", argv.includes("--never-started") ? null : "failed")
     .order("created_at", { ascending: false })
     .limit(LIMIT);
   console.log(`failed recordings: ${failed?.length ?? 0}`);
