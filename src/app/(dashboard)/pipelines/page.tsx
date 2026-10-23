@@ -72,6 +72,9 @@ export default function PipelinesPage() {
   // unassigned) and who created it (auth user id). "" = anyone.
   const [assigneeFilter, setAssigneeFilter] = useState("");
   const [creatorFilter, setCreatorFilter] = useState("");
+  // Lost deals stay off the board unless asked for.
+  const [showLost, setShowLost] = useState(false);
+  const lostCount = useMemo(() => deals.filter((d) => d.status === "lost").length, [deals]);
   const [members, setMembers] = useState<{ id: string; user_id: string; name: string }[]>([]);
   useEffect(() => {
     if (!accountId) return;
@@ -99,13 +102,14 @@ export default function PipelinesPage() {
     () =>
       deals.filter(
         (d) =>
+          (showLost || d.status !== "lost") &&
           inRange(d.created_at, createdRange) &&
           inRange(d.expected_close_date, closeRange) &&
           (assigneeFilter === "" ||
             (assigneeFilter === "none" ? !d.assigned_to : d.assigned_to === assigneeFilter)) &&
           (creatorFilter === "" || d.user_id === creatorFilter),
       ),
-    [deals, createdRange, closeRange, assigneeFilter, creatorFilter],
+    [deals, showLost, createdRange, closeRange, assigneeFilter, creatorFilter],
   );
   const personFilterActive = assigneeFilter !== "" || creatorFilter !== "";
   const [loading, setLoading] = useState(true);
@@ -511,6 +515,21 @@ export default function PipelinesPage() {
               </option>
             ))}
           </select>
+          {lostCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowLost((v) => !v)}
+              aria-pressed={showLost}
+              className={cn(
+                "h-8 rounded-lg border px-2 text-xs",
+                showLost
+                  ? "border-primary/50 bg-primary/10 text-primary"
+                  : "border-border bg-muted text-muted-foreground",
+              )}
+            >
+              {t("filterShowLost", { count: lostCount })}
+            </button>
+          )}
           {(isRangeActive(createdRange) || isRangeActive(closeRange) || personFilterActive) && (
             <span className="text-xs text-muted-foreground">
               {t("filterShowing", { shown: visibleDeals.length, total: deals.length })}

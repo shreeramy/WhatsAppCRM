@@ -613,6 +613,7 @@
       "filterAssignedToPerson": "Assigned to: {name}",
       "filterCreatedBy": "Created by",
       "filterCreatedByAnyone": "Created by: anyone",
+      "filterShowLost": "Mostrar perdidos ({count})",
       "filterCreatedByPerson": "Created by: {name}",
       "me": "me"
     },

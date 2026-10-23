@@ -613,6 +613,7 @@
       "filterAssignedToPerson": "Assigned to: {name}",
       "filterCreatedBy": "Created by",
       "filterCreatedByAnyone": "Created by: anyone",
+      "filterShowLost": "실패한 거래 보기 ({count})",
       "filterCreatedByPerson": "Created by: {name}",
       "me": "me"
     },
