@@ -1,7 +1,7 @@
 "use client";
 
 import type { Deal, PipelineStage } from "@/types";
-import { Calendar, CalendarClock, Check, X } from "lucide-react";
+import { Calendar, CalendarClock, Check, Phone, X } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useTranslations } from "next-intl";
 import { isPastDue } from "@/lib/follow-ups/dates";
@@ -83,6 +83,23 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
         </span>
         <span className="truncate text-xs text-muted-foreground">{contactLabel}</span>
       </div>
+      {/* Phone under the name, tap to call. A span, not a link: the card is a button. */}
+      {deal.contact?.name && deal.contact.phone && (
+        <span
+          role="link"
+          tabIndex={-1}
+          title={t("callContact")}
+          onClick={(e) => {
+            if (isOverlay) return;
+            e.stopPropagation();
+            window.location.href = `tel:+${deal.contact!.phone!.replace(/\D/g, "")}`;
+          }}
+          className="mt-1 ml-7 flex w-fit items-center gap-1 text-[11px] text-muted-foreground hover:text-primary hover:underline"
+        >
+          <Phone className="h-3 w-3" />
+          {formatPhoneDisplay(deal.contact.phone)}
+        </span>
+      )}
 
       <div className="mt-2 flex items-center justify-between">
         <span className="text-sm font-bold text-primary">

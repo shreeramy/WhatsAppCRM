@@ -623,6 +623,7 @@
     },
     "card": {
       "noContact": "No contact",
+      "callContact": "Call",
       "won": "Won",
       "lost": "Lost",
       "nextFollowUp": "Next follow-up",
