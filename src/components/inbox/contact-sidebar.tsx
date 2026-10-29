@@ -38,6 +38,7 @@ import { EditDealSheet } from "./edit-deal-sheet";
 import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
 import { FollowUpRow } from "@/components/follow-ups/follow-up-row";
 import { FOLLOW_UP_SELECT } from "@/components/follow-ups/follow-up-meta";
+import { ContactRecordings } from "@/components/calls/contact-recordings";
 
 /** Completed follow-ups kept visible in the chat for context. */
 const RECENT_DONE_LIMIT = 3;
@@ -567,6 +568,11 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated, clas
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Call recordings matched to this contact by phone number */}
+          <div className="mt-4">
+            <ContactRecordings key={contact.id} contactId={contact.id} />
           </div>
 
           {/* Divider */}

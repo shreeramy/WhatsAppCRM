@@ -190,6 +190,28 @@ export default function CallRecordingsPage() {
         .in("phone_normalized", phones);
       for (const c of data ?? []) contactByPhone.set(c.phone_normalized as string, c.id as string);
     }
+    // And each contact's deal: the newest open one, else the newest of any status.
+    const dealByContact = new Map<string, string>();
+    const openDeal = new Set<string>();
+    if (contactByPhone.size) {
+      const { data } = await supabase
+        .from("deals")
+        .select("id, contact_id, status")
+        .eq("account_id", accountId)
+        .in("contact_id", [...contactByPhone.values()])
+        .order("created_at", { ascending: false });
+      // Newest first: keep the first deal seen, unless an older one is the first open one.
+      for (const d of data ?? []) {
+        const cid = d.contact_id as string;
+        if (openDeal.has(cid)) continue;
+        if (d.status === "open") {
+          dealByContact.set(cid, d.id as string);
+          openDeal.add(cid);
+        } else if (!dealByContact.has(cid)) {
+          dealByContact.set(cid, d.id as string);
+        }
+      }
+    }
 
     const setStatus = (key: string, status: UploadStatus, error?: string) =>
       setQueue((prev) => prev.map((q) => (q.key === key ? { ...q, status, error } : q)));
@@ -224,6 +246,7 @@ export default function CallRecordingsPage() {
         return setStatus(item.key, "error", t("uploadFailed"));
       }
       const phone = phoneFromRecordingName(file.name);
+      const contactId = phone ? contactByPhone.get(phone) ?? null : null;
       const { data: row, error } = await supabase
         .from("call_recordings")
         .insert({
@@ -236,7 +259,8 @@ export default function CallRecordingsPage() {
           size_bytes: file.size,
           duration_seconds: duration,
           phone,
-          contact_id: phone ? contactByPhone.get(phone) ?? null : null,
+          contact_id: contactId,
+          deal_id: contactId ? dealByContact.get(contactId) ?? null : null,
         })
         .select("id")
         .single();

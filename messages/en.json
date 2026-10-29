@@ -2257,6 +2257,7 @@
     "clear": "Clear date filter"
   },
   "Calls": {
+    "contactRecordings": "Call recordings ({count})",
     "title": "Call Recordings",
     "descriptionManager": "Your team's phone-call recordings, day by day and agent by agent.",
     "descriptionAgent": "Upload today's call recordings in one go. Your manager can listen to them here.",

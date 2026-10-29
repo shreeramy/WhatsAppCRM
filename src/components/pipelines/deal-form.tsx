@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
 import { CALL_RECORDINGS_BUCKET } from "@/lib/call-recordings";
+import { ContactRecordings } from "@/components/calls/contact-recordings";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useTranslations } from "next-intl";
@@ -440,6 +441,8 @@ export function DealForm({
                 className="min-h-[100px] border-border bg-muted text-foreground"
               />
             </div>
+
+            {deal && <ContactRecordings key={deal.id} contactId={deal.contact_id} />}
 
             {deal && (
               <Button
