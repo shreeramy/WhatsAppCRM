@@ -115,6 +115,7 @@ export function TemplatePicker({
         .from("message_templates")
         .select("*")
         .eq("status", "APPROVED")
+        .eq("hidden", false)
         .order("created_at", { ascending: false });
 
       if (cancelled) return;

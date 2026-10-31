@@ -1553,6 +1553,12 @@
       }
     },
     "templates": {
+      "hideTitle": "선택 목록에서 숨기기",
+      "unhideTitle": "선택 목록에 표시",
+      "hiddenBadge": "숨김",
+      "hiddenToast": "받은편지함과 브로드캐스트 목록에서 템플릿을 숨겼습니다",
+      "shownToast": "템플릿을 다시 표시합니다",
+      "hideFailed": "템플릿을 변경하지 못했습니다",
       "title": "메시지 템플릿",
       "description": "템플릿을 만들어 Meta에 승인을 요청하세요. 다른 곳에서 승인된 템플릿을 가져오려면 \"Meta에서 동기화\"를 사용하세요.",
       "syncFromMeta": "Meta에서 동기화",

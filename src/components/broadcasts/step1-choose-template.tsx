@@ -37,6 +37,7 @@ export function Step1ChooseTemplate({ selectedTemplate, onSelect, onNext, onBack
           .from('message_templates')
           .select('*')
           .eq('status', 'APPROVED')
+          .eq('hidden', false)
           .order('created_at', { ascending: false });
 
         if (fetchError) throw fetchError;

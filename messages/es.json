@@ -1553,6 +1553,12 @@
       }
     },
     "templates": {
+      "hideTitle": "Ocultar de los selectores",
+      "unhideTitle": "Mostrar en los selectores",
+      "hiddenBadge": "Oculta",
+      "hiddenToast": "Plantilla oculta en la bandeja y en difusiones",
+      "shownToast": "Plantilla visible de nuevo",
+      "hideFailed": "No se pudo cambiar la plantilla",
       "title": "Plantillas de mensaje",
       "description": "Crea plantillas y envíalas a Meta para su aprobación. Usa \"Sincronizar desde Meta\" para traer plantillas aprobadas en otro lugar.",
       "syncFromMeta": "Sincronizar desde Meta",

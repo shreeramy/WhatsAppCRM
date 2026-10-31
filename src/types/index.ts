@@ -368,6 +368,8 @@ export interface MessageTemplate {
   meta_template_id?: string;
   rejection_reason?: string;
   quality_score?: 'GREEN' | 'YELLOW' | 'RED';
+  /** Left out of the inbox and broadcast pickers (migration 065). */
+  hidden?: boolean;
   submission_error?: string;
   last_submitted_at?: string;
   created_at: string;

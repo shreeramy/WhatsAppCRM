@@ -1553,6 +1553,12 @@
       }
     },
     "templates": {
+      "hideTitle": "Ocultar dos seletores",
+      "unhideTitle": "Mostrar nos seletores",
+      "hiddenBadge": "Oculto",
+      "hiddenToast": "Modelo oculto na caixa de entrada e nas transmissões",
+      "shownToast": "Modelo visível novamente",
+      "hideFailed": "Não foi possível alterar o modelo",
       "title": "Modelos de mensagem",
       "description": "Crie modelos e envie-os à Meta para aprovação. Use \"Sincronizar da Meta\" para importar modelos aprovados em outro lugar.",
       "syncFromMeta": "Sincronizar da Meta",

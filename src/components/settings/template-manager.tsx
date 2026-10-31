@@ -12,6 +12,8 @@ import {
   Pencil,
   RotateCcw,
   Upload,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -307,6 +309,20 @@ export function TemplateManager() {
     }
   }
 
+  async function toggleHidden(template: MessageTemplate) {
+    const hidden = !template.hidden;
+    const { error } = await supabase
+      .from('message_templates')
+      .update({ hidden })
+      .eq('id', template.id);
+    if (error) {
+      toast.error(t('hideFailed'));
+      return;
+    }
+    setTemplates((prev) => prev.map((x) => (x.id === template.id ? { ...x, hidden } : x)));
+    toast.success(hidden ? t('hiddenToast') : t('shownToast'));
+  }
+
   async function handleSyncFromMeta() {
     if (!user) return;
     setSyncing(true);
@@ -569,6 +585,11 @@ export function TemplateManager() {
                       <Badge className={`text-xs border ${status.classes}`}>
                         {status.label}
                       </Badge>
+                      {template.hidden && (
+                        <Badge className="text-xs border border-border bg-muted text-muted-foreground">
+                          {t('hiddenBadge')}
+                        </Badge>
+                      )}
                       {template.language && (
                         <span className="text-xs text-muted-foreground uppercase">
                           {template.language}
@@ -633,6 +654,16 @@ export function TemplateManager() {
                         {t('resubmit')}
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => toggleHidden(template)}
+                      title={template.hidden ? t('unhideTitle') : t('hideTitle')}
+                      aria-label={template.hidden ? t('unhideTitle') : t('hideTitle')}
+                      className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8"
+                    >
+                      {template.hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

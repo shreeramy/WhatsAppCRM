@@ -1553,6 +1553,12 @@
       }
     },
     "templates": {
+      "hideTitle": "Hide from pickers",
+      "unhideTitle": "Show in pickers",
+      "hiddenBadge": "Hidden",
+      "hiddenToast": "Template hidden from the inbox and broadcast pickers",
+      "shownToast": "Template shown again",
+      "hideFailed": "Couldn't change the template",
       "title": "Message templates",
       "description": "Create templates and submit them to Meta for approval. Use \"Sync from Meta\" to pull templates approved elsewhere.",
       "syncFromMeta": "Sync from Meta",
