@@ -39,10 +39,20 @@ const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_
 
 const def = JSON.parse(readFileSync(args.file || "supabase/flows/dsa-welcome-v2.json", "utf8"));
 
+// With several accounts in the DB, take the account from the flow being
+// replaced (or --account) instead of "the first owner".
+let accountId = args.account;
+if (!accountId && args.replaces) {
+  const { data: replaced, error } = await db.from("flows").select("account_id").eq("id", args.replaces).single();
+  if (error) throw error;
+  accountId = replaced.account_id;
+}
+if (!accountId) throw new Error("Pass --replaces <flow id> or --account <account id>");
 const { data: owner, error: ownerErr } = await db
   .from("profiles")
   .select("user_id, account_id")
   .eq("account_role", "owner")
+  .eq("account_id", accountId)
   .limit(1)
   .single();
 if (ownerErr) throw ownerErr;
