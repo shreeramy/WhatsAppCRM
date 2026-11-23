@@ -18,6 +18,95 @@ export interface MetaSendResult {
   messageId: string
 }
 
+// ------------------------------------------------------------
+// Upload-once media.
+//
+// When a send carries `{ link }`, Meta downloads the file from that URL
+// on (nearly) every message. For files in our own Supabase Storage that
+// is billed egress: a 10.9 MB video broadcast to ~1,000 contacts used
+// ~9.4 GB in one day and got the project restricted (14 Nov 2026).
+//
+// So for links on our Supabase host we fetch the file ONCE, upload it to
+// Meta's /media endpoint, and send `{ id }` instead. Meta keeps uploaded
+// media for 30 days; we reuse an id for 20. The cache is per server
+// instance, so the worst case is one download per warm instance rather
+// than one per recipient. Any failure falls back to `{ link }` so a send
+// never breaks because of this.
+// ------------------------------------------------------------
+
+const MEDIA_ID_TTL_MS = 20 * 24 * 60 * 60 * 1000
+const MEDIA_FAIL_TTL_MS = 10 * 60 * 1000
+const mediaIdCache = new Map<string, { id: string | null; expires: number }>()
+const mediaIdPending = new Map<string, Promise<string | null>>()
+
+/** True when the link points at our own Supabase project (billed egress). */
+export function isOwnStorageLink(link: string): boolean {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!base) return false
+  try {
+    const u = new URL(link)
+    return u.protocol === 'https:' && u.host === new URL(base).host && u.pathname.startsWith('/storage/v1/object/public/')
+  } catch {
+    return false
+  }
+}
+
+/** Test hook. */
+export function __resetMediaIdCache(): void {
+  mediaIdCache.clear()
+  mediaIdPending.clear()
+}
+
+/**
+ * Meta media id for a link on our own storage, uploading it once.
+ * Returns null for other links or on any failure (caller sends the link).
+ */
+export async function mediaIdForLink(args: {
+  phoneNumberId: string
+  accessToken: string
+  link: string
+}): Promise<string | null> {
+  const { phoneNumberId, accessToken, link } = args
+  if (!isOwnStorageLink(link)) return null
+  const key = `${phoneNumberId}|${link}`
+  const hit = mediaIdCache.get(key)
+  if (hit && hit.expires > Date.now()) return hit.id
+  const inflight = mediaIdPending.get(key)
+  if (inflight) return inflight
+
+  const job = (async () => {
+    try {
+      const file = await fetch(link, { signal: AbortSignal.timeout(30_000) })
+      if (!file.ok) throw new Error(`download ${file.status}`)
+      const mime = (file.headers.get('content-type') ?? 'application/octet-stream').split(';')[0].trim()
+      const blob = await file.blob()
+      const form = new FormData()
+      form.append('messaging_product', 'whatsapp')
+      form.append('type', mime)
+      form.append('file', new Blob([blob], { type: mime }), link.split('/').pop() || 'media')
+      const res = await fetch(`${META_API_BASE}/${phoneNumberId}/media`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form,
+        signal: AbortSignal.timeout(60_000),
+      })
+      if (!res.ok) throw new Error(`upload ${res.status}`)
+      const data = (await res.json()) as { id?: string }
+      if (!data.id) throw new Error('upload returned no id')
+      mediaIdCache.set(key, { id: data.id, expires: Date.now() + MEDIA_ID_TTL_MS })
+      return data.id
+    } catch (err) {
+      console.warn('[meta-media] upload-once failed, sending link instead:', err instanceof Error ? err.message : err)
+      mediaIdCache.set(key, { id: null, expires: Date.now() + MEDIA_FAIL_TTL_MS })
+      return null
+    } finally {
+      mediaIdPending.delete(key)
+    }
+  })()
+  mediaIdPending.set(key, job)
+  return job
+}
+
 export interface MetaPhoneInfo {
   id: string
   display_phone_number: string
@@ -421,7 +510,8 @@ export async function sendMediaMessage(
   // Audio accepts neither caption nor filename per Meta's spec — adding
   // either yields a 400. image/video/document accept a caption; only
   // document accepts a filename.
-  const media: Record<string, unknown> = { link }
+  const mediaId = await mediaIdForLink({ phoneNumberId, accessToken, link })
+  const media: Record<string, unknown> = mediaId ? { id: mediaId } : { link }
   if (caption && kind !== 'audio') media.caption = caption
   if (kind === 'document' && filename) media.filename = filename
 
@@ -518,13 +608,21 @@ export async function sendTemplateMessage(
   }
 
   if (template) {
+    // Media headers on our own storage go by uploaded id (see mediaIdForLink).
+    let headerMediaId = messageParams?.headerMediaId
+    const isMediaHeader =
+      template.header_type === 'image' || template.header_type === 'video' || template.header_type === 'document'
+    const headerLink = messageParams?.headerMediaUrl ?? template.header_media_url
+    if (isMediaHeader && !headerMediaId && headerLink) {
+      headerMediaId = (await mediaIdForLink({ phoneNumberId, accessToken, link: headerLink })) ?? undefined
+    }
     const components = buildSendComponents(template, {
       // Legacy callers pass body values in `params`; fold them into
       // `messageParams.body` so the new path covers them too.
       body: messageParams?.body ?? params,
       headerText: messageParams?.headerText,
       headerMediaUrl: messageParams?.headerMediaUrl,
-      headerMediaId: messageParams?.headerMediaId,
+      headerMediaId,
       buttonParams: messageParams?.buttonParams,
     })
     if (components.length > 0) {

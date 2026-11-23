@@ -107,7 +107,7 @@ export async function loadCallNext(db: SupabaseClient, accountId: string, agentI
 
   const items = buildQueue({ conversations, tags, followUps, deals, outcomes, extraContacts: extra, now, endOfToday });
   return {
-    items: items.slice(0, 100),
+    items: items.slice(0, 500),
     doneToday: done.count ?? 0,
     counts: { now: items.filter((i) => i.tier === "now").length, today: items.filter((i) => i.tier === "today").length },
   };

@@ -369,6 +369,22 @@
       "hint": "Click to edit name",
       "saved": "Name updated",
       "failed": "Couldn't update the name"
+    },
+    "trialLink": {
+      "title": "Teste grátis",
+      "get": "Teste grátis de 7 dias",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "open": "Abrir",
+      "send": "Enviar no WhatsApp",
+      "personal": "Link pessoal: funciona uma vez e expira em {date}.",
+      "expired": "O link de teste deste contato expirou em {date}. Peça que contate o suporte.",
+      "unavailable": "O teste grátis não está disponível agora. Tente novamente mais tarde.",
+      "windowClosed": "Mais de 24 h desde a última mensagem; o WhatsApp só permite um modelo. Copie o link.",
+      "message": "Aqui está seu link pessoal de teste grátis do DSA Management 👉 {url}\n\nFunciona uma vez e expira em {date}.",
+      "sent": "Link enviado no WhatsApp",
+      "sendFailed": "Não foi possível enviar a mensagem",
+      "copyFailed": "Não foi possível copiar o link"
     }
   },
   "Contacts": {
@@ -2469,6 +2485,8 @@
       "followUpToday": "Follow-up hoje",
       "nurture": "Viu vídeo",
       "readyToBuy": "Pronto para comprar"
-    }
+    },
+    "fullList": "Lista completa · {count}",
+    "fullListHint": "Na ordem de ligação. Leads adiados com “Depois” (1 hora, no celular dele) também aparecem."
   }
 }

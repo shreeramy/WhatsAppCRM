@@ -29,6 +29,7 @@ import { engineSendTemplate } from "@/lib/automations/meta-send";
 import { addContactTagAndDispatch } from "@/lib/contacts/tag-events";
 import { assignRoundRobin } from "@/lib/assignment/round-robin";
 import { resolveTagRef } from "../tag-ref";
+import { getOrIssueTrialLink, trialNote } from "@/lib/dsa-trial/issue";
 import type {
   DispatchInboundInput,
   DispatchInboundResult,
@@ -133,6 +134,13 @@ interface V2NodeConfig {
   route_by_var?: { var: string; map: Record<string, string>; default: string };
   /** Same-step dedupe per booked slot (a new slot = a new confirmation). */
   dedupe_by?: "slot";
+  /**
+   * send_message: get the contact's DSA Management free-trial link first.
+   * `text` is sent with {{trial_link}} / {{trial_expires}}; an expired link
+   * gets `text_expired` ({{trial_expires}}, {{support_contact}}), a failed
+   * request `text_unavailable`.
+   */
+  trial_link?: { text_expired: string; text_unavailable: string };
 }
 
 type ListSlotPicker = ListSlotConfig & {
@@ -948,7 +956,8 @@ export async function walk(ctx: Ctx, run: FlowRunRow, startKey: string): Promise
 
     let ok = true;
     if (node.node_type === "send_buttons") ok = await sendButtons(ctx, run, node, cfg, template);
-    else if (node.node_type === "send_message") ok = await sendText(ctx, run, node, cfg);
+    else if (node.node_type === "send_message")
+      ok = await sendText(ctx, run, node, cfg, cfg.trial_link ? await trialVariant(ctx, cfg) : undefined);
     else if (node.node_type !== "start" && node.node_type !== "end") {
       await logEvent(ctx.db, run.id, "error", node.node_key, { reason: `unsupported_node_type:${node.node_type}` });
       return;
@@ -1024,11 +1033,68 @@ async function textValues(ctx: Ctx, run: FlowRunRow, template = "{{agent_first_n
   };
 }
 
-async function sendText(ctx: Ctx, run: FlowRunRow, node: FlowNodeRow, cfg: V2NodeConfig): Promise<boolean> {
+interface TextVariant {
+  template: string;
+  values: Record<string, string | null>;
+  variant: string;
+}
+
+/** "18 Nov 2026" in the flow's working-hours timezone. */
+function shortDate(iso: string, timezone: string): string {
+  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: timezone }).format(
+    new Date(iso),
+  );
+}
+
+// The link is a secret: it goes into the message only, never into run
+// vars or event details.
+async function trialVariant(ctx: Ctx, cfg: V2NodeConfig): Promise<TextVariant> {
+  const t = cfg.trial_link!;
+  const tz = ctx.settings.working_hours.timezone;
+  const support = ctx.settings.support_contact ?? null;
+  if (ctx.dryRun) {
+    // Simulated contacts never use up a real link.
+    const expires = new Date(ctx.now.getTime() + 7 * 86_400_000).toISOString();
+    return {
+      template: cfg.text ?? "",
+      values: { trial_link: "https://trial-link.invalid/dry-run", trial_expires: shortDate(expires, tz) },
+      variant: "trial_dry_run",
+    };
+  }
+  const state = await getOrIssueTrialLink(ctx.db, {
+    accountId: ctx.accountId,
+    contactId: ctx.contact.id,
+    source: "bot",
+    note: trialNote({ who: "WhatsApp lead", name: ctx.contact.name, phone: ctx.contact.phone, contactId: ctx.contact.id }),
+  });
+  if (state.status === "issued") {
+    return {
+      template: cfg.text ?? "",
+      values: { trial_link: state.url, trial_expires: shortDate(state.expiresAt, tz) },
+      variant: state.reused ? "trial_reused" : "trial_new",
+    };
+  }
+  if (state.status === "expired") {
+    return {
+      template: t.text_expired,
+      values: { trial_expires: shortDate(state.expiresAt, tz), support_contact: support },
+      variant: "trial_expired",
+    };
+  }
+  return { template: t.text_unavailable, values: { support_contact: support }, variant: "trial_unavailable" };
+}
+
+async function sendText(
+  ctx: Ctx,
+  run: FlowRunRow,
+  node: FlowNodeRow,
+  cfg: V2NodeConfig,
+  override?: TextVariant,
+): Promise<boolean> {
   const open = workingHoursOpen(ctx);
-  const template = !open && cfg.text_off_hours ? cfg.text_off_hours : cfg.text ?? "";
+  const template = override?.template ?? (!open && cfg.text_off_hours ? cfg.text_off_hours : cfg.text ?? "");
   try {
-    const text = fill(template, await textValues(ctx, run, template));
+    const text = fill(template, { ...(await textValues(ctx, run, template)), ...override?.values });
     const { whatsapp_message_id } = await engineSendText({
       accountId: ctx.accountId,
       userId: ctx.userId,
@@ -1040,7 +1106,7 @@ async function sendText(ctx: Ctx, run: FlowRunRow, node: FlowNodeRow, cfg: V2Nod
     await logEvent(ctx.db, run.id, "message_sent", node.node_key, {
       node_type: "send_message",
       whatsapp_message_id,
-      variant: !open && cfg.text_off_hours ? "off_hours" : "default",
+      variant: override?.variant ?? (!open && cfg.text_off_hours ? "off_hours" : "default"),
       dry_run: ctx.dryRun || undefined,
     });
     return true;

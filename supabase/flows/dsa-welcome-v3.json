@@ -1,14 +1,15 @@
 {
-  "name": "DSA Welcome v3",
-  "description": "v3: image welcome, assign on first message, step nudges (max 2), 30-min slot list with capacity, post-video buy path, lost reasons.",
+  "name": "DSA Welcome v3 Trial",
+  "description": "v3 with the 7-day free trial (DSA Management signup link) in place of demo booking. Installed as its own flow: test numbers first, then switched to live; v3 is the rollback.",
   "settings": {
     "engine": "v2",
     "routing": "test",
     "test_phones": [],
     "dry_run_phones": [],
-    "replaces_flow_id": "fcca58b4-6445-492d-ae6a-5cd1d3261192",
+    "replaces_flow_id": "58065faf-eff4-43fe-8ab0-898a8be68c17",
     "history_flow_ids": [
-      "fcca58b4-6445-492d-ae6a-5cd1d3261192"
+      "fcca58b4-6445-492d-ae6a-5cd1d3261192",
+      "58065faf-eff4-43fe-8ab0-898a8be68c17"
     ],
     "entry_nodes": {
       "en": "e1",
@@ -42,6 +43,7 @@
       "en": "Our team",
       "hi": "हमारी team"
     },
+    "support_contact": "+91 96694 40778",
     "agent_intro": {
       "en": {
         "named": "{{name}} from our team",
@@ -409,7 +411,7 @@
       "node_type": "send_message",
       "config": {
         "lang": "en",
-        "text": "Thanks! {{agent_intro}} will get back to you shortly. Meanwhile, here's a 2-min video that answers most questions 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "text": "Thanks! {{agent_intro}} will get back to you shortly. Meanwhile, here's a 2-min video that answers most questions 👇\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU\n▶️ Hindi: https://www.youtube.com/watch?v=YRvlkmQ7XD4",
         "actions": [
           {
             "type": "assign"
@@ -437,7 +439,7 @@
       "config": {
         "lang": "en",
         "terminal": true,
-        "text": "Thanks! {{agent_intro}} will get back to you shortly. Meanwhile, here's a 2-min video that answers most questions 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "text": "Thanks! {{agent_intro}} will get back to you shortly. Meanwhile, here's a 2-min video that answers most questions 👇\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU\n▶️ Hindi: https://www.youtube.com/watch?v=YRvlkmQ7XD4",
         "actions": [
           {
             "type": "assign"
@@ -530,12 +532,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "en",
-        "text": "Perfect, the Individual Plan fits you:\n\n💰 ₹600/month\n✅ Track every loan file & its status\n✅ Follow-up reminders, so no file slips away\n✅ Commission tracking\n\nWant to see it live in a free 15-min demo?",
+        "text": "Perfect, the Individual Plan fits you:\n\n💰 ₹600/month\n✅ Track every loan file & its status\n✅ Follow-up reminders, so no file slips away\n✅ Commission tracking\n\nTry it free for 7 days, no payment needed 👇",
         "buttons": [
           {
             "reply_id": "v2.e4a.demo",
-            "title": "Book free demo",
-            "next_node_key": "e5"
+            "title": "Get 7-day free trial",
+            "next_node_key": "e_trial"
           },
           {
             "reply_id": "v2.e4a.call",
@@ -575,12 +577,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "en",
-        "text": "For teams, we have the Team Plan:\n\n💰 ₹1,397/month 🔥 or ₹14,400/year (save ₹2,364, about 2 months free)\n\n✅ Everything in Individual\n✅ Assign files to team members\n✅ See every member's pipeline & follow-ups\n✅ Team performance reports\n\nWant to see it live in a free 15-min demo?",
+        "text": "For teams, we have the Team Plan:\n\n💰 ₹1,397/month 🔥 or ₹14,400/year (save ₹2,364, about 2 months free)\n\n✅ Everything in Individual\n✅ Assign files to team members\n✅ See every member's pipeline & follow-ups\n✅ Team performance reports\n\nTry it free for 7 days, no payment needed 👇",
         "buttons": [
           {
             "reply_id": "v2.e4b.demo",
-            "title": "Book free demo",
-            "next_node_key": "e5"
+            "title": "Get 7-day free trial",
+            "next_node_key": "e_trial"
           },
           {
             "reply_id": "v2.e4b.call",
@@ -674,9 +676,6 @@
             }
           ]
         },
-        "title_aliases": {
-          "Yes, book demo": "e5"
-        },
         "actions": [
           {
             "type": "remove_tag",
@@ -710,7 +709,7 @@
         "lang": "en",
         "terminal": true,
         "dedupe_by": "slot",
-        "text": "Done ✅ Your demo is booked for {{slot}}. {{agent_intro}} will send the Google Meet link 10 min before. 🙂\n\nBefore the demo, watch this 2-min video so we can focus on your questions 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "text": "Done ✅ Your demo is booked for {{slot}}. {{agent_intro}} will send the Google Meet link 10 min before. 🙂\n\nBefore the demo, watch this 2-min video so we can focus on your questions 👇\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU\n▶️ Hindi: https://www.youtube.com/watch?v=YRvlkmQ7XD4",
         "actions": [
           {
             "type": "assign"
@@ -801,7 +800,7 @@
         "lang": "en",
         "terminal": true,
         "reachable_via": "schedule_reminder",
-        "text": "Your demo is today at {{slot_time}} 🙂 {{agent_intro}} will send the Google Meet link 10 min before. If you haven't yet, watch this 2-min video first 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c"
+        "text": "Your demo is today at {{slot_time}} 🙂 {{agent_intro}} will send the Google Meet link 10 min before. If you haven't yet, watch this 2-min video first 👇\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU\n▶️ Hindi: https://www.youtube.com/watch?v=YRvlkmQ7XD4"
       }
     },
     {
@@ -810,8 +809,8 @@
       "config": {
         "lang": "en",
         "terminal": true,
-        "text": "Sure! {{agent_intro}} will call you shortly 📞 Meanwhile, watch this 2-min video so the call is quick and useful 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
-        "text_off_hours": "Sure! {{agent_intro}} will call you tomorrow 📞 Meanwhile, watch this 2-min video so the call is quick and useful 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "text": "Sure! {{agent_intro}} will call you shortly 📞 Meanwhile, watch this 2-min video so the call is quick and useful 👇\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU\n▶️ Hindi: https://www.youtube.com/watch?v=YRvlkmQ7XD4",
+        "text_off_hours": "Sure! {{agent_intro}} will call you tomorrow 📞 Meanwhile, watch this 2-min video so the call is quick and useful 👇\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU\n▶️ Hindi: https://www.youtube.com/watch?v=YRvlkmQ7XD4",
         "actions": [
           {
             "type": "remove_tag",
@@ -848,7 +847,7 @@
       "node_type": "send_message",
       "config": {
         "lang": "en",
-        "text": "Here's a 2-min video showing exactly how DSAs use it 👇\n▶️ English: https://youtu.be/1JD25RJFkOU\n▶️ Hindi: https://youtu.be/-4AXco_mN8c",
+        "text": "Here's a 2-min video showing exactly how DSAs use it 👇\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU\n▶️ Hindi: https://www.youtube.com/watch?v=YRvlkmQ7XD4",
         "actions": [
           {
             "type": "add_tag",
@@ -891,9 +890,52 @@
         ],
         "title_aliases": {
           "Yes, I want it": "ready_route",
-          "Not watched yet": "e7",
-          "Yes, book demo": "e5"
+          "Not watched yet": "e7"
         }
+      }
+    },
+    {
+      "node_key": "e_trial",
+      "node_type": "send_message",
+      "config": {
+        "lang": "en",
+        "terminal": true,
+        "title_aliases": {
+          "Book free demo": "e_trial",
+          "Yes, book demo": "e_trial",
+          "Free trial": "e_trial"
+        },
+        "text": "Here's your 7-day free trial 🎉\n\n👉 {{trial_link}}\n\nOpen it, create your company account and password, and start adding your loan files.\n\n🔒 This link is personal, works only once and expires on {{trial_expires}}.\n\n{{agent_intro}} will check in to help you get set up 🙂",
+        "trial_link": {
+          "text_expired": "Your free-trial link expired on {{trial_expires}} 🙁 Please contact our support at {{support_contact}} and we'll help you get started.",
+          "text_unavailable": "Free trial is not available right now. Please try again later."
+        },
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Trial Requested"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Free trial – help {{contact_name}} sign up"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🎁 Free trial requested: {{contact_name}}",
+            "body": "Check they signed up and help with setup"
+          }
+        ]
       }
     },
     {
@@ -1209,12 +1251,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "en",
-        "text": "Many DSAs start with Excel. The difference is automatic follow-up reminders and commission tracking. Want a 15-min demo to compare?",
+        "text": "Many DSAs start with Excel. The difference is automatic follow-up reminders and commission tracking. Try it free for 7 days and compare?",
         "buttons": [
           {
             "reply_id": "v3.lost_crm.demo",
-            "title": "Book free demo",
-            "next_node_key": "e5"
+            "title": "Get 7-day free trial",
+            "next_node_key": "e_trial"
           },
           {
             "reply_id": "v3.lost_crm.no",
@@ -1315,12 +1357,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "en",
-        "text": "Would you like a quick 15-min demo? Pick a time 👇",
+        "text": "Want to try it yourself? Get a 7-day free trial, no payment needed 👇",
         "buttons": [
           {
             "reply_id": "v3.n_plan.demo",
-            "title": "Book free demo",
-            "next_node_key": "e5"
+            "title": "Get 7-day free trial",
+            "next_node_key": "e_trial"
           },
           {
             "reply_id": "v3.n_plan.call",
@@ -1403,12 +1445,12 @@
       "config": {
         "lang": "en",
         "reachable_via": "settings.nudges.followups",
-        "text": "DSAs using DSA Management track every file from login to disbursal on their phone 📱 See it live in a free 15-min demo?",
+        "text": "DSAs using DSA Management track every file from login to disbursal on their phone 📱 Try it free for 7 days?",
         "buttons": [
           {
             "reply_id": "v3.n_plan2.demo",
-            "title": "Book free demo",
-            "next_node_key": "e5"
+            "title": "Get 7-day free trial",
+            "next_node_key": "e_trial"
           },
           {
             "reply_id": "v3.n_plan2.call",
@@ -1613,7 +1655,7 @@
       "node_type": "send_message",
       "config": {
         "lang": "hi",
-        "text": "धन्यवाद! {{agent_intro}} जल्द ही आपसे संपर्क करेंगे। तब तक ये 2-min video देखिए, इसमें ज़्यादातर सवालों के जवाब हैं 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "text": "धन्यवाद! {{agent_intro}} जल्द ही आपसे संपर्क करेंगे। तब तक ये 2-min video देखिए, इसमें ज़्यादातर सवालों के जवाब हैं 👇\n▶️ हिंदी: https://www.youtube.com/watch?v=YRvlkmQ7XD4\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU",
         "actions": [
           {
             "type": "assign"
@@ -1641,7 +1683,7 @@
       "config": {
         "lang": "hi",
         "terminal": true,
-        "text": "धन्यवाद! {{agent_intro}} जल्द ही आपसे संपर्क करेंगे। तब तक ये 2-min video देखिए, इसमें ज़्यादातर सवालों के जवाब हैं 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "text": "धन्यवाद! {{agent_intro}} जल्द ही आपसे संपर्क करेंगे। तब तक ये 2-min video देखिए, इसमें ज़्यादातर सवालों के जवाब हैं 👇\n▶️ हिंदी: https://www.youtube.com/watch?v=YRvlkmQ7XD4\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU",
         "actions": [
           {
             "type": "assign"
@@ -1734,12 +1776,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "hi",
-        "text": "आपके लिए Individual Plan सही रहेगा:\n\n💰 ₹600/महीना\n✅ हर loan file और उसका status track करें\n✅ Follow-up reminders, कोई file नहीं छूटेगी\n✅ Commission tracking\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?",
+        "text": "आपके लिए Individual Plan सही रहेगा:\n\n💰 ₹600/महीना\n✅ हर loan file और उसका status track करें\n✅ Follow-up reminders, कोई file नहीं छूटेगी\n✅ Commission tracking\n\n7 दिन free में use करके देखिए, कोई payment नहीं 👇",
         "buttons": [
           {
             "reply_id": "v2.h4a.demo",
-            "title": "Free demo book करें",
-            "next_node_key": "h5"
+            "title": "7 दिन का free trial",
+            "next_node_key": "h_trial"
           },
           {
             "reply_id": "v2.h4a.call",
@@ -1779,12 +1821,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "hi",
-        "text": "Team के लिए हमारा Team Plan:\n\n💰 ₹1,397/महीना 🔥 या ₹14,400/साल (₹2,364 की बचत, लगभग 2 महीने free)\n\n✅ Individual plan के सारे features\n✅ Team members को files assign करें\n✅ हर member की pipeline और follow-ups देखें\n✅ Team performance reports\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?",
+        "text": "Team के लिए हमारा Team Plan:\n\n💰 ₹1,397/महीना 🔥 या ₹14,400/साल (₹2,364 की बचत, लगभग 2 महीने free)\n\n✅ Individual plan के सारे features\n✅ Team members को files assign करें\n✅ हर member की pipeline और follow-ups देखें\n✅ Team performance reports\n\n7 दिन free में use करके देखिए, कोई payment नहीं 👇",
         "buttons": [
           {
             "reply_id": "v2.h4b.demo",
-            "title": "Free demo book करें",
-            "next_node_key": "h5"
+            "title": "7 दिन का free trial",
+            "next_node_key": "h_trial"
           },
           {
             "reply_id": "v2.h4b.call",
@@ -1878,9 +1920,6 @@
             }
           ]
         },
-        "title_aliases": {
-          "हाँ, demo चाहिए": "h5"
-        },
         "actions": [
           {
             "type": "remove_tag",
@@ -1914,7 +1953,7 @@
         "lang": "hi",
         "terminal": true,
         "dedupe_by": "slot",
-        "text": "Done ✅ आपका demo {{slot}} के लिए book हो गया है। {{agent_intro}} 10 मिनट पहले Google Meet link भेजेंगे। 🙂\n\nDemo से पहले ये 2-min video देख लीजिए, ताकि demo में आपके सवालों पर बात हो सके 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "text": "Done ✅ आपका demo {{slot}} के लिए book हो गया है। {{agent_intro}} 10 मिनट पहले Google Meet link भेजेंगे। 🙂\n\nDemo से पहले ये 2-min video देख लीजिए, ताकि demo में आपके सवालों पर बात हो सके 👇\n▶️ हिंदी: https://www.youtube.com/watch?v=YRvlkmQ7XD4\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU",
         "actions": [
           {
             "type": "assign"
@@ -2005,7 +2044,7 @@
         "lang": "hi",
         "terminal": true,
         "reachable_via": "schedule_reminder",
-        "text": "आपका demo आज {{slot_time}} है 🙂 {{agent_intro}} 10 मिनट पहले Google Meet link भेजेंगे। अगर अभी तक नहीं देखा, तो पहले ये 2-min video देख लीजिए 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU"
+        "text": "आपका demo आज {{slot_time}} है 🙂 {{agent_intro}} 10 मिनट पहले Google Meet link भेजेंगे। अगर अभी तक नहीं देखा, तो पहले ये 2-min video देख लीजिए 👇\n▶️ हिंदी: https://www.youtube.com/watch?v=YRvlkmQ7XD4\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU"
       }
     },
     {
@@ -2014,8 +2053,8 @@
       "config": {
         "lang": "hi",
         "terminal": true,
-        "text": "ज़रूर! {{agent_intro}} जल्द ही आपको call करेंगे 📞 तब तक ये 2-min video देख लीजिए, ताकि call जल्दी और काम की हो 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
-        "text_off_hours": "ज़रूर! {{agent_intro}} कल आपको call करेंगे 📞 तब तक ये 2-min video देख लीजिए, ताकि call जल्दी और काम की हो 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "text": "ज़रूर! {{agent_intro}} जल्द ही आपको call करेंगे 📞 तब तक ये 2-min video देख लीजिए, ताकि call जल्दी और काम की हो 👇\n▶️ हिंदी: https://www.youtube.com/watch?v=YRvlkmQ7XD4\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU",
+        "text_off_hours": "ज़रूर! {{agent_intro}} कल आपको call करेंगे 📞 तब तक ये 2-min video देख लीजिए, ताकि call जल्दी और काम की हो 👇\n▶️ हिंदी: https://www.youtube.com/watch?v=YRvlkmQ7XD4\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU",
         "actions": [
           {
             "type": "remove_tag",
@@ -2052,7 +2091,7 @@
       "node_type": "send_message",
       "config": {
         "lang": "hi",
-        "text": "ये 2-min video देखिए कि DSAs इसे कैसे use करते हैं 👇\n▶️ हिंदी: https://youtu.be/-4AXco_mN8c\n▶️ English: https://youtu.be/1JD25RJFkOU",
+        "text": "ये 2-min video देखिए कि DSAs इसे कैसे use करते हैं 👇\n▶️ हिंदी: https://www.youtube.com/watch?v=YRvlkmQ7XD4\n▶️ English: https://www.youtube.com/watch?v=UOop21nMpEU",
         "actions": [
           {
             "type": "add_tag",
@@ -2094,9 +2133,52 @@
           }
         ],
         "title_aliases": {
-          "अभी नहीं देखा": "h7",
-          "हाँ, demo चाहिए": "h5"
+          "अभी नहीं देखा": "h7"
         }
+      }
+    },
+    {
+      "node_key": "h_trial",
+      "node_type": "send_message",
+      "config": {
+        "lang": "hi",
+        "terminal": true,
+        "title_aliases": {
+          "Free demo book करें": "h_trial",
+          "हाँ, demo चाहिए": "h_trial",
+          "Free trial": "h_trial"
+        },
+        "text": "ये रहा आपका 7 दिन का free trial 🎉\n\n👉 {{trial_link}}\n\nLink खोलिए, अपनी company का account और password बनाइए, और अपनी loan files डालना शुरू कीजिए।\n\n🔒 ये link सिर्फ आपके लिए है, एक ही बार चलेगा और {{trial_expires}} को expire हो जाएगा।\n\n{{agent_intro}} setup में मदद के लिए आपसे संपर्क करेंगे 🙂",
+        "trial_link": {
+          "text_expired": "आपका free-trial link {{trial_expires}} को expire हो गया 🙁 कृपया हमारे support {{support_contact}} पर संपर्क करें, हम आपकी मदद करेंगे।",
+          "text_unavailable": "Free trial अभी उपलब्ध नहीं है। कृपया थोड़ी देर बाद फिर कोशिश करें।"
+        },
+        "actions": [
+          {
+            "type": "remove_tag",
+            "tag": "Lost:*"
+          },
+          {
+            "type": "assign"
+          },
+          {
+            "type": "ensure_deal"
+          },
+          {
+            "type": "add_tag",
+            "tag": "Trial Requested"
+          },
+          {
+            "type": "create_follow_up",
+            "kind": "call",
+            "title": "Free trial – help {{contact_name}} sign up"
+          },
+          {
+            "type": "notify_agent",
+            "title": "🎁 Free trial requested: {{contact_name}}",
+            "body": "Check they signed up and help with setup"
+          }
+        ]
       }
     },
     {
@@ -2412,12 +2494,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "hi",
-        "text": "बहुत से DSAs Excel से शुरू करते हैं। फर्क है automatic follow-up reminders और commission tracking का। Compare करने के लिए 15-min demo देखें?",
+        "text": "बहुत से DSAs Excel से शुरू करते हैं। फर्क है automatic follow-up reminders और commission tracking का। 7 दिन free में use करके compare करें?",
         "buttons": [
           {
             "reply_id": "v3.h_lost_crm.demo",
-            "title": "Free demo book करें",
-            "next_node_key": "h5"
+            "title": "7 दिन का free trial",
+            "next_node_key": "h_trial"
           },
           {
             "reply_id": "v3.h_lost_crm.no",
@@ -2518,12 +2600,12 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "hi",
-        "text": "क्या आप 15-min का छोटा demo देखना चाहेंगे? Time चुनें 👇",
+        "text": "खुद use करके देखना चाहेंगे? 7 दिन का free trial लीजिए, कोई payment नहीं 👇",
         "buttons": [
           {
             "reply_id": "v3.h_np.demo",
-            "title": "Free demo book करें",
-            "next_node_key": "h5"
+            "title": "7 दिन का free trial",
+            "next_node_key": "h_trial"
           },
           {
             "reply_id": "v3.h_np.call",
@@ -2606,12 +2688,12 @@
       "config": {
         "lang": "hi",
         "reachable_via": "settings.nudges.followups",
-        "text": "DSA Management से DSAs हर file login से disbursal तक mobile पर track करते हैं 📱 Free 15-min demo में live देखें?",
+        "text": "DSA Management से DSAs हर file login से disbursal तक mobile पर track करते हैं 📱 7 दिन free में use करके देखें?",
         "buttons": [
           {
             "reply_id": "v3.h_np2.demo",
-            "title": "Free demo book करें",
-            "next_node_key": "h5"
+            "title": "7 दिन का free trial",
+            "next_node_key": "h_trial"
           },
           {
             "reply_id": "v3.h_np2.call",

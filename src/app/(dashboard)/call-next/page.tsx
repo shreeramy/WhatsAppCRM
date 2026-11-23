@@ -355,8 +355,44 @@ export default function CallNextPage() {
         </div>
       )}
 
+      {/* Admins: the whole queue of the selected person, in call order */}
+      {canPickAgent && data && data.items.length > 0 && (
+        <div className="rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-4 py-2">
+            <p className="text-xs font-medium text-muted-foreground">{t("fullList", { count: data.items.length })}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">{t("fullListHint")}</p>
+          </div>
+          <ol>
+            {data.items.map((i, n) => (
+              <li key={i.contactId} className="flex items-start gap-2 border-b border-border px-4 py-2 text-sm last:border-b-0">
+                <span className="w-5 shrink-0 pt-0.5 text-right text-xs tabular-nums text-muted-foreground">{n + 1}</span>
+                <span className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", i.tier === "now" ? "bg-red-500" : "bg-amber-500")} />
+                <div className="min-w-0 flex-1">
+                  {i.conversationId ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/inbox?c=${i.conversationId}`)}
+                      className="block max-w-full truncate text-left font-medium text-foreground hover:underline"
+                    >
+                      {i.name}
+                    </button>
+                  ) : (
+                    <p className="truncate font-medium text-foreground">{i.name}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {reasonText(i)}
+                    {i.dealValue ? ` · ₹${Number(i.dealValue).toLocaleString("en-IN")}` : ""}
+                  </p>
+                  {i.phone && <p className="text-xs text-muted-foreground">{formatPhoneDisplay(i.phone)}</p>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       {/* What's coming up */}
-      {!asking && queue.length > 1 && (
+      {!canPickAgent && !asking && queue.length > 1 && (
         <div className="rounded-xl border border-border bg-card">
           <p className="border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground">{t("upNext")}</p>
           <ul>

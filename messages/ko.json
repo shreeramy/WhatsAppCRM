@@ -369,6 +369,22 @@
       "hint": "Click to edit name",
       "saved": "Name updated",
       "failed": "Couldn't update the name"
+    },
+    "trialLink": {
+      "title": "무료 체험",
+      "get": "7일 무료 체험 받기",
+      "copy": "복사",
+      "copied": "복사됨",
+      "open": "열기",
+      "send": "WhatsApp으로 보내기",
+      "personal": "개인 링크: 한 번만 사용 가능하며 {date}에 만료됩니다.",
+      "expired": "이 연락처의 체험 링크가 {date}에 만료되었습니다. 지원팀에 문의하도록 안내하세요.",
+      "unavailable": "지금은 무료 체험을 이용할 수 없습니다. 나중에 다시 시도하세요.",
+      "windowClosed": "마지막 메시지 후 24시간이 지나 템플릿만 보낼 수 있습니다. 링크를 복사하세요.",
+      "message": "DSA Management 개인 무료 체험 링크입니다 👉 {url}\n\n한 번만 사용 가능하며 {date}에 만료됩니다.",
+      "sent": "WhatsApp으로 링크를 보냈습니다",
+      "sendFailed": "메시지를 보내지 못했습니다",
+      "copyFailed": "링크를 복사하지 못했습니다"
     }
   },
   "Contacts": {
@@ -2469,6 +2485,8 @@
       "followUpToday": "오늘 후속",
       "nurture": "영상 시청",
       "readyToBuy": "구매 준비"
-    }
+    },
+    "fullList": "전체 목록 · {count}",
+    "fullListHint": "통화 순서대로 표시. 본인 휴대폰에서 '나중에'로 미룬 리드(1시간)도 여기에 보입니다."
   }
 }

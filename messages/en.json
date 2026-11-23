@@ -369,6 +369,22 @@
       "hint": "Click to edit name",
       "saved": "Name updated",
       "failed": "Couldn't update the name"
+    },
+    "trialLink": {
+      "title": "Free trial",
+      "get": "Get 7-day free trial",
+      "copy": "Copy",
+      "copied": "Copied",
+      "open": "Open",
+      "send": "Send on WhatsApp",
+      "personal": "Personal link: works once and expires on {date}.",
+      "expired": "This contact's trial link expired on {date}. Ask them to contact support for a new one.",
+      "unavailable": "Free trial is not available right now. Please try again later.",
+      "windowClosed": "More than 24h since their last message, so WhatsApp only allows a template. Copy the link instead.",
+      "message": "Here's your personal free-trial link for DSA Management 👉 {url}\n\nIt works once and expires on {date}.",
+      "sent": "Trial link sent on WhatsApp",
+      "sendFailed": "Couldn't send the message",
+      "copyFailed": "Couldn't copy the link"
     }
   },
   "Contacts": {
@@ -2469,6 +2485,8 @@
       "followUpToday": "Follow-up today",
       "nurture": "Watched video",
       "readyToBuy": "Ready to buy"
-    }
+    },
+    "fullList": "Full list · {count}",
+    "fullListHint": "In call order. Leads they tapped “Later” on (hidden for 1 hour on their own phone) still show here."
   }
 }

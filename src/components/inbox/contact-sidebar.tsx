@@ -39,6 +39,7 @@ import { FollowUpForm } from "@/components/follow-ups/follow-up-form";
 import { FollowUpRow } from "@/components/follow-ups/follow-up-row";
 import { FOLLOW_UP_SELECT } from "@/components/follow-ups/follow-up-meta";
 import { ContactRecordings } from "@/components/calls/contact-recordings";
+import { ContactTrialLink } from "./contact-trial-link";
 
 /** Completed follow-ups kept visible in the chat for context. */
 const RECENT_DONE_LIMIT = 3;
@@ -569,6 +570,13 @@ export function ContactSidebar({ contact, conversationId, onContactUpdated, clas
               )}
             </div>
           </div>
+
+          {/* DSA Management free-trial link (same one the bot sends) */}
+          {canSendMessages && (
+            <div className="mt-4">
+              <ContactTrialLink key={contact.id} contactId={contact.id} conversationId={conversationId} />
+            </div>
+          )}
 
           {/* Call recordings matched to this contact by phone number */}
           <div className="mt-4">

@@ -12,15 +12,18 @@ import json, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ---- business config -------------------------------------------------------
-V2_FLOW_ID = "fcca58b4-6445-492d-ae6a-5cd1d3261192"      # rolled back to / history
+V2_FLOW_ID = "fcca58b4-6445-492d-ae6a-5cd1d3261192"      # history
+V3_FLOW_ID = "58065faf-eff4-43fe-8ab0-898a8be68c17"      # demo-booking v3: stays live until this one goes live; rollback target
 HEADER_IMG = "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png"
 WEBINAR_WHEN_EN = "Thursday, 22 Oct at 9:00 AM"
 WEBINAR_WHEN_HI = "गुरुवार, 22 अक्टूबर, सुबह 9:00 बजे"
-VIDEO_EN = "https://youtu.be/1JD25RJFkOU"
-VIDEO_HI = "https://youtu.be/-4AXco_mN8c"
+VIDEO_EN = "https://www.youtube.com/watch?v=UOop21nMpEU"
+VIDEO_HI = "https://www.youtube.com/watch?v=YRvlkmQ7XD4"
 REG_FORM = "https://docs.google.com/forms/d/e/1FAIpQLScMCX2Iv9h8VEvRF-sr0gUfVRQ9O3GQNbXQSAyUtN1QJpnHjg/viewform"
 PAY_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORYC1Yen1y-YRaxKZIhDr12ng/viewform"
 PRICE_SOLO, PRICE_TEAM_M, PRICE_TEAM_Y = 600, 1397, 14400
+TRIAL_DAYS = 7
+SUPPORT_CONTACT = "+91 96694 40778"
 
 VIDEO_BLOCK_EN = f"▶️ English: {VIDEO_EN}\n▶️ Hindi: {VIDEO_HI}"
 VIDEO_BLOCK_HI = f"▶️ हिंदी: {VIDEO_HI}\n▶️ English: {VIDEO_EN}"
@@ -61,6 +64,8 @@ for L in ("en", "hi"):
     pays, paym, payy = k("pay_solo","h_pay_solo"), k("pay_team_m","h_pay_team_m"), k("pay_team_y","h_pay_team_y")
     notn, lp, lc, lx, nothx, price = k("e_not","h_not"), k("lost_price","h_lost_price"), k("lost_crm","h_lost_crm"), k("lost_explore","h_lost_explore"), k("no_thanks","h_no_thanks"), k("price_en","price_hi")
     other_lang_welcome = k("h1", "e1")
+    trial = k("e_trial", "h_trial")
+    TRIAL_BTN = t(f"Get {TRIAL_DAYS}-day free trial", f"{TRIAL_DAYS} दिन का free trial")
 
     NUDGE_W = nudge({"en": "n_welcome", "hi": "h_nw"}, 45)
     NUDGE_T = nudge({"en": "n_team", "hi": "h_nt"}, 60)
@@ -108,17 +113,17 @@ for L in ("en", "hi"):
       buttons=[btn(f"v2.{team}", "solo", t("Just me", "सिर्फ मैं"), plan_a), btn(f"v2.{team}", "team", t("I have a team", "मेरी team है"), plan_b)],
       actions=[A(type="remove_tag", tag="Lost: Not-DSA"), A(type="add_tag", tag="Contacted"), A(type="ensure_deal"), NUDGE_T])
 
-    PLAN_BTNS = lambda n: [btn(f"v2.{n}", "demo", t("Book free demo", "Free demo book करें"), slots),
+    PLAN_BTNS = lambda n: [btn(f"v2.{n}", "demo", TRIAL_BTN, trial),
                            btn(f"v2.{n}", "call", t("Call me", "मुझे call करें"), call),
                            btn(f"v2.{n}", "video", t("Watch video first", "पहले video देखूँगा"), video)]
     N(plan_a, "send_buttons", lang=L,
-      text=t(f"Perfect, the Individual Plan fits you:\n\n💰 ₹{PRICE_SOLO}/month\n✅ Track every loan file & its status\n✅ Follow-up reminders, so no file slips away\n✅ Commission tracking\n\nWant to see it live in a free 15-min demo?",
-             f"आपके लिए Individual Plan सही रहेगा:\n\n💰 ₹{PRICE_SOLO}/महीना\n✅ हर loan file और उसका status track करें\n✅ Follow-up reminders, कोई file नहीं छूटेगी\n✅ Commission tracking\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?"),
+      text=t(f"Perfect, the Individual Plan fits you:\n\n💰 ₹{PRICE_SOLO}/month\n✅ Track every loan file & its status\n✅ Follow-up reminders, so no file slips away\n✅ Commission tracking\n\nTry it free for {TRIAL_DAYS} days, no payment needed 👇",
+             f"आपके लिए Individual Plan सही रहेगा:\n\n💰 ₹{PRICE_SOLO}/महीना\n✅ हर loan file और उसका status track करें\n✅ Follow-up reminders, कोई file नहीं छूटेगी\n✅ Commission tracking\n\n{TRIAL_DAYS} दिन free में use करके देखिए, कोई payment नहीं 👇"),
       buttons=PLAN_BTNS(plan_a),
       actions=[A(type="set_deal_value", value=PRICE_SOLO, plan="individual"), A(type="add_tag", tag="Price Sent"), NUDGE_P])
     N(plan_b, "send_buttons", lang=L,
-      text=t(f"For teams, we have the Team Plan:\n\n💰 ₹{PRICE_TEAM_M:,}/month 🔥 or ₹{PRICE_TEAM_Y:,}/year (save ₹{PRICE_TEAM_M*12-PRICE_TEAM_Y:,}, about 2 months free)\n\n✅ Everything in Individual\n✅ Assign files to team members\n✅ See every member's pipeline & follow-ups\n✅ Team performance reports\n\nWant to see it live in a free 15-min demo?",
-             f"Team के लिए हमारा Team Plan:\n\n💰 ₹{PRICE_TEAM_M:,}/महीना 🔥 या ₹{PRICE_TEAM_Y:,}/साल (₹{PRICE_TEAM_M*12-PRICE_TEAM_Y:,} की बचत, लगभग 2 महीने free)\n\n✅ Individual plan के सारे features\n✅ Team members को files assign करें\n✅ हर member की pipeline और follow-ups देखें\n✅ Team performance reports\n\nक्या आप free 15-min demo में इसे live देखना चाहेंगे?"),
+      text=t(f"For teams, we have the Team Plan:\n\n💰 ₹{PRICE_TEAM_M:,}/month 🔥 or ₹{PRICE_TEAM_Y:,}/year (save ₹{PRICE_TEAM_M*12-PRICE_TEAM_Y:,}, about 2 months free)\n\n✅ Everything in Individual\n✅ Assign files to team members\n✅ See every member's pipeline & follow-ups\n✅ Team performance reports\n\nTry it free for {TRIAL_DAYS} days, no payment needed 👇",
+             f"Team के लिए हमारा Team Plan:\n\n💰 ₹{PRICE_TEAM_M:,}/महीना 🔥 या ₹{PRICE_TEAM_Y:,}/साल (₹{PRICE_TEAM_M*12-PRICE_TEAM_Y:,} की बचत, लगभग 2 महीने free)\n\n✅ Individual plan के सारे features\n✅ Team members को files assign करें\n✅ हर member की pipeline और follow-ups देखें\n✅ Team performance reports\n\n{TRIAL_DAYS} दिन free में use करके देखिए, कोई payment नहीं 👇"),
       buttons=PLAN_BTNS(plan_b),
       actions=[A(type="set_deal_value", value=PRICE_TEAM_M, plan="team"), A(type="add_tag", tag="Price Sent"), NUDGE_P])
 
@@ -129,7 +134,6 @@ for L in ("en", "hi"):
                      "button_label": t("See times", "Time देखें"), "section_title": t("Free slots", "खाली slots"),
                      "extra_rows": [btn(f"v3.{slots}", "call", t("Call me instead", "Call कर लीजिए"), call),
                                     btn(f"v3.{slots}", "other", t("Other time", "कोई और time"), other)]},
-      title_aliases=t({"Yes, book demo": "e5"}, {"हाँ, demo चाहिए": "h5"}),
       actions=[UNLOST, NUDGE_S])
     N(full, "send_message", lang=L,
       text=t("That time just filled up 🙈 Please pick another 👇", "ये time अभी भर गया 🙈 कृपया दूसरा चुनें 👇"),
@@ -179,8 +183,26 @@ for L in ("en", "hi"):
       buttons=[btn(f"v3.{n1}", "yes", t("Yes, I want this", "हाँ, लेना है"), rr),
                btn(f"v3.{n1}", "q", t("I have a question", "एक सवाल है"), q),
                btn(f"v3.{n1}", "no", t("Not for me", "मेरे लिए नहीं"), notn)],
-      title_aliases=t({"Yes, I want it": "ready_route", "Not watched yet": "e7", "Yes, book demo": "e5"},
-                      {"अभी नहीं देखा": "h7", "हाँ, demo चाहिए": "h5"}))
+      title_aliases=t({"Yes, I want it": "ready_route", "Not watched yet": "e7"},
+                      {"अभी नहीं देखा": "h7"}))
+
+    # Free trial (replaces the demo booking). The engine asks DSA Management
+    # for the contact's personal signup link (one per contact, reused while
+    # valid) and fills {{trial_link}} / {{trial_expires}}.
+    N(trial, "send_message", lang=L, terminal=True,
+      title_aliases=t({"Book free demo": trial, "Yes, book demo": trial, "Free trial": trial},
+                      {"Free demo book करें": trial, "हाँ, demo चाहिए": trial, "Free trial": trial}),
+      text=t(f"Here's your {TRIAL_DAYS}-day free trial 🎉\n\n👉 {{{{trial_link}}}}\n\nOpen it, create your company account and password, and start adding your loan files.\n\n🔒 This link is personal, works only once and expires on {{{{trial_expires}}}}.\n\n{{{{agent_intro}}}} will check in to help you get set up 🙂",
+             f"ये रहा आपका {TRIAL_DAYS} दिन का free trial 🎉\n\n👉 {{{{trial_link}}}}\n\nLink खोलिए, अपनी company का account और password बनाइए, और अपनी loan files डालना शुरू कीजिए।\n\n🔒 ये link सिर्फ आपके लिए है, एक ही बार चलेगा और {{{{trial_expires}}}} को expire हो जाएगा।\n\n{{{{agent_intro}}}} setup में मदद के लिए आपसे संपर्क करेंगे 🙂"),
+      trial_link={
+          "text_expired": t("Your free-trial link expired on {{trial_expires}} 🙁 Please contact our support at {{support_contact}} and we'll help you get started.",
+                            "आपका free-trial link {{trial_expires}} को expire हो गया 🙁 कृपया हमारे support {{support_contact}} पर संपर्क करें, हम आपकी मदद करेंगे।"),
+          "text_unavailable": t("Free trial is not available right now. Please try again later.",
+                                "Free trial अभी उपलब्ध नहीं है। कृपया थोड़ी देर बाद फिर कोशिश करें।"),
+      },
+      actions=[UNLOST, A(type="assign"), A(type="ensure_deal"), A(type="add_tag", tag="Trial Requested"),
+               A(type="create_follow_up", kind="call", title="Free trial – help {{contact_name}} sign up"),
+               A(type="notify_agent", title="🎁 Free trial requested: {{contact_name}}", body="Check they signed up and help with setup")])
 
     # 9a. Yes → plan confirm by team size
     N(rr, "start", lang=L, route_by_var={"var": "plan", "map": {"individual": rs, "team": rt}, "default": e3r})
@@ -233,9 +255,9 @@ for L in ("en", "hi"):
       buttons=[btn(f"v3.{lp}", "call", t("Call me", "मुझे call करें"), call), btn(f"v3.{lp}", "no", t("No thanks", "नहीं, धन्यवाद"), nothx)],
       actions=[A(type="add_tag", tag="Lost: Price")])
     N(lc, "send_buttons", lang=L,
-      text=t("Many DSAs start with Excel. The difference is automatic follow-up reminders and commission tracking. Want a 15-min demo to compare?",
-             "बहुत से DSAs Excel से शुरू करते हैं। फर्क है automatic follow-up reminders और commission tracking का। Compare करने के लिए 15-min demo देखें?"),
-      buttons=[btn(f"v3.{lc}", "demo", t("Book free demo", "Free demo book करें"), slots), btn(f"v3.{lc}", "no", t("No thanks", "नहीं, धन्यवाद"), nothx)],
+      text=t(f"Many DSAs start with Excel. The difference is automatic follow-up reminders and commission tracking. Try it free for {TRIAL_DAYS} days and compare?",
+             f"बहुत से DSAs Excel से शुरू करते हैं। फर्क है automatic follow-up reminders और commission tracking का। {TRIAL_DAYS} दिन free में use करके compare करें?"),
+      buttons=[btn(f"v3.{lc}", "demo", TRIAL_BTN, trial), btn(f"v3.{lc}", "no", t("No thanks", "नहीं, धन्यवाद"), nothx)],
       actions=[A(type="add_tag", tag="Lost: Already-CRM")])
     N(lx, "send_message", lang=L, terminal=True,
       text=t("No problem! We'll check back in a few weeks. Save this number 🙂", "कोई बात नहीं! कुछ हफ्तों में हम फिर बात करेंगे। ये number save कर लीजिए 🙂"),
@@ -254,8 +276,8 @@ for L in ("en", "hi"):
       text=t("Solo or with a team? I'll share the right plan for you.", "अकेले काम करते हैं या team के साथ? मैं आपके लिए सही plan बताऊँगा।"),
       buttons=[btn(f"v3.{nt}", "solo", t("Just me", "सिर्फ मैं"), plan_a), btn(f"v3.{nt}", "team", t("I have a team", "मेरी team है"), plan_b)])
     N(np_, "send_buttons", lang=L,
-      text=t("Would you like a quick 15-min demo? Pick a time 👇", "क्या आप 15-min का छोटा demo देखना चाहेंगे? Time चुनें 👇"),
-      buttons=[btn(f"v3.{np_}", "demo", t("Book free demo", "Free demo book करें"), slots), btn(f"v3.{np_}", "call", t("Call me", "मुझे call करें"), call)])
+      text=t(f"Want to try it yourself? Get a {TRIAL_DAYS}-day free trial, no payment needed 👇", f"खुद use करके देखना चाहेंगे? {TRIAL_DAYS} दिन का free trial लीजिए, कोई payment नहीं 👇"),
+      buttons=[btn(f"v3.{np_}", "demo", TRIAL_BTN, trial), btn(f"v3.{np_}", "call", t("Call me", "मुझे call करें"), call)])
     N(ns, "send_buttons", lang=L,
       text=t("Any time works for you? We can simply call you 📞", "कोई time सही नहीं लग रहा? हम सीधे call कर लेते हैं 📞"),
       buttons=[btn(f"v3.{ns}", "call", t("Call me", "मुझे call करें"), call), btn(f"v3.{ns}", "slots", t("Pick another time", "दूसरा time चुनें"), slots)])
@@ -274,9 +296,9 @@ for L in ("en", "hi"):
              f"बस एक आखिरी सवाल 🙂 files अकेले संभालते हैं या team के साथ? Plans ₹{PRICE_SOLO}/महीना से शुरू।"),
       buttons=[btn(f"v3.{nt2}", "solo", t("Just me", "सिर्फ मैं"), plan_a), btn(f"v3.{nt2}", "team", t("I have a team", "मेरी team है"), plan_b)])
     N(np2, "send_buttons", lang=L, reachable_via=R2,
-      text=t("DSAs using DSA Management track every file from login to disbursal on their phone 📱 See it live in a free 15-min demo?",
-             "DSA Management से DSAs हर file login से disbursal तक mobile पर track करते हैं 📱 Free 15-min demo में live देखें?"),
-      buttons=[btn(f"v3.{np2}", "demo", t("Book free demo", "Free demo book करें"), slots), btn(f"v3.{np2}", "call", t("Call me", "मुझे call करें"), call)])
+      text=t(f"DSAs using DSA Management track every file from login to disbursal on their phone 📱 Try it free for {TRIAL_DAYS} days?",
+             f"DSA Management से DSAs हर file login से disbursal तक mobile पर track करते हैं 📱 {TRIAL_DAYS} दिन free में use करके देखें?"),
+      buttons=[btn(f"v3.{np2}", "demo", TRIAL_BTN, trial), btn(f"v3.{np2}", "call", t("Call me", "मुझे call करें"), call)])
     N(ns2, "send_buttons", lang=L, reachable_via=R2,
       text=t("Your free demo is still open 🙂 Pick a time that suits you, or we can just give you a quick call.",
              "आपका free demo अभी भी available है 🙂 अपनी सुविधा का time चुनें, या हम आपको एक छोटी call कर लेते हैं।"),
@@ -314,8 +336,8 @@ settings = {
     "routing": "test",
     "test_phones": [],
     "dry_run_phones": [],
-    "replaces_flow_id": V2_FLOW_ID,
-    "history_flow_ids": [V2_FLOW_ID],
+    "replaces_flow_id": V3_FLOW_ID,
+    "history_flow_ids": [V2_FLOW_ID, V3_FLOW_ID],
     "entry_nodes": {"en": "e1", "hi": "h1"},
     "fallback_nodes": {"en": "e8", "hi": "h8"},
     "entry_fallback_nodes": {"en": "e8w", "hi": "h8w"},
@@ -324,6 +346,7 @@ settings = {
     "skip_offline": False,
     "agent_name_pool_only": True,
     "fallback_agent_name": {"en": "Our team", "hi": "हमारी team"},
+    "support_contact": SUPPORT_CONTACT,
     "agent_intro": {"en": {"named": "{{name}} from our team", "none": "Our team"},
                     "hi": {"named": "हमारी team से {{name}}", "none": "हमारी team"}},
     "taps_bypass_pause": True,
@@ -375,8 +398,8 @@ settings = {
     "test_overrides": {"working_hours_mode": "auto"},
 }
 
-flow = {"name": "DSA Welcome v3",
-        "description": "v3: image welcome, assign on first message, step nudges (max 2), 30-min slot list with capacity, post-video buy path, lost reasons.",
+flow = {"name": "DSA Welcome v3 Trial",
+        "description": "v3 with the 7-day free trial (DSA Management signup link) in place of demo booking. Installed as its own flow: test numbers first, then switched to live; v3 is the rollback.",
         "settings": settings,
         "nodes": [{"node_key": k, **v} for k, v in nodes.items()]}
 
@@ -407,6 +430,9 @@ for k, v in nodes.items():
     for a in c.get("actions", []):
         if a["type"] in ("schedule_nudge", "schedule_reminder"):
             assert all(n in keys for n in a["nodes"].values()), (k, a)
+    if c.get("trial_link"):
+        assert v["node_type"] == "send_message" and "{{trial_link}}" in c["text"], k
+        assert c["trial_link"]["text_expired"] and c["trial_link"]["text_unavailable"], k
     for txt in (c.get("text"), c.get("text_off_hours")):
         if txt:
             low = txt.lower()

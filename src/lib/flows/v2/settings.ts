@@ -60,6 +60,8 @@ export interface V2Settings {
   respect_inbox_auto_assign?: boolean;
   /** Shown as {{agent_first_name}} when no agent is assigned yet. */
   fallback_agent_name: Record<V2Lang, string>;
+  /** Shown as {{support_contact}}, e.g. when a free-trial link has expired. */
+  support_contact?: string;
 
   entry: {
     /** Re-start for an existing contact silent for this many days. */
