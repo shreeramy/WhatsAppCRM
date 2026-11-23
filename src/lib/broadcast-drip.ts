@@ -23,8 +23,19 @@ export interface DripConfig {
   daily_cap?: number
   /** Template per language; `en` is the default for everyone else. */
   templates: { en: DripTemplate } & Partial<Record<string, DripTemplate>>
-  /** Body params; tokens: {first_name} and any literal text. */
+  /**
+   * Body params; tokens: {first_name}, and — filled at send time —
+   * {trial_link} (the lead's DSA Management signup link), {agent_name}
+   * and {agent_phone} (the lead's assigned salesperson, from `agents`).
+   */
   params: string[]
+  /**
+   * Salespeople for {agent_name}/{agent_phone}, by user id. A lead
+   * assigned to someone not listed here is split evenly between them.
+   */
+  agents?: Record<string, { phone: string }>
+  /** Start of the signup-link note, e.g. "Bcast 24 Nov". */
+  trial_note?: string
   audience: {
     /** Only these contacts (e.g. a test send). */
     contact_ids?: string[]
@@ -102,6 +113,59 @@ export function greetingName(name: string | null | undefined, lang: string): str
 
 export function fillParams(params: string[], name: string | null | undefined, lang: string): string[] {
   return params.map((p) => p.replaceAll('{first_name}', greetingName(name, lang)))
+}
+
+const SEND_TIME_TOKENS = ['{trial_link}', '{agent_name}', '{agent_phone}'] as const
+
+/** True when a param needs per-lead values looked up at send time. */
+export function needsSendTimeValues(params: string[] | null | undefined): boolean {
+  return (params ?? []).some((p) => SEND_TIME_TOKENS.some((t) => p.includes(t)))
+}
+
+export function needsTrialLink(params: string[] | null | undefined): boolean {
+  return (params ?? []).some((p) => p.includes('{trial_link}'))
+}
+
+export function fillSendTimeParams(
+  params: string[],
+  values: { trial_link?: string; agent_name?: string; agent_phone?: string },
+): string[] {
+  return params.map((p) =>
+    p
+      .replaceAll('{trial_link}', values.trial_link ?? '')
+      .replaceAll('{agent_name}', values.agent_name ?? '')
+      .replaceAll('{agent_phone}', values.agent_phone ?? ''),
+  )
+}
+
+/**
+ * The salesperson named in the message: the lead's assigned agent if
+ * listed in `agents`, else one of them picked by a stable hash of the
+ * contact id (so a retry names the same person).
+ */
+export function pickDripAgent(
+  agents: Record<string, { phone: string }> | undefined,
+  assignedUserId: string | null | undefined,
+  contactId: string,
+): string | null {
+  const ids = Object.keys(agents ?? {}).sort()
+  if (!ids.length) return null
+  if (assignedUserId && ids.includes(assignedUserId)) return assignedUserId
+  let h = 0
+  for (const ch of contactId) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  return ids[h % ids.length]
+}
+
+/** "919893795404" → "+91 98937 95404"; anything else is returned as given. */
+export function formatIndianPhone(raw: string): string {
+  const d = raw.replace(/\D/g, '')
+  const ten = d.length === 12 && d.startsWith('91') ? d.slice(2) : d.length === 10 ? d : null
+  return ten ? `+91 ${ten.slice(0, 5)} ${ten.slice(5)}` : raw
+}
+
+/** Signup-link note: "<prefix> | <agent> | <lead phone>", max 120 chars. */
+export function dripTrialNote(prefix: string | undefined, agentName: string, leadPhone: string | null): string {
+  return [prefix || 'Broadcast', agentName, leadPhone ?? ''].filter(Boolean).join(' | ').slice(0, 120)
 }
 
 export function templateFor(cfg: DripConfig, lang: string): DripTemplate {

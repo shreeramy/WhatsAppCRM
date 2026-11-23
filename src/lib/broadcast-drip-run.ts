@@ -14,10 +14,17 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/automations/admin-client'
 import { engineSendTemplate } from '@/lib/automations/meta-send'
 import { finalizeBroadcastStatus } from '@/lib/whatsapp/broadcast-core'
+import { getOrIssueTrialLink } from '@/lib/dsa-trial/issue'
 import {
   dripQuota,
+  dripTrialNote,
   fillParams,
+  fillSendTimeParams,
+  formatIndianPhone,
   localDayStart,
+  needsSendTimeValues,
+  needsTrialLink,
+  pickDripAgent,
   tagExcluded,
   templateFor,
   type DripConfig,
@@ -174,10 +181,11 @@ async function tickOne(db: SupabaseClient, b: DripBroadcast, now: Date): Promise
     return result
   }
 
+  const agentNames = new Map<string, string>()
   for (const r of ready) {
     const { data: conv } = await db
       .from('conversations')
-      .select('id')
+      .select('id, assigned_agent_id')
       .eq('contact_id', r.contact_id)
       .order('last_message_at', { ascending: false, nullsFirst: false })
       .limit(1)
@@ -187,6 +195,48 @@ async function tickOne(db: SupabaseClient, b: DripBroadcast, now: Date): Promise
       continue
     }
     const tpl = Object.values(cfg.templates).find((t) => t?.name === r.template_name)
+
+    // Per-lead values: salesperson and signup link.
+    let params: string[] = r.template_params ?? []
+    if (needsSendTimeValues(params)) {
+      const agentId = pickDripAgent(cfg.agents, conv[0].assigned_agent_id, r.contact_id)
+      if (!agentId) {
+        result.note = 'drip.agents is empty'
+        break
+      }
+      if (!agentNames.has(agentId)) {
+        const { data: p } = await db.from('profiles').select('full_name').eq('user_id', agentId).maybeSingle()
+        agentNames.set(agentId, (p?.full_name as string | undefined) || 'our team')
+      }
+      const agentName = agentNames.get(agentId)!
+      let trialLink: string | undefined
+      if (needsTrialLink(params)) {
+        const { data: contact } = await db.from('contacts').select('phone').eq('id', r.contact_id).maybeSingle()
+        const link = await getOrIssueTrialLink(db, {
+          accountId: b.account_id,
+          contactId: r.contact_id,
+          source: 'bot',
+          note: dripTrialNote(cfg.trial_note, agentName, (contact?.phone as string | null) ?? null),
+        })
+        if (link.status === 'unavailable') {
+          // DSA Management is down or limiting: keep the lead pending, retry next tick.
+          result.note = 'trial link unavailable; retrying next tick'
+          break
+        }
+        if (link.status === 'expired') {
+          await db.from('broadcast_recipients').update({ status: 'failed', error_message: 'trial link expired' }).eq('id', r.id)
+          result.failed++
+          continue
+        }
+        trialLink = link.url
+      }
+      params = fillSendTimeParams(params, {
+        trial_link: trialLink,
+        agent_name: agentName,
+        agent_phone: formatIndianPhone(cfg.agents![agentId].phone),
+      })
+    }
+
     try {
       const { whatsapp_message_id } = await engineSendTemplate({
         accountId: b.account_id,
@@ -195,7 +245,7 @@ async function tickOne(db: SupabaseClient, b: DripBroadcast, now: Date): Promise
         contactId: r.contact_id,
         templateName: r.template_name,
         language: r.template_language,
-        params: r.template_params ?? [],
+        params,
         headerMediaUrl: tpl?.header_media_url,
       })
       await db
