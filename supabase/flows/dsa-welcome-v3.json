@@ -356,7 +356,7 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "en",
-        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
+        "header_image_url": "https://btmqhzkcgmmyouiaqbjs.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
         "text": "Namaste 🙏\n\nHow many loan files slipped away last month just because a follow-up was missed? 📂\n\nDSA Management keeps every file, follow-up and commission in one place, on your phone. 📱 Your bank DSA code stays 100% yours. This is only software to manage your work.\n\nOne quick question 👇 Are you already working as a DSA / loan agent?",
         "buttons": [
           {
@@ -1599,7 +1599,7 @@
       "node_type": "send_buttons",
       "config": {
         "lang": "hi",
-        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
+        "header_image_url": "https://btmqhzkcgmmyouiaqbjs.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
         "text": "नमस्ते 🙏\n\nपिछले महीने कितनी loan files सिर्फ इसलिए हाथ से निकल गईं क्योंकि follow-up छूट गया? 📂\n\nDSA Management में हर file, follow-up और commission एक जगह, आपके mobile पर। 📱 आपका bank DSA code 100% आपका ही रहेगा। ये सिर्फ आपका काम संभालने का software है।\n\nबस एक सवाल 👇 क्या आप अभी DSA / loan agent का काम करते हैं?",
         "buttons": [
           {

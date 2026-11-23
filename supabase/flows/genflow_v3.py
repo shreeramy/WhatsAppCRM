@@ -14,7 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # ---- business config -------------------------------------------------------
 V2_FLOW_ID = "fcca58b4-6445-492d-ae6a-5cd1d3261192"      # history
 V3_FLOW_ID = "58065faf-eff4-43fe-8ab0-898a8be68c17"      # demo-booking v3: stays live until this one goes live; rollback target
-HEADER_IMG = "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png"
+HEADER_IMG = "https://btmqhzkcgmmyouiaqbjs.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png"
 WEBINAR_WHEN_EN = "Thursday, 22 Oct at 9:00 AM"
 WEBINAR_WHEN_HI = "गुरुवार, 22 अक्टूबर, सुबह 9:00 बजे"
 VIDEO_EN = "https://www.youtube.com/watch?v=UOop21nMpEU"

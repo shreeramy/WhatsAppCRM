@@ -170,7 +170,7 @@
         "title_aliases": {
           "Want to become DSA": "e2"
         },
-        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
+        "header_image_url": "https://btmqhzkcgmmyouiaqbjs.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
         "actions": [
           {
             "type": "schedule_no_reply",
@@ -632,7 +632,7 @@
           "DSA बनना है": "h2",
           "बस price जानना है": "h3"
         },
-        "header_image_url": "https://kjthxacyqeuuqqwepbgr.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
+        "header_image_url": "https://btmqhzkcgmmyouiaqbjs.supabase.co/storage/v1/object/public/flow-media/welcome/dsa-welcome-header.png",
         "actions": [
           {
             "type": "schedule_no_reply",
