@@ -60,10 +60,12 @@ describe('upload-once media', () => {
     expect(calls.filter((c) => c.url.endsWith('/media'))).toHaveLength(1)
   })
 
-  it('falls back to the link when the upload fails', async () => {
+  it('fails the send instead of sending the storage link when the upload fails', async () => {
     vi.stubGlobal('fetch', fakeFetch({ uploadOk: false }))
-    await sendTemplateMessage({ ...BASE, templateName: 't', template })
-    expect(sentBody().template.components[0].parameters[0]).toEqual({ type: 'video', video: { link: OWN } })
+    await expect(sendTemplateMessage({ ...BASE, templateName: 't', template })).rejects.toThrow(/upload-once failed/)
+    await expect(sendTemplateMessage({ ...BASE, templateName: 't', template })).rejects.toThrow(/upload-once failed/)
+    expect(calls.filter((c) => c.url.endsWith('/messages'))).toHaveLength(0)
+    expect(calls.filter((c) => c.url === OWN)).toHaveLength(1)
   })
 
   it('leaves links on other hosts alone', async () => {

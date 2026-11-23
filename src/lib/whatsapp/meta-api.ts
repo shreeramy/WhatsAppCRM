@@ -30,8 +30,8 @@ export interface MetaSendResult {
 // Meta's /media endpoint, and send `{ id }` instead. Meta keeps uploaded
 // media for 30 days; we reuse an id for 20. The cache is per server
 // instance, so the worst case is one download per warm instance rather
-// than one per recipient. Any failure falls back to `{ link }` so a send
-// never breaks because of this.
+// than one per recipient. A failed upload fails the send; it never falls
+// back to `{ link }` (that would bring the per-recipient downloads back).
 // ------------------------------------------------------------
 
 const MEDIA_ID_TTL_MS = 20 * 24 * 60 * 60 * 1000
@@ -59,7 +59,8 @@ export function __resetMediaIdCache(): void {
 
 /**
  * Meta media id for a link on our own storage, uploading it once.
- * Returns null for other links or on any failure (caller sends the link).
+ * Returns null for links elsewhere (caller sends the link); throws when the
+ * upload fails, so our storage is never fetched once per recipient.
  */
 export async function mediaIdForLink(args: {
   phoneNumberId: string
@@ -70,7 +71,10 @@ export async function mediaIdForLink(args: {
   if (!isOwnStorageLink(link)) return null
   const key = `${phoneNumberId}|${link}`
   const hit = mediaIdCache.get(key)
-  if (hit && hit.expires > Date.now()) return hit.id
+  if (hit && hit.expires > Date.now()) {
+    if (!hit.id) throw new Error('media upload-once failed recently; not sending the storage link')
+    return hit.id
+  }
   const inflight = mediaIdPending.get(key)
   if (inflight) return inflight
 
@@ -96,9 +100,13 @@ export async function mediaIdForLink(args: {
       mediaIdCache.set(key, { id: data.id, expires: Date.now() + MEDIA_ID_TTL_MS })
       return data.id
     } catch (err) {
-      console.warn('[meta-media] upload-once failed, sending link instead:', err instanceof Error ? err.message : err)
+      // Never fall back to the link for our own storage: that is exactly
+      // the per-recipient download that ran up the egress bill. The send
+      // fails instead (drip broadcasts keep the lead pending and stop).
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn('[meta-media] upload-once failed:', msg)
       mediaIdCache.set(key, { id: null, expires: Date.now() + MEDIA_FAIL_TTL_MS })
-      return null
+      throw new Error(`media upload-once failed: ${msg}`)
     } finally {
       mediaIdPending.delete(key)
     }
