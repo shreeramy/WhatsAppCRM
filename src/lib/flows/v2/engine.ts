@@ -298,6 +298,17 @@ export async function dispatchV2IfApplicable(input: V2DispatchInput): Promise<Di
   const phone = (contact as { phone?: string | null } | null)?.phone ?? null;
 
   const bundle = pickBundle(bundles, phone);
+  // Contacts with a skip tag (e.g. job candidates on the same number) get
+  // no bot reply at all; the message just lands in the inbox.
+  if (bundle?.settings.skip_tags?.length) {
+    const { data: tagged } = await db
+      .from("contact_tags")
+      .select("tags!inner(name)")
+      .eq("contact_id", input.contactId)
+      .in("tags.name", bundle.settings.skip_tags)
+      .limit(1);
+    if (tagged?.length) return { consumed: true, outcome: "no_match" };
+  }
   if (!bundle) {
     // v2 doesn't handle this contact. If they still have an ACTIVE run on
     // a v2 flow (routing was switched back), end it so the original
