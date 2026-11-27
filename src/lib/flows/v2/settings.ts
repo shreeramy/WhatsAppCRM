@@ -68,6 +68,8 @@ export interface V2Settings {
    * {{2}} expiry date. Keyed by language; `en` is the fallback.
    */
   trial_link_templates?: Partial<Record<V2Lang, { name: string; language: string }>>;
+  /** Contacts with any of these tags get no bot reply (e.g. "Walk-in candidate"). */
+  skip_tags?: string[];
 
   entry: {
     /** Re-start for an existing contact silent for this many days. */
