@@ -82,6 +82,21 @@ export function ContactTrialLink({ contactId, conversationId }: { contactId: str
   async function sendOnWhatsApp(url: string, expiresAt: string) {
     if (!conversationId || sending) return;
     setSending(true);
+    // 24h window closed: the server sends the approved trial-link template.
+    if (!windowOpen) {
+      const res = await fetch(`/api/contacts/${contactId}/trial-link/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversation_id: conversationId }),
+      }).catch(() => null);
+      setSending(false);
+      if (res?.ok) toast.success(t("sentTemplate"));
+      else {
+        const err = ((await res?.json().catch(() => null)) as { error?: string } | null)?.error;
+        toast.error(err ? `${t("sendFailed")} ${err}` : t("sendFailed"));
+      }
+      return;
+    }
     const res = await fetch("/api/whatsapp/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -144,7 +159,7 @@ export function ContactTrialLink({ contactId, conversationId }: { contactId: str
                 variant="outline"
                 className="h-7 px-2 text-xs"
                 onClick={() => sendOnWhatsApp(state.url, state.expires_at)}
-                disabled={!windowOpen || sending}
+                disabled={sending}
                 title={windowOpen ? undefined : t("windowClosed")}
               >
                 {sending ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Send className="mr-1 h-3 w-3" />}

@@ -380,11 +380,12 @@
       "personal": "Personal link: works once and expires on {date}.",
       "expired": "This contact's trial link expired on {date}. Ask them to contact support for a new one.",
       "unavailable": "Free trial is not available right now. Please try again later.",
-      "windowClosed": "More than 24h since their last message, so WhatsApp only allows a template. Copy the link instead.",
+      "windowClosed": "More than 24h since their last message: this sends the approved trial-link template.",
       "message": "Here's your personal free-trial link for DSA Management 👉 {url}\n\nIt works once and expires on {date}.",
       "sent": "Trial link sent on WhatsApp",
       "sendFailed": "Couldn't send the message",
-      "copyFailed": "Couldn't copy the link"
+      "copyFailed": "Couldn't copy the link",
+      "sentTemplate": "Trial link sent as a WhatsApp template"
     }
   },
   "Contacts": {

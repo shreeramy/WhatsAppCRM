@@ -380,11 +380,12 @@
       "personal": "Link pessoal: funciona uma vez e expira em {date}.",
       "expired": "O link de teste deste contato expirou em {date}. Peça que contate o suporte.",
       "unavailable": "O teste grátis não está disponível agora. Tente novamente mais tarde.",
-      "windowClosed": "Mais de 24 h desde a última mensagem; o WhatsApp só permite um modelo. Copie o link.",
+      "windowClosed": "Mais de 24 h desde a última mensagem: será enviado o modelo aprovado com o link.",
       "message": "Aqui está seu link pessoal de teste grátis do DSA Management 👉 {url}\n\nFunciona uma vez e expira em {date}.",
       "sent": "Link enviado no WhatsApp",
       "sendFailed": "Não foi possível enviar a mensagem",
-      "copyFailed": "Não foi possível copiar o link"
+      "copyFailed": "Não foi possível copiar o link",
+      "sentTemplate": "Link enviado como modelo do WhatsApp"
     }
   },
   "Contacts": {

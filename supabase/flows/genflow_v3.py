@@ -24,6 +24,10 @@ PAY_FORM = "https://docs.google.com/forms/d/e/1FAIpQLSeyXBS5MrRFMi2Gs4L-CY83TORY
 PRICE_SOLO, PRICE_TEAM_M, PRICE_TEAM_Y = 600, 1397, 14400
 TRIAL_DAYS = 7
 SUPPORT_CONTACT = "+91 96694 40778"
+# Approved templates that send the trial link when the 24h window is closed
+# (inbox "Send on WhatsApp"). Body: {{1}} link, {{2}} expiry date.
+TRIAL_LINK_TEMPLATES = {"en": {"name": "dsa_trial_link_utility", "language": "en"},
+                        "hi": {"name": "dsa_trial_link_utility_hi", "language": "hi"}}
 
 VIDEO_BLOCK_EN = f"▶️ English: {VIDEO_EN}\n▶️ Hindi: {VIDEO_HI}"
 VIDEO_BLOCK_HI = f"▶️ हिंदी: {VIDEO_HI}\n▶️ English: {VIDEO_EN}"
@@ -347,6 +351,7 @@ settings = {
     "agent_name_pool_only": True,
     "fallback_agent_name": {"en": "Our team", "hi": "हमारी team"},
     "support_contact": SUPPORT_CONTACT,
+    "trial_link_templates": TRIAL_LINK_TEMPLATES,
     "agent_intro": {"en": {"named": "{{name}} from our team", "none": "Our team"},
                     "hi": {"named": "हमारी team से {{name}}", "none": "हमारी team"}},
     "taps_bypass_pause": True,

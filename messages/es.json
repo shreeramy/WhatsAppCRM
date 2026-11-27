@@ -380,11 +380,12 @@
       "personal": "Enlace personal: funciona una vez y vence el {date}.",
       "expired": "El enlace de prueba de este contacto venció el {date}. Pídele que contacte con soporte.",
       "unavailable": "La prueba gratis no está disponible ahora. Inténtalo más tarde.",
-      "windowClosed": "Han pasado más de 24 h desde su último mensaje; WhatsApp solo permite una plantilla. Copia el enlace.",
+      "windowClosed": "Han pasado más de 24 h desde su último mensaje: se enviará la plantilla aprobada con el enlace.",
       "message": "Aquí tienes tu enlace personal de prueba gratis de DSA Management 👉 {url}\n\nFunciona una vez y vence el {date}.",
       "sent": "Enlace enviado por WhatsApp",
       "sendFailed": "No se pudo enviar el mensaje",
-      "copyFailed": "No se pudo copiar el enlace"
+      "copyFailed": "No se pudo copiar el enlace",
+      "sentTemplate": "Enlace enviado como plantilla de WhatsApp"
     }
   },
   "Contacts": {

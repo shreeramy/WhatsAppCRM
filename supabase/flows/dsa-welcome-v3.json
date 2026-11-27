@@ -44,6 +44,16 @@
       "hi": "हमारी team"
     },
     "support_contact": "+91 96694 40778",
+    "trial_link_templates": {
+      "en": {
+        "name": "dsa_trial_link_utility",
+        "language": "en"
+      },
+      "hi": {
+        "name": "dsa_trial_link_utility_hi",
+        "language": "hi"
+      }
+    },
     "agent_intro": {
       "en": {
         "named": "{{name}} from our team",

@@ -62,6 +62,12 @@ export interface V2Settings {
   fallback_agent_name: Record<V2Lang, string>;
   /** Shown as {{support_contact}}, e.g. when a free-trial link has expired. */
   support_contact?: string;
+  /**
+   * Approved templates that send a contact their free-trial link when the
+   * 24h window is closed (inbox "Send on WhatsApp"). Body: {{1}} link,
+   * {{2}} expiry date. Keyed by language; `en` is the fallback.
+   */
+  trial_link_templates?: Partial<Record<V2Lang, { name: string; language: string }>>;
 
   entry: {
     /** Re-start for an existing contact silent for this many days. */

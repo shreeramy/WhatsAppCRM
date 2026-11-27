@@ -380,11 +380,12 @@
       "personal": "개인 링크: 한 번만 사용 가능하며 {date}에 만료됩니다.",
       "expired": "이 연락처의 체험 링크가 {date}에 만료되었습니다. 지원팀에 문의하도록 안내하세요.",
       "unavailable": "지금은 무료 체험을 이용할 수 없습니다. 나중에 다시 시도하세요.",
-      "windowClosed": "마지막 메시지 후 24시간이 지나 템플릿만 보낼 수 있습니다. 링크를 복사하세요.",
+      "windowClosed": "마지막 메시지 후 24시간이 지나 승인된 링크 템플릿으로 보냅니다.",
       "message": "DSA Management 개인 무료 체험 링크입니다 👉 {url}\n\n한 번만 사용 가능하며 {date}에 만료됩니다.",
       "sent": "WhatsApp으로 링크를 보냈습니다",
       "sendFailed": "메시지를 보내지 못했습니다",
-      "copyFailed": "링크를 복사하지 못했습니다"
+      "copyFailed": "링크를 복사하지 못했습니다",
+      "sentTemplate": "WhatsApp 템플릿으로 링크를 보냈습니다"
     }
   },
   "Contacts": {
